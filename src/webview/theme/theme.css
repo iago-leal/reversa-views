@@ -1,0 +1,251 @@
+/*
+ * The single stylesheet of the panel (RF-11, EC-03, EC-04, D-02).
+ *
+ * Every colour comes from a named token of the design system. That is not
+ * only a matter of contrast: this sheet is what SEEDS the trim of
+ * `scripts/theme-tokens.js`, and a token it does not name does not survive the
+ * closure. Each rule written here is therefore also a decision about size.
+ *
+ * The measures fix a narrow column. There is no minimum width in pixels
+ * anywhere, because a column the editor can drag to 200 px would then scroll
+ * sideways; cells wrap instead, and below 300 px the rows stack.
+ *
+ * High contrast asks for no rule of its own: it arrives through the colour set
+ * the attributes of `primer-themes.ts` select.
+ */
+
+:root {
+  --panel-gap: 0.5rem;
+  --panel-radius: 0.375rem;
+  --panel-hairline: 1px;
+}
+
+body {
+  margin: 0;
+  padding: var(--panel-gap);
+  background-color: var(--bgColor-default);
+  color: var(--fgColor-default);
+  font-family: var(--vscode-font-family, system-ui, sans-serif);
+  font-size: var(--vscode-font-size, 0.8125rem);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--panel-gap);
+  max-width: 100%;
+}
+
+/* ---------------------------------------------------------------- header */
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-bottom: var(--panel-gap);
+  border-bottom: var(--panel-hairline) solid var(--borderColor-muted);
+}
+
+.header__title {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--fgColor-default);
+}
+
+.header__item {
+  color: var(--fgColor-muted);
+}
+
+.header__integrity[data-degraded='true'] {
+  color: var(--fgColor-attention);
+  background-color: var(--bgColor-attention-muted);
+  border-radius: var(--panel-radius);
+  padding: 0.125rem 0.25rem;
+}
+
+.header__integrity[data-degraded='false'] {
+  color: var(--fgColor-success);
+}
+
+/* The reserved place of the dispatch action: named, empty, and drawn as
+   nothing until the feature that fills it exists (RF-15). */
+.header__dispatch:empty {
+  display: none;
+}
+
+/* --------------------------------------------------------------- actions */
+
+.button {
+  font: inherit;
+  color: var(--fgColor-accent);
+  background-color: transparent;
+  border: var(--panel-hairline) solid var(--borderColor-accent-muted);
+  border-radius: var(--panel-radius);
+  padding: 0.125rem 0.5rem;
+  cursor: pointer;
+}
+
+.button:hover {
+  background-color: var(--bgColor-accent-muted);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--fgColor-accent);
+  outline-offset: 1px;
+}
+
+.link {
+  color: var(--fgColor-accent);
+  background: none;
+  border: none;
+  font: inherit;
+  padding: 0;
+  text-align: start;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ---------------------------------------------------------------- blocks */
+
+pre {
+  margin: 0.25rem 0;
+  padding: 0.375rem;
+  background-color: var(--bgColor-muted);
+  border: var(--panel-hairline) solid var(--borderColor-muted);
+  border-radius: var(--panel-radius);
+  white-space: pre-wrap;
+  word-break: break-word;
+  overflow-x: auto;
+}
+
+/* -------------------------------------------------------------- sections */
+
+.section {
+  border: var(--panel-hairline) solid var(--borderColor-muted);
+  border-radius: var(--panel-radius);
+}
+
+.section__title {
+  margin: 0;
+  font-size: inherit;
+}
+
+.section__toggle {
+  display: flex;
+  gap: 0.375rem;
+  align-items: baseline;
+  width: 100%;
+  font: inherit;
+  font-weight: 600;
+  color: var(--fgColor-default);
+  background-color: var(--bgColor-muted);
+  border: none;
+  border-radius: var(--panel-radius);
+  padding: 0.25rem 0.375rem;
+  text-align: start;
+  cursor: pointer;
+}
+
+.section__count {
+  color: var(--fgColor-muted);
+  font-weight: 400;
+}
+
+.section__body {
+  padding: 0.375rem;
+}
+
+.section[data-collapsed='true'] .section__body {
+  display: none;
+}
+
+.section__failure {
+  color: var(--fgColor-danger);
+  background-color: var(--bgColor-danger-muted);
+  border-radius: var(--panel-radius);
+  padding: 0.375rem;
+}
+
+/* -------------------------------------------------------------- blocking */
+
+.blocking {
+  border: var(--panel-hairline) solid var(--borderColor-default);
+  border-radius: var(--panel-radius);
+  background-color: var(--bgColor-attention-muted);
+  padding: 0.375rem;
+}
+
+.blocking__list {
+  margin: 0;
+  padding-inline-start: 1rem;
+}
+
+/* ----------------------------------------------------------------- lists */
+
+.pairs {
+  display: grid;
+  grid-template-columns: minmax(6rem, auto) 1fr;
+  gap: 0.125rem 0.5rem;
+  margin: 0;
+}
+
+.pairs dt {
+  color: var(--fgColor-muted);
+}
+
+.pairs dd {
+  margin: 0;
+}
+
+.status {
+  color: var(--fgColor-muted);
+}
+
+.status[data-status='current'] {
+  color: var(--fgColor-accent);
+}
+
+.status[data-status='done'] {
+  color: var(--fgColor-success);
+}
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.rows code {
+  color: var(--fgColor-muted);
+}
+
+.empty {
+  color: var(--fgColor-muted);
+  font-style: italic;
+}
+
+.notice {
+  color: var(--fgColor-attention);
+  background-color: var(--bgColor-attention-muted);
+  border-radius: var(--panel-radius);
+  padding: 0.25rem 0.375rem;
+}
+
+/* ------------------------------------------------------- narrow column */
+
+/* EC-03: below 300 px the two-column pairs become one, so that nothing has to
+   scroll sideways. The breakpoint is a query, not a measure of an element. */
+@media (max-width: 300px) {
+  .pairs {
+    grid-template-columns: 1fr;
+  }
+
+  .section__toggle {
+    flex-wrap: wrap;
+  }
+}

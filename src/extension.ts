@@ -31,12 +31,23 @@ export function activate(context: vscode.ExtensionContext): void {
   const channel = vscode.window.createOutputChannel(CHANNEL_NAME)
   const log = logPort(channel)
 
+  // The bundle of the panel lives under `out/res/webview`. It is declared as
+  // an allowed resource root of its own: a local resource loaded by disk path
+  // is refused by the policy, and without this declaration the editor will not
+  // rewrite the address either (RF-09, D-13).
+  const outRoot = vscode.Uri.joinPath(context.extensionUri, 'out')
+  const webviewRoot = vscode.Uri.joinPath(outRoot, 'res', 'webview')
+
   const provider = new ProcessViewProvider({
     workspace: workspacePort(),
     editor: editorPort(),
     log,
     readRoot: (root) => readWorkspace(root, { log }),
-    localResourceRoots: [vscode.Uri.joinPath(context.extensionUri, 'out')],
+    localResourceRoots: [outRoot, webviewRoot],
+    assets: {
+      script: vscode.Uri.joinPath(webviewRoot, 'main.js'),
+      style: vscode.Uri.joinPath(webviewRoot, 'main.css'),
+    },
     visibilityOf: visibilityPort,
   })
 

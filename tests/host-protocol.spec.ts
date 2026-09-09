@@ -95,6 +95,7 @@ describe('comandos do host', () => {
           entry: 'no-reversa',
           root: '/w',
           ignoredRoots: [],
+          inheritedRevision: '420305daa6cdd10858b720a34cb8db67d8e5c5e9',
         },
       },
       { command: 'setEntry', data: { kind: 'loading' } },
@@ -106,7 +107,7 @@ describe('comandos do host', () => {
 })
 
 describe('carga de dados', () => {
-  it('traz os seis campos de RF-13, RF-03 e RF-04, e nenhum a mais', () => {
+  it('traz os sete campos de RF-13, RF-03, RF-04 e RF-14, e nenhum a mais', () => {
     const data: SetProcessData = {
       process: readReversa(EMPTY_SNAPSHOT),
       probe,
@@ -114,10 +115,16 @@ describe('carga de dados', () => {
       entry: 'installed',
       root: '/w',
       ignoredRoots: ['/outra'],
+      inheritedRevision: '420305daa6cdd10858b720a34cb8db67d8e5c5e9',
     }
     expect(Object.keys(data).sort()).toEqual(
-      ['entry', 'ignoredRoots', 'probe', 'process', 'readAt', 'root'],
+      ['entry', 'ignoredRoots', 'inheritedRevision', 'probe', 'process', 'readAt', 'root'],
     )
+  })
+
+  it('o campo da revisão herdada é acréscimo: a carga sem processo segue com quatro', () => {
+    const bare: SetEntryData = { kind: 'error', message: 'disco recusou', root: '/w', ignoredRoots: [] }
+    expect(Object.keys(bare).sort()).toEqual(['ignoredRoots', 'kind', 'message', 'root'])
   })
 
   it('o relatório da sonda expõe os quatro campos que RF-13 exige', () => {

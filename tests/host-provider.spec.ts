@@ -9,6 +9,7 @@
 
 import { describe, expect, it, vi } from 'vitest'
 import { EMPTY_SNAPSHOT, readReversa } from '../src/heranca/reversa-domain/src/index.ts'
+import { INHERITED_MODEL_REVISION } from '../src/host/inheritance.ts'
 import { ProcessViewProvider } from '../src/host/provider.ts'
 import type { ReadingResult } from '../src/host/reading.ts'
 
@@ -30,6 +31,10 @@ function bancada(options: { roots?: string[]; readRoot?: (root: string) => Readi
   const postMessage = vi.fn(async () => true)
   const setState = vi.fn()
   const onDidReceiveMessage = vi.fn(() => ({ dispose: vi.fn() }))
+  /** O editor reescreve o caminho de disco no endereço que ele serve (D-13). */
+  const asWebviewUri = vi.fn((uri: { fsPath: string }) => ({
+    toString: () => `vscode-webview://abc${uri.fsPath}`,
+  }))
   const webview = {
     options: {},
     html: '',
@@ -37,6 +42,7 @@ function bancada(options: { roots?: string[]; readRoot?: (root: string) => Readi
     postMessage,
     onDidReceiveMessage,
     setState,
+    asWebviewUri,
   }
 
   let visivel = true
@@ -45,7 +51,11 @@ function bancada(options: { roots?: string[]; readRoot?: (root: string) => Readi
 
   const readRoot = vi.fn(options.readRoot ?? leitura)
   const raizes = options.roots ?? ['/w']
-  const localResourceRoots = [{ fsPath: '/ext/out' }]
+  const localResourceRoots = [{ fsPath: '/ext/out' }, { fsPath: '/ext/out/res/webview' }]
+  const assets = {
+    script: { fsPath: '/ext/out/res/webview/main.js' },
+    style: { fsPath: '/ext/out/res/webview/main.css' },
+  }
 
   const provider = new ProcessViewProvider({
     workspace: { roots: () => raizes },
@@ -53,6 +63,7 @@ function bancada(options: { roots?: string[]; readRoot?: (root: string) => Readi
     log: { write: (line) => void lines.push(line) },
     readRoot,
     localResourceRoots: localResourceRoots as never,
+    assets: assets as never,
     visibilityOf: () => ({
       isVisible: () => visivel,
       onVisibilityChange: (ouvinte) => {
@@ -83,6 +94,7 @@ function bancada(options: { roots?: string[]; readRoot?: (root: string) => Readi
     webview,
     setState,
     onDidReceiveMessage,
+    asWebviewUri,
     localResourceRoots,
     lines,
   }
@@ -98,6 +110,25 @@ describe('resolver a visão', () => {
       enableScripts: true,
       localResourceRoots: b.localResourceRoots,
     })
+  })
+
+  it('serve o painel real: etiqueta de script e etiqueta de folha', () => {
+    const b = bancada()
+    b.resolver()
+
+    expect(b.webview.html).toMatch(/<script[^>]*nonce="[a-f0-9]{32}"[^>]*src="/)
+    expect(b.webview.html).toMatch(/<link[^>]*rel="stylesheet"[^>]*href="/)
+    expect(b.webview.html).toContain('<div id="root"></div>')
+  })
+
+  it('resolve os dois endereços pela interface do webview, e não monta caminho de disco', () => {
+    const b = bancada()
+    b.resolver()
+
+    expect(b.asWebviewUri).toHaveBeenCalledTimes(2)
+    expect(b.webview.html).toContain('vscode-webview://abc/ext/out/res/webview/main.js')
+    expect(b.webview.html).toContain('vscode-webview://abc/ext/out/res/webview/main.css')
+    expect(b.webview.html).not.toMatch(/(?:src|href)="\/ext/)
   })
 
   it('registra o ouvinte uma única vez', () => {
@@ -132,6 +163,27 @@ describe('chegada do pronto', () => {
       ignoredRoots: [],
       readAt: '2026-09-09T12:00:00.000Z',
     })
+  })
+
+  it('a carga declara a revisão do modelo de que a leitura veio (RF-14)', async () => {
+    const b = bancada()
+    b.resolver()
+    b.enviarDaWebview({ command: 'onLoaded' })
+    await esperar()
+
+    const enviadas = b.enviadas() as Array<{ command: string; data: Record<string, unknown> }>
+    expect(enviadas[1]!.data.inheritedRevision).toBe(INHERITED_MODEL_REVISION)
+    expect(enviadas[1]!.data.inheritedRevision).toMatch(/^[0-9a-f]{40}$/)
+  })
+
+  it('estado sem processo não carrega revisão alguma: o campo é do processo', async () => {
+    const b = bancada({ roots: [] })
+    b.resolver()
+    b.enviarDaWebview({ command: 'onLoaded' })
+    await esperar()
+
+    const enviadas = b.enviadas() as Array<{ command: string; data: Record<string, unknown> }>
+    for (const enviada of enviadas) expect(enviada.data.inheritedRevision).toBeUndefined()
   })
 
   it('sem pasta alguma, envia o estado de sem diretório e não lê', async () => {

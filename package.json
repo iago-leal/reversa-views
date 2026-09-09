@@ -39,12 +39,27 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc -p ./ --noEmit",
-    "compile": "tsc -p ./"
+    "compile": "tsc -p ./",
+    "build:webview": "node scripts/build-webview.js",
+    "build": "npm run check:heranca:local && npm run gerar:revisao-heranca && npm run compile && npm run build:webview",
+    "check:webview": "tsc -p tsconfig.webview.json --noEmit",
+    "check:heranca": "node scripts/verificar-heranca.js",
+    "check:heranca:local": "node scripts/verificar-heranca.js --local",
+    "sync:heranca": "node scripts/ressincronizar-heranca.js",
+    "gerar:revisao-heranca": "node scripts/gerar-revisao-heranca.js"
   },
   "devDependencies": {
+    "@primer/primitives": "11.10.0",
     "@types/node": "20.19.9",
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
     "@types/vscode": "1.78.0",
+    "@vitest/coverage-v8": "3.2.7",
+    "esbuild": "0.25.12",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
     "typescript": "5.9.3",
-    "vitest": "3.2.7"
+    "vitest": "3.2.7",
+    "yaml": "2.9.0"
   }
 }

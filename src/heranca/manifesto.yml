@@ -1,0 +1,312 @@
+# Manifesto da camada herdada.
+#
+# O QUE É. A fonte do dado de procedência: quais são as origens, em que revisão elas estavam
+# quando a cópia foi feita, e qual o resumo criptográfico do conteúdo de cada arquivo herdado.
+# O registro em prosa, com o porquê de cada escolha, vive em `src/heranca/PROCEDENCIA.md`, e as
+# adaptações declaradas vivem em `src/heranca/adaptacoes.yml`. O ritual está no `README.md`.
+#
+# QUEM O ESCREVE. A lista de `arquivos` é escrita por ferramenta: quem a mantém é
+# `npm run sync:heranca` e quem a confere é `npm run check:heranca`. Editá-la à mão é convite a
+# erro, porque um resumo é uma linha de sessenta e quatro caracteres hexadecimais que ninguém
+# confere de olho, e um resumo errado transforma o verificador em ruído: ou ele acusa o que está
+# certo, ou deixa de acusar o que está errado. As origens acima da lista, essas sim, são escritas
+# à mão, porque declaram decisão, e não observação.
+#
+# O QUE O RESUMO COBRE. O conteúdo herdado, isto é, o arquivo a partir da linha 8 nos que têm
+# carimbo e o arquivo inteiro nos três fixtures que não podem tê-lo. Trocar o carimbo não conta
+# como edição: carimbo é metadado, e ressincronizar o reescreve por definição.
+#
+# O QUE NÃO ENTRA AQUI. Caminho de máquina. Onde cada origem está clonada é assunto de
+# `heranca.origens.yml`, que o git ignora, e cujo exemplo versionado fica ao lado dele.
+versao: 1
+origens:
+  - nome: scrum-harness
+    tipo: codigo
+    endereco: https://github.com/iago-leal/scrum-harness
+    revisao: 420305daa6cdd10858b720a34cb8db67d8e5c5e9
+    dataDaRevisao: 2026-09-08
+    dataDaCopia: 2026-09-09
+    versaoDoReversaNaOrigem: 1.3.3
+    chaveDoCaminhoLocal: scrum-harness
+    prefixoNaOrigem: packages/
+    sinaisDeDisparo:
+      - anomalia de campo desconhecido no painel
+      - versão nova do Reversa instalada
+  - nome: vscode-kanban
+    tipo: padrao
+    endereco: https://github.com/iago-leal/vscode-kanban
+    versaoObservada: 1.35.2
+    dataDaObservacao: 2026-09-09
+    chaveDoCaminhoLocal: vscode-kanban
+    sinaisDeDisparo:
+      - release nova da origem do kit
+    nota: |
+      Origem de padrão, não de arquivo. A lista de arquivos é vazia por definição, e não por
+      pendência: da feature 003 veio desenho, e nenhum arquivo foi copiado. O arquivo mais próximo
+      dela é `scripts/theme-tokens.js`, reescrito a partir do podador do kit e por isso não
+      conferível por resumo.
+    arquivos: []
+arquivos:
+  - caminho: src/heranca/reversa-domain/src/actions.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/src/actions.ts
+    carimbado: true
+    resumo: sha256:18bde05cb2cd2c8cb884b834a8851a8268f0ac61b5da270c73749f22327409e2
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/src/anomaly.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/src/anomaly.ts
+    carimbado: true
+    resumo: sha256:f8d10b2a2de6b63e854a74095b5d2a120e7ebc68a16b864a0ece1d2801037d04
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/src/forward.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/src/forward.ts
+    carimbado: true
+    resumo: sha256:71f7c8a54dfc5b49a45f1d9df8703cb66862df3263487ac1b05eaf88d5684a81
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/src/glob.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/src/glob.ts
+    carimbado: true
+    resumo: sha256:6e744e65387b20450c915be774b4cfe00ad36b012aee846af66b5e8c926361d9
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/src/ideation.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/src/ideation.ts
+    carimbado: true
+    resumo: sha256:b99104e06b52ac066bdf37558abb0af53c27ca8f8f5b5f4f45a3300d145f0adb
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/src/impact.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/src/impact.ts
+    carimbado: true
+    resumo: sha256:a7d4bfa84591f0eb605d412784a4616421099a4fc36403942866c1139f825e53
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/src/index.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/src/index.ts
+    carimbado: true
+    resumo: sha256:f0529a1bfbe2f8ca6b3bf60baa96e22c45a09a8cd437db48320f6bf5da26b558
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/src/json.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/src/json.ts
+    carimbado: true
+    resumo: sha256:8bbe7cc79b941d8f3e1d80990c55051867775c497919ae4c9c52f407a0a8acee
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/src/migration.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/src/migration.ts
+    carimbado: true
+    resumo: sha256:398ad924a3c0b0f5dcaf01173d076689bb36c27205cdc744e0a798fc98ea765f
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/src/policy.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/src/policy.ts
+    carimbado: true
+    resumo: sha256:1db477983c7bcb05cd9c4be17cd596fda44a4cd6d1cf4ec8d1fd8ce27fad306c
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/src/progress.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/src/progress.ts
+    carimbado: true
+    resumo: sha256:7cd8d77a5c0849d46fe9cba9ef617de701f5318d4a01fff2e66c3ba081740cae
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/src/state.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/src/state.ts
+    carimbado: true
+    resumo: sha256:6573df05428ddb5dbafafe57fb8a3d290a367934d592d3988de99d3cb2f1eadf
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/src/table.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/src/table.ts
+    carimbado: true
+    resumo: sha256:f694f1e9e85e80b27a0a6b0e354152e012dde0b4fcf1dbc2a3001f39e5e743c5
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/src/watch.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/src/watch.ts
+    carimbado: true
+    resumo: sha256:8c2ace5952dc2f1a9bf98ebdfcb067c7cc50ee2045eabcafde4af6f925753019
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/tests/actions.spec.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/tests/actions.spec.ts
+    carimbado: true
+    resumo: sha256:13ee1cd12b471392b879761949b032c45e9a8c50ed1b39dbbd822b7b647ff5d2
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/tests/compose.spec.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/tests/compose.spec.ts
+    carimbado: true
+    resumo: sha256:abe3c468257a896e672e291c799b5449f43f129ecbf46e9b0eafcf25d8bb0d3e
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/tests/fixtures/check-legacy-policy.mjs
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/tests/fixtures/check-legacy-policy.mjs
+    carimbado: false
+    resumo: sha256:6c4f727e9d84d1b4b975e1f090ab28cb7f7495abbffadab43995caf6255bd4c2
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+    paridadeExterna: .reversa/hooks/check-legacy-policy.mjs
+  - caminho: src/heranca/reversa-domain/tests/fixtures/reversa-config.real.json
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/tests/fixtures/reversa-config.real.json
+    carimbado: false
+    resumo: sha256:02802e2e1cb8ebfad14ef1a1cc58ecba41845c6b8ed32016c01846a64a85ffaa
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/tests/fixtures/state.real.json
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/tests/fixtures/state.real.json
+    carimbado: false
+    resumo: sha256:1a57e32cbe91a98be57e105b297f0e9bc3040252c85605b61dbafd5896fd71b4
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/tests/forward.spec.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/tests/forward.spec.ts
+    carimbado: true
+    resumo: sha256:f47455570e0bcf53d7d16a3b09a4b60b33bc05baa858be5e5cacca65fafe3650
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/tests/glob.spec.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/tests/glob.spec.ts
+    carimbado: true
+    resumo: sha256:074f666ae2e1df03f3e7bcb6c5fe608f1da73994c61df03fd5a6a7c98377c758
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/tests/hook-parity.spec.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/tests/hook-parity.spec.ts
+    carimbado: true
+    resumo: sha256:4648b741eb5f702435c3dcec23cdfeab85469809f955c53eb664deaf770bd13e
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/tests/ideation.spec.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/tests/ideation.spec.ts
+    carimbado: true
+    resumo: sha256:dbf72dbe7ecdb81b1f8f94101b731398adbc562caada950312d8ab138b306eb3
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/tests/impact.spec.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/tests/impact.spec.ts
+    carimbado: true
+    resumo: sha256:b75fd38f0bbcf34a90bd7be6cd8fa83b65e6aae1f59a0fb0f6659c7324594d77
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/tests/migration.spec.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/tests/migration.spec.ts
+    carimbado: true
+    resumo: sha256:bae4c4920c5d3ebc549930140613e73fae985cfbe1f6dd1b71a7ed5cc5901e7a
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/tests/policy.spec.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/tests/policy.spec.ts
+    carimbado: true
+    resumo: sha256:e2dce787f0b881d6ad25a24bed4ee67d6bb8e8b5753458e6e0029380db926827
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/tests/progress.spec.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/tests/progress.spec.ts
+    carimbado: true
+    resumo: sha256:e30b41f3c93d9d1ab1e4d8797e8645c2b76be51406c9c8a43dce3b5c44e031f7
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/tests/readonly.spec.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/tests/readonly.spec.ts
+    carimbado: true
+    resumo: sha256:0096be0c2172b6d06ddedaa9eb8b6af1e30b35925703211f2c69cbe3097f10f2
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/tests/state.spec.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/tests/state.spec.ts
+    carimbado: true
+    resumo: sha256:c05693f640aaee0eebf4ced13ec73390b274aae820db5522193054d2d8bc378a
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/tests/table.spec.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/tests/table.spec.ts
+    carimbado: true
+    resumo: sha256:7454ba76c79db0ea9aecf7251bfe00f70cc63e78c961963eb416ceb8bcf2394d
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-domain/tests/watch.spec.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-domain/tests/watch.spec.ts
+    carimbado: true
+    resumo: sha256:ac3ae326c51c9eb1156284bc1c27214a3ade2edeaf378144cdc255d1993395b6
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-probe/src/files.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-probe/src/files.ts
+    carimbado: true
+    resumo: sha256:e351dbb8c162b418147f77b1e98df1953e54cdc2684f3cf2f0b0b4ec613f1c73
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-probe/src/index.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-probe/src/index.ts
+    carimbado: true
+    resumo: sha256:04e2665d638fe065f2018ea1fddf1b5e9883df1c5688b74f8e7301eadeeaf3de
+    dataDaCopia: 2026-09-09
+    adaptacoes:
+      - A3
+  - caminho: src/heranca/reversa-probe/src/snapshot.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-probe/src/snapshot.ts
+    carimbado: true
+    resumo: sha256:74383875ee9aaa87cdace0aee7dc0af6c9e3d891e0c63a255d484a5420521c15
+    dataDaCopia: 2026-09-09
+    adaptacoes:
+      - A1
+  - caminho: src/heranca/reversa-probe/tests/files.spec.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-probe/tests/files.spec.ts
+    carimbado: true
+    resumo: sha256:61ffd2b4ac52f051e0fd5c90df78885df77170bec3f04fa6c9f76d3eba9419f0
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-probe/tests/readonly.spec.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-probe/tests/readonly.spec.ts
+    carimbado: true
+    resumo: sha256:924824f1ab038c99e0b63cba5dce4b1a2ecc5e1958d9d032f39d3c6c05fcfd58
+    dataDaCopia: 2026-09-09
+    adaptacoes: []
+  - caminho: src/heranca/reversa-probe/tests/snapshot.spec.ts
+    origem: scrum-harness
+    caminhoNaOrigem: packages/reversa-probe/tests/snapshot.spec.ts
+    carimbado: true
+    resumo: sha256:85dd3b02216bd8368cc554a88f07ef0606e6b19fc986bcdbb5eef82f797ce283
+    dataDaCopia: 2026-09-09
+    adaptacoes:
+      - A2

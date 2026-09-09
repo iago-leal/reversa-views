@@ -1,0 +1,15 @@
+# Onde as origens da herança estão NESTA máquina.
+#
+# Copie este arquivo para `heranca.origens.yml`, que o git ignora, e ajuste os
+# dois caminhos. O manifesto versionado nunca guarda caminho de máquina, porque
+# a mesma cópia precisa verificar-se em discos organizados de formas diferentes.
+#
+#     cp heranca.origens.exemplo.yml heranca.origens.yml
+#
+# A chave de cada origem é o campo `chaveDoCaminhoLocal` da entrada
+# correspondente em `src/heranca/manifesto.yml`. Origem que faltar aqui é
+# relatada como indisponível, e o verificador conclui as demais conferências
+# assim mesmo.
+origens:
+  scrum-harness: /caminho/para/scrum-harness
+  vscode-kanban: /caminho/para/vscode-kanban

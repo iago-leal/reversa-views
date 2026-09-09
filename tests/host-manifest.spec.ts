@@ -20,6 +20,7 @@ const manifesto = JSON.parse(readFileSync('package.json', 'utf8')) as {
   }
   scripts?: Record<string, string>
   devDependencies?: Record<string, string>
+  dependencies?: Record<string, string>
 }
 
 describe('versão mínima do editor', () => {
@@ -75,11 +76,52 @@ describe('comando de releitura (RF-07, D-11)', () => {
   })
 })
 
+describe('as duas unidades de compilação (RF-23, D-04)', () => {
+  it('declara os dez scripts, e apenas eles', () => {
+    expect(Object.keys(manifesto.scripts ?? {})).toEqual([
+      'test',
+      'typecheck',
+      'compile',
+      'build:webview',
+      'build',
+      'check:webview',
+      'check:heranca',
+      'check:heranca:local',
+      'sync:heranca',
+      'gerar:revisao-heranca',
+    ])
+  })
+
+  it('o build confere a herança localmente e gera a constante antes de compilar (RF-19)', () => {
+    const build = manifesto.scripts?.build ?? ''
+    expect(build.indexOf('check:heranca:local')).toBeLessThan(build.indexOf('compile'))
+    expect(build.indexOf('gerar:revisao-heranca')).toBeLessThan(build.indexOf('compile'))
+    expect(build).not.toContain('check:heranca &&')
+  })
+
+  it('o interpretador de YAML entra com igualdade exata, e só como ferramenta', () => {
+    expect(manifesto.devDependencies?.yaml).toMatch(/^\d+\.\d+\.\d+$/)
+    expect(manifesto.dependencies?.yaml).toBeUndefined()
+  })
+
+  it('as dependências de interface e a dos tokens entram com igualdade exata', () => {
+    const deps = manifesto.devDependencies ?? {}
+    for (const nome of ['react', 'react-dom', '@types/react', '@types/react-dom', 'esbuild', '@primer/primitives']) {
+      expect(deps[nome], `${nome} não está declarado`).toBeDefined()
+      expect(deps[nome], `${nome} tem faixa de versão`).toMatch(/^\d+\.\d+\.\d+$/)
+    }
+  })
+
+  it('não traz `@primer/react`, que é o recorte de D-02', () => {
+    const todas = { ...(manifesto.dependencies ?? {}), ...(manifesto.devDependencies ?? {}) }
+    expect(Object.keys(todas)).not.toContain('@primer/react')
+  })
+})
+
 describe('o que pertence à feature 005 e não entra aqui', () => {
-  it('nenhum script de empacotamento', () => {
+  it('nenhum script de empacotamento de extensão', () => {
     const scripts = Object.keys(manifesto.scripts ?? {})
-    expect(scripts).toEqual(['test', 'typecheck', 'compile'])
-    for (const nome of ['package', 'vscode:prepublish', 'vsix', 'bundle']) {
+    for (const nome of ['package', 'vscode:prepublish', 'vsix']) {
       expect(scripts).not.toContain(nome)
     }
   })
@@ -88,9 +130,9 @@ describe('o que pertence à feature 005 e não entra aqui', () => {
     expect(existsSync('.vscodeignore')).toBe(false)
   })
 
-  it('nenhum empacotador em dependências', () => {
+  it('nenhuma ferramenta de empacotamento de extensão em dependências', () => {
     const deps = Object.keys(manifesto.devDependencies ?? {})
-    for (const nome of ['esbuild', 'webpack', 'rollup', 'vite', '@vscode/vsce', 'vsce']) {
+    for (const nome of ['webpack', 'rollup', 'vite', '@vscode/vsce', 'vsce']) {
       expect(deps).not.toContain(nome)
     }
   })

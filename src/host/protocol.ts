@@ -49,6 +49,14 @@ export interface SetProcessData {
   root: string
   /** The other workspace roots, declared as not observed. */
   ignoredRoots: string[]
+  /**
+   * The revision of the model this reading layer was copied from (RF-14).
+   *
+   * Added by feature 004, and added is the word: the protocol grows by
+   * accretion, so `SetEntryData` stays untouched and a webview built before
+   * this field simply ignores it.
+   */
+  inheritedRevision: string
 }
 
 /** The payload for every situation with no process to show. */

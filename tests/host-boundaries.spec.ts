@@ -55,11 +55,12 @@ describe('ponto único de travessia (RF-17)', () => {
   const REGISTRO_DE_OUVINTE = /\.\s*onDidReceiveMessage\s*\(/g
 
   /**
-   * `provisional.ts` fica de fora do lado do host, e a exceção é declarada:
-   * o que ele contém é o documento da webview, em texto, e portanto o OUTRO
-   * lado do canal. O último caso deste bloco cobre esse lado.
+   * Sem exceção alguma: `provisional.ts` foi removido pela feature 003, e a
+   * contagem passa a valer para todos os módulos do host. O outro lado do
+   * canal, que aquela exceção cobria, agora vive na webview e é a suíte de
+   * `webview-boundaries.spec.ts` que o verifica.
    */
-  const doHost = () => fontesDoHost().filter((fonte) => fonte.nome !== 'provisional.ts')
+  const doHost = () => fontesDoHost()
 
   it('a chamada de envio aparece uma vez, em bridge.ts', () => {
     const porArquivo = doHost().map(
@@ -75,9 +76,10 @@ describe('ponto único de travessia (RF-17)', () => {
     expect(porArquivo.filter(([, quantas]) => quantas > 0)).toEqual([['bridge.ts', 1]])
   })
 
-  it('do lado da webview, a interface do host é tomada uma única vez', () => {
-    const provisorio = readFileSync('src/host/provisional.ts', 'utf8')
-    expect(ocorrencias(provisorio, /acquireVsCodeApi\s*\(/g)).toBe(1)
+  it('nenhum módulo do host toma a interface da webview', () => {
+    for (const fonte of doHost()) {
+      expect(fonte.texto, fonte.nome).not.toMatch(/acquireVsCodeApi/)
+    }
   })
 
   it('nem a ativação chama a interface de mensagens', () => {
@@ -104,12 +106,8 @@ describe('disco (RN-01)', () => {
 })
 
 describe('nada de layout do Reversa no host (RF-14)', () => {
-  /**
-   * `provisional.ts` fica de fora, e a exceção é declarada: o corpo
-   * provisório aponta um arquivo desta feature apenas para exercitar o botão
-   * de abertura, e a feature 003 o descarta inteiro. Ele não deriva nada.
-   */
-  const decisores = () => fontesDoHost().filter((fonte) => fonte.nome !== 'provisional.ts')
+  /** Sem exceção: o corpo provisório que a carregava saiu com a feature 003. */
+  const decisores = () => fontesDoHost()
 
   it('nenhum caminho literal de arquivo do Reversa', () => {
     for (const fonte of decisores()) {

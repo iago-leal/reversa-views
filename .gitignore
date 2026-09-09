@@ -16,3 +16,6 @@ out/
 node_modules/
 coverage/
 *.vsix
+
+# Herança: caminho local das origens, feito a partir de heranca.origens.exemplo.yml
+heranca.origens.yml

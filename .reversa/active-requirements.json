@@ -1,14 +1,30 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/002-ponte-e-host",
-  "feature-id": "002",
-  "short-name": "ponte-e-host",
-  "started-at": "2026-09-09T12:15:58Z",
-  "current-stage": "plan",
+  "feature-dir": "_reversa_forward/004-heranca-e-sincronia",
+  "feature-id": "004",
+  "short-name": "heranca-e-sincronia",
+  "started-at": "2026-09-09T16:36:35Z",
+  "current-stage": "to-do",
   "stages-completed": [
     "requirements",
     "clarify",
-    "plan"
+    "plan",
+    "to-do"
   ],
-  "paused-features": []
+  "paused-features": [
+    {
+      "feature-dir": "_reversa_forward/002-ponte-e-host",
+      "feature-id": "002",
+      "short-name": "ponte-e-host",
+      "started-at": "2026-09-09T12:15:58Z",
+      "current-stage": "plan",
+      "stages-completed": [
+        "requirements",
+        "clarify",
+        "plan"
+      ],
+      "paused-at": "2026-09-09T14:06:13Z",
+      "paused-from-stage": "coding-em-progresso"
+    }
+  ]
 }

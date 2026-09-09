@@ -17,10 +17,11 @@
 import type * as vscode from 'vscode'
 import { Bridge } from './bridge.ts'
 import { buildDocument, createNonce } from './document.ts'
+import { INHERITED_MODEL_REVISION } from './inheritance.ts'
 import { openFile } from './open-file.ts'
 import { logLine } from './ports.ts'
 import type { EditorPort, LogPort, VisibilityPort, WorkspacePort } from './ports.ts'
-import { provisionalBody } from './provisional.ts'
+import { panelBody } from './panel.ts'
 import type { ReadingResult } from './reading.ts'
 import { chooseRoot } from './root.ts'
 import { routeMessage } from './router.ts'
@@ -34,8 +35,15 @@ export interface ProviderDeps {
   log: LogPort
   /** Reads one root; bound to the inherited layer by the activation. */
   readRoot: (root: string) => ReadingResult
-  /** The only folder the webview may load a local resource from (RF-09). */
+  /** The only folders the webview may load a local resource from (RF-09). */
   localResourceRoots: readonly vscode.Uri[]
+  /**
+   * Where the two assets of the bundle live on disk, as the activation built
+   * them. They are rewritten by the webview before they reach the document:
+   * the policy refuses a disk path, and the editor is the only one that knows
+   * the address it serves them from (D-13).
+   */
+  assets: { script: vscode.Uri; style: vscode.Uri }
   /** Visibility lives on the view, so it is built when the view exists. */
   visibilityOf: (view: vscode.WebviewView) => VisibilityPort
   createNonce?: () => string
@@ -62,7 +70,11 @@ export class ProcessViewProvider implements vscode.WebviewViewProvider {
     view.webview.html = buildDocument({
       nonce,
       cspSource: view.webview.cspSource,
-      body: provisionalBody(nonce),
+      body: panelBody({
+        nonce,
+        scriptUri: view.webview.asWebviewUri(this.deps.assets.script).toString(),
+        styleUri: view.webview.asWebviewUri(this.deps.assets.style).toString(),
+      }),
     })
 
     // A view resolved a second time is a new webview: the old bridge goes.
@@ -126,6 +138,7 @@ export class ProcessViewProvider implements vscode.WebviewViewProvider {
         entry: reading.entry,
         root,
         ignoredRoots,
+        inheritedRevision: INHERITED_MODEL_REVISION,
       },
     })
   }

@@ -1,0 +1,42 @@
+# Adaptações declaradas sobre o código herdado.
+#
+# Cada item diz o que foi mudado na cópia em relação à origem, e é isso que o
+# ressincronizador reaplica quando traz uma revisão nova. O trecho `original` é
+# procurado por igualdade exata no conteúdo lido da origem e precisa ocorrer uma
+# única vez; zero ou duas ocorrências interrompem a ressincronização inteira,
+# sem escrever arquivo algum.
+#
+# A prosa que explica a história de cada adaptação continua em
+# `src/heranca/PROCEDENCIA.md`. Aqui vive o dado.
+versao: 1
+adaptacoes:
+  - id: A1
+    arquivo: src/heranca/reversa-probe/src/snapshot.ts
+    motivo: |
+      Na origem os pacotes se enxergam pelo nome do espaço de trabalho. Aqui não há espaço de
+      trabalho, e o caminho relativo faz o mesmo serviço.
+    original: |
+      import { EMPTY_SNAPSHOT, StateContract, asRecord, asString, parseJsonSafe } from '@scrum-harness/reversa-domain'
+      import type { ReversaSnapshot } from '@scrum-harness/reversa-domain'
+    adaptado: |
+      import { EMPTY_SNAPSHOT, StateContract, asRecord, asString, parseJsonSafe } from '../../reversa-domain/src/index.ts'
+      import type { ReversaSnapshot } from '../../reversa-domain/src/index.ts'
+
+  - id: A2
+    arquivo: src/heranca/reversa-probe/tests/snapshot.spec.ts
+    motivo: |
+      Mesmo motivo de A1, na suíte.
+    original: |
+      import { readReversa } from '@scrum-harness/reversa-domain'
+    adaptado: |
+      import { readReversa } from '../../reversa-domain/src/index.ts'
+
+  - id: A3
+    arquivo: src/heranca/reversa-probe/src/index.ts
+    motivo: |
+      Consequência do descarte da camada de rota: um índice que reexporta um arquivo ausente não
+      compila. Apenas as duas linhas finais saíram, e nada entrou no lugar.
+    original: |
+      export { answerReversa } from './route.ts'
+      export type { ReversaAnswer, ReversaAnswerBody, ReversaProcessWire } from './route.ts'
+    adaptado: ''

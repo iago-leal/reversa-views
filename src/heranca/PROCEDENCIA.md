@@ -141,16 +141,53 @@ divergência. Carimbá-lo quebraria essa comparação no ato.
 Na data da cópia os três eram idênticos à origem, e o `.mjs` era idêntico também ao gancho instalado
 neste repositório.
 
-## 7. O que fica para a feature 004
+## 7. O kit de extensão, segunda origem: padrão adotado, código nenhum
 
-Esta é a primeira forma do regime de herança, e cobre só o registro. A feature 004 acrescenta a
-verificação automática:
+A feature 003 trouxe uma segunda origem, `vscode-kanban`, e ela é de natureza diferente da primeira.
+Da camada de leitura veio **código**, vendorizado, carimbado e sujeito ao regime das seções acima.
+Do kit de extensão veio **padrão**: o desenho de cinco decisões que já haviam sido resolvidas lá, e
+que teria sido tolice resolver de novo pior. Nenhum arquivo foi copiado.
 
-- **Manifesto com resumo criptográfico** de cada arquivo herdado, para detectar edição acidental sem
-  depender de comparação com a origem.
-- **Verificador** que lê o manifesto e o carimbo, e acusa arquivo herdado alterado, arquivo sem
-  carimbo e carimbo inconsistente com o manifesto.
-- **Ressincronizador** que traz uma revisão nova da origem e reaplica as adaptações declaradas na
-  seção 5, apontando as que deixaram de casar.
+Os cinco padrões adotados:
 
-Até lá, a conferência é manual, e o procedimento está no passo 8 do `onboarding.md` da feature 001.
+1. **A ponte como caminho único.** Um módulo, e um só, toma a interface do host e registra o ouvinte
+   de mensagem. Todo o resto da webview recebe funções.
+2. **A preferência como função total.** O estado guardado da webview sobrevive à versão que o
+   escreveu, e por isso a leitura dele nunca lança: ausência, tipo errado e nome que não existe mais
+   viram preferência vazia.
+3. **O tema pela classe do corpo do documento.** O editor escreve a classe, o painel a lê e traduz
+   em atributos, e a troca repinta sem releitura.
+4. **A ausência de falha silenciosa.** Comando que não se entende produz linha de log nomeando o
+   comando; seção que quebra declara a falha no lugar dela; leitura que degradou diz que degradou.
+5. **A poda de tokens por fecho transitivo, com guarda.** O fecho parte do que a folha nomeia, e um
+   fecho vazio interrompe a construção em vez de servir um painel sem cor.
+
+Porque nada foi copiado, o carimbo de sete linhas e a entrada de manifesto das seções 3 e 4 **não se
+aplicam** a esta origem: não há arquivo herdado a conferir, e um verificador que a procurasse não
+acharia nada. O que existe é dívida de desenho, e ela está declarada onde nasce.
+
+O arquivo mais próximo da origem é `scripts/theme-tokens.js`: o algoritmo do fecho e a guarda do
+fecho vazio vieram do podador do kit, reescritos para este projeto. O cabeçalho dele é o lugar onde
+essa proximidade está registrada, e é lá que a conferência começa se um dia a origem mudar.
+
+## 8. O regime verificável, entregue pela feature 004
+
+O que esta nota registra em prosa, a feature 004 passou a registrar em dado conferível. A divisão é
+esta: aqui vive o **porquê** de cada escolha, e lá vive o **que**, na forma que uma ferramenta lê.
+
+- **`src/heranca/manifesto.yml`** é a fonte do dado de procedência: as duas origens, a revisão de
+  cada uma, e o resumo criptográfico do conteúdo dos 37 arquivos herdados. A lista de arquivos é
+  escrita por ferramenta, e não à mão.
+- **`src/heranca/adaptacoes.yml`** é a fonte das adaptações. As três descritas na seção 5 estão lá
+  com o trecho original e o adaptado literais, e é assim que o ressincronizador as reaplica sobre
+  uma revisão nova sem ninguém precisar refazê-las.
+- **O ritual** está no `README.md`, na seção da herança: os três sinais que disparam a conferência,
+  os comandos `npm run check:heranca` e `npm run sync:heranca`, e o que fazer quando o
+  ressincronizador para.
+
+O resumo cobre o conteúdo herdado, isto é, o arquivo a partir da linha 8 nos que têm carimbo e o
+arquivo inteiro nos três fixtures da seção 6. Trocar o carimbo, portanto, não conta como edição:
+carimbo é metadado, e ressincronizar o reescreve por definição.
+
+O limite continua o mesmo, e o `README.md` o declara: resumo igual não é comportamento igual. A
+dependência transitiva é o caso que ele não pega, e as suítes herdadas são a rede que resta.
