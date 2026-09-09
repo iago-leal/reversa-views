@@ -1,0 +1,33 @@
+{"ts":"2026-09-09T13:00:51Z","action":"T001","status":"done","files":["package.json","package-lock.json"],"nota":"@types/vscode 1.78.0 em igualdade exata; npm ls resolveu 1.78.0"}
+{"ts":"2026-09-09T13:00:51Z","action":"T002","status":"done","files":["package.json"],"nota":"seis chaves: engines.vscode ^1.78.0, main, activationEvents, viewsContainers, views, commands; sem empacotador"}
+{"ts":"2026-09-09T13:00:51Z","action":"T003","status":"done","files":["tsconfig.json"],"nota":"types passou a [node, vscode]; npm run typecheck verde"}
+{"ts":"2026-09-09T13:00:51Z","action":"T004","status":"done","files":["media/reversa.svg"],"nota":"24x24, currentColor, fill none, sem texto"}
+{"ts":"2026-09-09T13:00:51Z","action":"T005","status":"done","files":["src/host/protocol.ts"],"nota":"5 estados, 5 comandos da webview com dispatch reservado, 3 do host; ReversaProcess e ProbeReport importados da heranca"}
+{"ts":"2026-09-09T13:00:51Z","action":"T006","status":"done","files":["src/host/ports.ts"],"nota":"MessagingPort, EditorPort, WorkspacePort, LogPort; nenhuma importacao do editor"}
+{"ts":"2026-09-09T13:09:44Z","action":"T006","status":"corrected","files":["src/host/ports.ts"],"nota":"MessagingPort passou a ter a forma estrutural do editor (postMessage, onDidReceiveMessage) e a visibilidade saiu para VisibilityPort; sem isso a chamada de envio cairia em adapters.ts e T016 nao fecharia. Acrescentado logLine(), formato unico da linha de log, ao lado de LogPort"}
+{"ts":"2026-09-09T13:09:44Z","action":"T007","status":"done","files":["tests/host-protocol.spec.ts"],"nota":"verde ja nesta fase, o protocolo existe desde T005"}
+{"ts":"2026-09-09T13:09:44Z","action":"T008","status":"done","files":["tests/host-root.spec.ts"]}
+{"ts":"2026-09-09T13:09:44Z","action":"T009","status":"done","files":["tests/host-reading.spec.ts"]}
+{"ts":"2026-09-09T13:09:44Z","action":"T010","status":"done","files":["tests/host-router.spec.ts"]}
+{"ts":"2026-09-09T13:09:44Z","action":"T011","status":"done","files":["tests/host-open-file.spec.ts"],"nota":"recusa de caminho fica so no log, sem setNotice, conforme a tabela de erros do contrato"}
+{"ts":"2026-09-09T13:09:44Z","action":"T012","status":"done","files":["tests/host-document.spec.ts"]}
+{"ts":"2026-09-09T13:09:44Z","action":"T013","status":"done","files":["tests/host-bridge.spec.ts"]}
+{"ts":"2026-09-09T13:09:44Z","action":"T014","status":"done","files":["tests/host-provider.spec.ts"]}
+{"ts":"2026-09-09T13:09:44Z","action":"T015","status":"done","files":["tests/host-manifest.spec.ts"],"nota":"verde ja nesta fase, o manifesto existe desde T002"}
+{"ts":"2026-09-09T13:09:44Z","action":"T016","status":"done","files":["tests/host-boundaries.spec.ts"],"nota":"10 suites escritas; 8 vermelhas por modulos ausentes, como o TDD preve"}
+{"ts":"2026-09-09T13:12:42Z","action":"T017","status":"done","files":["src/host/reading.ts"],"nota":"suite T009 verde, 7 casos; readSnapshot/readProcess com padrao na camada herdada e sobrescrita por dulbe"}
+{"ts":"2026-09-09T13:12:42Z","action":"T018","status":"done","files":["src/host/root.ts"],"nota":"suite T008 verde, 6 casos"}
+{"ts":"2026-09-09T13:12:42Z","action":"T019","status":"done","files":["src/host/open-file.ts"],"nota":"suite T011 verde, 9 casos; contencao por resolveInside da sonda"}
+{"ts":"2026-09-09T13:12:42Z","action":"T020","status":"done","files":["src/host/document.ts"],"nota":"suite T012 verde, 10 casos; politica sem unsafe-eval, sem coringa, nonce de 128 bits"}
+{"ts":"2026-09-09T13:12:42Z","action":"T021","status":"done","files":["src/host/provisional.ts"],"nota":"corpo descartado pela feature 003; T016 passou a excluir este arquivo das buscas do lado do host e a exigir acquireVsCodeApi uma unica vez do lado da webview"}
+{"ts":"2026-09-09T13:12:42Z","action":"T022","status":"done","files":["src/host/bridge.ts"],"nota":"suite T013 verde, 10 casos"}
+{"ts":"2026-09-09T13:12:42Z","action":"T023","status":"done","files":["src/host/router.ts"],"nota":"suite T010 verde, 12 casos"}
+{"ts":"2026-09-09T13:12:42Z","action":"T024","status":"done","files":["src/host/provider.ts"],"nota":"suite T014 verde, 9 casos; view.webview satisfaz MessagingPort estruturalmente, sem adaptador"}
+{"ts":"2026-09-09T13:13:46Z","action":"T025","status":"done","files":["src/host/adapters.ts"],"nota":"quatro adaptadores: visibilidade, editor, workspace, log; a porta de mensagens dispensa adaptador por ser a forma do proprio webview"}
+{"ts":"2026-09-09T13:13:46Z","action":"T026","status":"done","files":["src/extension.ts"],"nota":"canal Reversa Views, provedor com retainContextWhenHidden, comando reversaViews.reload, quatro descartaveis; nenhuma leitura na ativacao"}
+{"ts":"2026-09-09T13:13:46Z","action":"T027","status":"done","files":["out/"],"nota":"typecheck verde; 29 arquivos de teste (17 herdados, 12 locais), 308 casos, 0 falhas, 0 pulados; compile gerou out/extension.js e out/host/ com 11 modulos"}
+{"ts":"2026-09-09T13:13:46Z","action":"T028","status":"done","files":["src/host/","src/extension.ts"],"nota":"importacao de valor de vscode em 2 arquivos; chamada de envio e registro de ouvinte 1 vez cada, ambos em bridge.ts; suite de fronteiras verde com 11 casos"}
+{"ts":"2026-09-09T13:16:16Z","action":"T029","status":"done","files":["src/host/"],"nota":"formato unico origem · ato: motivo; os oito casos da tabela de erros exercitados sobre a saida compilada, nenhuma linha vazia nem generica"}
+{"ts":"2026-09-09T13:16:16Z","action":"T030","status":"done","files":["src/host/","src/extension.ts"],"nota":"12 cabecalhos com o que resolve, o que nao faz e o requisito; 9 a 12 linhas de prosa, acima das 3 a 6 previstas, por escolha declarada"}
+{"ts":"2026-09-09T13:16:16Z","action":"T031","status":"failed","files":[],"nota":"bloqueada pelo ambiente: contêiner sem interface grafica; o code disponivel e o cliente remoto do servidor e nao aceita --extensionDevelopmentPath. Passos 6 a 11 do onboarding pendentes na maquina do mantenedor"}
+{"ts":"2026-09-09T13:16:16Z","action":"T032","status":"done","files":["_reversa_forward/002-ponte-e-host/actions.md"],"nota":"18 cenarios mapeados: 16 com teste automatizado, 11 e 12 com prova documental e visual pendente, 17 so pela verificacao manual de T031"}

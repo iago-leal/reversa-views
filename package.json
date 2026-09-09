@@ -3,6 +3,39 @@
   "version": "0.0.1",
   "private": true,
   "description": "Camada de leitura do processo do Reversa, herdada de scrum-harness",
+  "engines": {
+    "vscode": "^1.78.0"
+  },
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onView:reversaViews.process"
+  ],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "reversa-views",
+          "title": "Reversa",
+          "icon": "media/reversa.svg"
+        }
+      ]
+    },
+    "views": {
+      "reversa-views": [
+        {
+          "id": "reversaViews.process",
+          "name": "Processo",
+          "type": "webview"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "reversaViews.reload",
+        "title": "Reversa Views: Reler o processo"
+      }
+    ]
+  },
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc -p ./ --noEmit",
@@ -10,6 +43,7 @@
   },
   "devDependencies": {
     "@types/node": "20.19.9",
+    "@types/vscode": "1.78.0",
     "typescript": "5.9.3",
     "vitest": "3.2.7"
   }
