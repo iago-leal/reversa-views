@@ -2,7 +2,7 @@
  * Activation, and nothing else (RF-02, RF-07, RF-11, RNF-02).
  *
  * It creates the output channel, builds the adapters, registers the provider
- * and the palette command, and hands every disposable to the editor. It
+ * and the two palette commands, and hands every disposable to the editor. It
  * deliberately does NOT read the disk: the panel only reads after the webview
  * says it loaded, which is what keeps the cost of an activation nobody opens
  * at zero.
@@ -18,10 +18,19 @@ import { visibilityPort, editorPort, logPort, workspacePort } from './host/adapt
 import { ProcessViewProvider } from './host/provider.ts'
 import { readWorkspace } from './host/reading.ts'
 
-/** The view, the container and the command, as the manifest declares them. */
+/** The view, the container and the commands, as the manifest declares them. */
 const VIEW_ID = 'reversaViews.process'
+const OPEN_COMMAND = 'reversaViews.abrir'
 const RELOAD_COMMAND = 'reversaViews.reload'
 const CHANNEL_NAME = 'Reversa Views'
+
+/**
+ * The command the editor generates on its own for a contributed view. It
+ * reveals the container and the view in one go, which is exactly what opening
+ * the panel means; reimplementing it here would be a second answer to a
+ * question the editor already answers.
+ */
+const FOCUS_COMMAND = `${VIEW_ID}.focus`
 
 /**
  * Wire the extension into the editor.
@@ -57,6 +66,9 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.window.registerWebviewViewProvider(VIEW_ID, provider, {
       webviewOptions: { retainContextWhenHidden: true },
     }),
+    vscode.commands.registerCommand(OPEN_COMMAND, () =>
+      vscode.commands.executeCommand(FOCUS_COMMAND),
+    ),
     vscode.commands.registerCommand(RELOAD_COMMAND, () => void provider.reload()),
   )
 }

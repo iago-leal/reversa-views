@@ -17,14 +17,13 @@
 import type * as vscode from 'vscode'
 import { Bridge } from './bridge.ts'
 import { buildDocument, createNonce } from './document.ts'
-import { INHERITED_MODEL_REVISION } from './inheritance.ts'
 import { openFile } from './open-file.ts'
 import { logLine } from './ports.ts'
 import type { EditorPort, LogPort, VisibilityPort, WorkspacePort } from './ports.ts'
 import { panelBody } from './panel.ts'
 import type { ReadingResult } from './reading.ts'
-import { chooseRoot } from './root.ts'
 import { routeMessage } from './router.ts'
+import { sessionMessages } from './session.ts'
 
 const ORIGIN = 'provider'
 
@@ -102,6 +101,10 @@ export class ProcessViewProvider implements vscode.WebviewViewProvider {
   /**
    * Reread the process and send it: the single path of RF-07, used by the
    * webview button and by the palette command alike.
+   *
+   * Which envelopes go out, and in what order, is `session.ts` (D-04). What
+   * stays here is the sending itself, which needs the bridge, and the memory
+   * of the observed root, which the opening of a file needs.
    */
   async reload(): Promise<void> {
     const bridge = this.bridge
@@ -110,37 +113,12 @@ export class ProcessViewProvider implements vscode.WebviewViewProvider {
       return
     }
 
-    await bridge.send({ command: 'setEntry', data: { kind: 'loading' } })
-
-    const choice = chooseRoot(this.deps.workspace.roots(), this.deps.readRoot)
-    if (choice.kind === 'no-folder') {
-      this.observedRoot = null
-      await bridge.send({ command: 'setEntry', data: { kind: 'no-folder' } })
-      return
-    }
-
-    this.observedRoot = choice.root
-    const { reading, root, ignoredRoots } = choice
-    if (reading.kind === 'error') {
-      await bridge.send({
-        command: 'setEntry',
-        data: { kind: 'error', message: reading.message, root, ignoredRoots },
-      })
-      return
-    }
-
-    await bridge.send({
-      command: 'setProcess',
-      data: {
-        process: reading.process,
-        probe: reading.probe,
-        readAt: reading.readAt,
-        entry: reading.entry,
-        root,
-        ignoredRoots,
-        inheritedRevision: INHERITED_MODEL_REVISION,
-      },
-    })
+    const { messages, observedRoot } = sessionMessages(
+      this.deps.workspace.roots(),
+      this.deps.readRoot,
+    )
+    this.observedRoot = observedRoot
+    for (const message of messages) await bridge.send(message)
   }
 
   /** Drop the bridge; the editor disposes the view on its own. */

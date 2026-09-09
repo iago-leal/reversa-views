@@ -1,0 +1,16 @@
+{
+  // A construção como tarefa, para que a depuração possa exigi-la antes de
+  // abrir a janela (RF-19, D-18). É o mesmo comando do terminal, e não uma
+  // segunda receita de construir.
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "build",
+      "group": "build",
+      "problemMatcher": ["$tsc"],
+      "label": "npm: build",
+      "detail": "Confere a herança, gera a revisão, compila o host e empacota a tela"
+    }
+  ]
+}

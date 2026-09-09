@@ -1,0 +1,25 @@
+# O conteúdo do pacote, por exclusão universal e reinclusão explícita
+# (RF-02, RN-07, D-12).
+#
+# A ordem importa: a primeira linha tira tudo, e só o que vier depois com '!'
+# volta. É falha segura, e é deliberada: pasta nova nasce fora do pacote, e
+# entrar exige um ato aqui. O caminho contrário, listar o que se exclui,
+# envelhece a cada pasta que aparece, e no estado medido em 2026-09-09 levaria
+# 787 arquivos para dentro do pacote, entre eles as pastas de agentes, o ciclo
+# forward, a cobertura e o arquivo com os caminhos das origens desta máquina.
+#
+# Quem confere isto de verdade é 'tests/vsix-conteudo.spec.ts', que abre o
+# pacote gerado e recusa caminho fora da lista de 'scripts/conteudo-esperado.js'.
+
+**
+
+# A saída da construção: o host compilado e o pacote da tela. É o que a
+# extensão executa, e é o que 'main' do manifesto aponta.
+!out/**
+
+# O ícone da barra de atividades, apontado por 'contributes'.
+!media/**
+
+# O manifesto e a porta de entrada de quem instala.
+!package.json
+!README.md

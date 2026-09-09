@@ -1,0 +1,19 @@
+{
+  // A janela de desenvolvimento com a extensão carregada da pasta de saída
+  // (RF-19, D-18).
+  //
+  // A tarefa de construção roda antes, e é isso que evita o engano mais caro
+  // de depurar extensão: a janela abrir sobre uma saída velha e o defeito que
+  // se está caçando já não existir no código.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Extensão: janela de desenvolvimento",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "outFiles": ["${workspaceFolder}/out/**/*.js"],
+      "preLaunchTask": "npm: build"
+    }
+  ]
+}

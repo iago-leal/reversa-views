@@ -1,0 +1,44 @@
+{"ts": "2026-09-09T19:17:52Z", "action": "T001", "status": "done", "files": ["scripts/limites.js"]}
+{"ts": "2026-09-09T19:17:52Z", "action": "T002", "status": "done", "files": [".vscodeignore"]}
+{"ts": "2026-09-09T19:17:52Z", "action": "T003", "status": "done", "files": ["scripts/conteudo-esperado.js"]}
+{"ts": "2026-09-09T19:17:52Z", "action": "T004", "status": "done", "files": ["package.json"]}
+{"ts": "2026-09-09T19:17:52Z", "action": "T005", "status": "done", "files": ["package.json", "package-lock.json"]}
+{"ts": "2026-09-09T19:21:35Z", "action": "T006", "status": "done", "files": ["tests/host-session.spec.ts"]}
+{"ts": "2026-09-09T19:21:35Z", "action": "T007", "status": "done", "files": ["tests/limites.spec.ts"]}
+{"ts": "2026-09-09T19:21:35Z", "action": "T008", "status": "done", "files": ["tests/webview-build.spec.ts"]}
+{"ts": "2026-09-09T19:21:35Z", "action": "T009", "status": "done", "files": ["tests/vsix-leitor.spec.ts"]}
+{"ts": "2026-09-09T19:21:35Z", "action": "T010", "status": "done", "files": ["tests/vsix-conteudo.spec.ts"]}
+{"ts": "2026-09-09T19:21:35Z", "action": "T011", "status": "done", "files": ["tests/preview-config.spec.ts"]}
+{"ts": "2026-09-09T19:21:35Z", "action": "T012", "status": "done", "files": ["tests/preview-servidor.spec.ts"]}
+{"ts": "2026-09-09T19:28:45Z", "action": "T013", "status": "done", "files": ["src/host/session.ts"]}
+{"ts": "2026-09-09T19:28:45Z", "action": "T014", "status": "done", "files": ["src/host/provider.ts"]}
+{"ts": "2026-09-09T19:28:45Z", "action": "T015", "status": "done", "files": ["src/host/document.ts"]}
+{"ts": "2026-09-09T19:28:45Z", "action": "T016", "status": "done", "files": ["scripts/build-webview.js"]}
+{"ts": "2026-09-09T19:28:45Z", "action": "T017", "status": "done", "files": ["scripts/build-webview.js"]}
+{"ts": "2026-09-09T19:28:45Z", "action": "T018", "status": "done", "files": ["scripts/preview/config.js"]}
+{"ts": "2026-09-09T19:28:45Z", "action": "T019", "status": "done", "files": ["scripts/preview/pagina.js"]}
+{"ts": "2026-09-09T19:28:45Z", "action": "T020", "status": "done", "files": ["scripts/preview/leitura.js"]}
+{"ts": "2026-09-09T19:28:45Z", "action": "T021", "status": "done", "files": ["scripts/preview/servidor.js"]}
+{"ts": "2026-09-09T19:28:45Z", "action": "T022", "status": "done", "files": ["scripts/preview/cliente.js"]}
+{"ts": "2026-09-09T19:28:46Z", "action": "T023", "status": "done", "files": ["scripts/preview.js"]}
+{"ts": "2026-09-09T19:28:46Z", "action": "T024", "status": "done", "files": ["scripts/estragar-workspace.js"]}
+{"ts": "2026-09-09T19:28:46Z", "action": "T025", "status": "done", "files": ["scripts/vsix.js"]}
+{"ts": "2026-09-09T19:30:50Z", "action": "T026", "status": "done", "files": ["scripts/build-webview.js"]}
+{"ts": "2026-09-09T19:30:50Z", "action": "T027", "status": "done", "files": ["scripts/empacotar.js"]}
+{"ts": "2026-09-09T19:30:50Z", "action": "T028", "status": "done", "files": ["package.json"]}
+{"ts": "2026-09-09T19:30:51Z", "action": "T029", "status": "done", "files": ["tests/host-manifest.spec.ts"]}
+{"ts": "2026-09-09T19:30:51Z", "action": "T030", "status": "done", "files": [".vscode/launch.json", ".vscode/tasks.json"]}
+{"ts": "2026-09-09T19:30:51Z", "action": "T003", "status": "corrected", "files": ["scripts/conteudo-esperado.js"]}
+{"ts": "2026-09-09T19:32:06Z", "action": "T034", "status": "done", "files": ["_reversa_forward/005-empacotamento-e-verificacao/progress.jsonl"], "medidas": {"tempo_do_build_completo_s": 1.6, "pacote_da_tela_bytes": 168849, "teto_do_pacote_da_tela_bytes": 409600, "pacote_da_extensao_bytes": 133194, "teto_do_pacote_da_extensao_bytes": 2097152, "metodo": "tempo: subprocess do `npm run build` com out/ apagada antes, relogio monotonico, uma execucao nesta maquina de desenvolvimento (contêiner Linux). pacote da tela: soma de out/res/webview/main.js e main.css apos build sem mapa de fontes, que e a mesma soma que a guarda do build mede. pacote da extensao: tamanho do arquivo .vsix gerado por `npm run empacotar`. tetos: scripts/limites.js."}}
+{"ts": "2026-09-09T19:32:12Z", "action": "T031", "status": "done", "files": ["README.md"]}
+{"ts": "2026-09-09T19:32:12Z", "action": "T032", "status": "done", "files": ["README.md"]}
+{"ts": "2026-09-09T19:32:12Z", "action": "T033", "status": "done", "files": ["README.md"]}
+{"ts": "2026-09-09T19:35:47Z", "action": "T034", "status": "corrected", "files": ["_reversa_forward/005-empacotamento-e-verificacao/regression-watch.md"], "nota": "IDs de vigilancia renumerados de W001-W021 para W095-W115: a numeracao e continua entre features (001 W001-W018, 002 W019-W041, 003 W042-W075, 004 W076-W094) e a faixa original colidia com as tres primeiras features."}
+{"ts": "2026-09-09T19:39:31Z", "action": "E001", "status": "done", "files": ["README.md"], "nota": "Emenda pedida na conversa: a secao \"Como abrir o painel\" detalha RF-18, que dizia como instalar mas nao como abrir."}
+{"ts":"2026-09-09T19:50:00Z","action":"E002","status":"done","files":["package.json"]}
+{"ts":"2026-09-09T19:50:00Z","action":"E003","status":"done","files":["src/extension.ts"]}
+{"ts":"2026-09-09T19:50:00Z","action":"E004","status":"done","files":["tests/host-manifest.spec.ts"]}
+{"ts":"2026-09-09T19:51:00Z","action":"E005","status":"done","files":["README.md"]}
+{"ts":"2026-09-09T19:52:00Z","action":"E006","status":"done","files":["reversa-views-0.0.1.vsix"],"nota":"instalada no servidor do Dev Container como iagoleal-local.reversa-views; o editor da maquina local exige o mesmo comando fora do conteiner"}
+{"ts":"2026-09-09T20:05:00Z","action":"E007","status":"done","files":["src/webview/theme/theme.css"],"nota":"body nomeava --bgColor-default e --fgColor-default, mas os conjuntos de cor sao definidos em .panel, que e descendente; no tema escuro o texto sem cor propria herdava a cor do documento sobre fundo escuro"}
+{"ts":"2026-09-09T20:05:00Z","action":"E008","status":"done","files":["tests/webview-theme.spec.ts"]}

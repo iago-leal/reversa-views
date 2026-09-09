@@ -10,6 +10,7 @@
 
 import { existsSync, readFileSync, statSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
+import { TETO_DO_PACOTE_DA_TELA } from '../scripts/limites.js'
 
 const SCRIPT = readFileSync('scripts/build-webview.js', 'utf8')
 const CONFIG = JSON.parse(readFileSync('tsconfig.webview.json', 'utf8')) as {
@@ -54,8 +55,9 @@ describe('fronteira de compilação da webview (RF-23)', () => {
 })
 
 describe('declaração do empacotamento', () => {
-  it('mira o Chromium que o editor mínimo declarado embarca', () => {
-    expect(SCRIPT).toContain("'chrome108'")
+  it('mira o Chromium que o editor mínimo declarado embarca, lido do módulo', () => {
+    expect(SCRIPT).toContain('ALVO_DO_NAVEGADOR')
+    expect(SCRIPT).toContain("require('./limites')")
   })
 
   it('emite no formato de execução imediata, que é o que a política aceita', () => {
@@ -85,5 +87,30 @@ describe('o podador na construção (D-15)', () => {
     expect(SCRIPT).toMatch(/const options = \{[\s\S]*?\n\}/)
     const declaração = SCRIPT.match(/const options = \{[\s\S]*?\n\}/)?.[0] ?? ''
     expect(declaração).not.toContain('plugins')
+  })
+})
+
+describe('a guarda de tamanho (RF-14, D-11)', () => {
+  it('mora ao fim do empacotamento, que é quem sabe o que emitiu', () => {
+    expect(SCRIPT).toContain('TETO_DO_PACOTE_DA_TELA')
+    expect(SCRIPT).toMatch(/function conferirTamanho|conferirTamanho\(/)
+  })
+
+  it('soma os dois arquivos emitidos, porque folha e script viajam juntos', () => {
+    expect(SCRIPT).toContain('main.js')
+    expect(SCRIPT).toContain('main.css')
+  })
+
+  it('interrompe o processo em vez de apenas avisar', () => {
+    expect(SCRIPT).toMatch(/process\.exit\(1\)/)
+  })
+
+  it('o que a última construção emitiu cabe no teto', () => {
+    const emitidos = ['out/res/webview/main.js', 'out/res/webview/main.css']
+    if (!emitidos.every((caminho) => existsSync(caminho))) return
+    const soma = emitidos.reduce((total, caminho) => total + statSync(caminho).size, 0)
+    expect(soma, `o pacote da tela soma ${soma} B, acima do teto`).toBeLessThanOrEqual(
+      TETO_DO_PACOTE_DA_TELA,
+    )
   })
 })

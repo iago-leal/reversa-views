@@ -1,15 +1,17 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/004-heranca-e-sincronia",
-  "feature-id": "004",
-  "short-name": "heranca-e-sincronia",
-  "started-at": "2026-09-09T16:36:35Z",
-  "current-stage": "to-do",
+  "feature-dir": "_reversa_forward/005-empacotamento-e-verificacao",
+  "feature-id": "005",
+  "short-name": "empacotamento-e-verificacao",
+  "started-at": "2026-09-09T18:11:22Z",
+  "current-stage": "sync",
   "stages-completed": [
     "requirements",
     "clarify",
     "plan",
-    "to-do"
+    "to-do",
+    "coding",
+    "sync"
   ],
   "paused-features": [
     {

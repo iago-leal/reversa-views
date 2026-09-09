@@ -1,6 +1,7 @@
 {
   "name": "reversa-views",
   "version": "0.0.1",
+  "publisher": "iagoleal-local",
   "private": true,
   "description": "Camada de leitura do processo do Reversa, herdada de scrum-harness",
   "engines": {
@@ -31,8 +32,14 @@
     },
     "commands": [
       {
+        "command": "reversaViews.abrir",
+        "title": "Abrir o painel do processo",
+        "category": "Reversa"
+      },
+      {
         "command": "reversaViews.reload",
-        "title": "Reversa Views: Reler o processo"
+        "title": "Reler o processo",
+        "category": "Reversa"
       }
     ]
   },
@@ -46,7 +53,11 @@
     "check:heranca": "node scripts/verificar-heranca.js",
     "check:heranca:local": "node scripts/verificar-heranca.js --local",
     "sync:heranca": "node scripts/ressincronizar-heranca.js",
-    "gerar:revisao-heranca": "node scripts/gerar-revisao-heranca.js"
+    "gerar:revisao-heranca": "node scripts/gerar-revisao-heranca.js",
+    "preview": "node scripts/preview.js",
+    "empacotar": "node scripts/empacotar.js",
+    "observar:webview": "node scripts/build-webview.js --observar",
+    "estragar:workspace": "node scripts/estragar-workspace.js"
   },
   "devDependencies": {
     "@primer/primitives": "11.10.0",
@@ -55,6 +66,7 @@
     "@types/react-dom": "18.3.1",
     "@types/vscode": "1.78.0",
     "@vitest/coverage-v8": "3.2.7",
+    "@vscode/vsce": "3.9.2",
     "esbuild": "0.25.12",
     "react": "18.3.1",
     "react-dom": "18.3.1",

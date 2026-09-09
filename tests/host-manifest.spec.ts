@@ -1,22 +1,37 @@
 /**
- * Suíte do manifesto (T015), lendo o `package.json` do repositório.
+ * Suíte do manifesto (T015, ampliada em T029), lendo o `package.json`.
  *
- * RF-18 fixa o mínimo de extensão que esta feature acrescenta, e o critério
- * de aceite dele é tanto o que entra quanto o que não entra: empacotador,
- * script de empacotamento e lista de exclusão de VSIX pertencem à feature 005.
+ * RF-18 fixa o mínimo de extensão que a feature 003 acrescentou. A feature 005
+ * inverteu o bloco final desta suíte: empacotador, comando de empacotamento e
+ * lista de conteúdo do pacote, que antes eram o que NÃO podia entrar, passaram
+ * a ser o que TEM de estar.
+ *
+ * A lista de comandos é fixada por inteiro, de propósito: mexer nela é declarar
+ * a mudança em vez de sofrê-la. Foi assim que ela passou de seis para dez na
+ * feature 004, e de dez para catorze aqui.
  */
 
 import { existsSync, readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
+import {
+  ALVO_DO_NAVEGADOR,
+  FAIXA_DO_EDITOR_NO_MANIFESTO,
+  VERSAO_MINIMA_DO_EDITOR,
+} from '../scripts/limites.js'
 
 const manifesto = JSON.parse(readFileSync('package.json', 'utf8')) as {
+  publisher?: string
+  private?: boolean
+  license?: string
+  repository?: unknown
+  icon?: string
   engines?: Record<string, string>
   main?: string
   activationEvents?: string[]
   contributes?: {
     viewsContainers?: { activitybar?: Array<{ id: string; title: string; icon: string }> }
     views?: Record<string, Array<{ id: string; name: string; type?: string }>>
-    commands?: Array<{ command: string; title: string }>
+    commands?: Array<{ command: string; title: string; category?: string }>
   }
   scripts?: Record<string, string>
   devDependencies?: Record<string, string>
@@ -24,9 +39,9 @@ const manifesto = JSON.parse(readFileSync('package.json', 'utf8')) as {
 }
 
 describe('versão mínima do editor', () => {
-  it('é 1.78 e coincide com a da tipagem instalada (D-12)', () => {
-    expect(manifesto.engines?.vscode).toBe('^1.78.0')
-    expect(manifesto.devDependencies?.['@types/vscode']).toBe('1.78.0')
+  it('é a do módulo de limites e coincide com a da tipagem instalada (D-12)', () => {
+    expect(manifesto.engines?.vscode).toBe(FAIXA_DO_EDITOR_NO_MANIFESTO)
+    expect(manifesto.devDependencies?.['@types/vscode']).toBe(`${VERSAO_MINIMA_DO_EDITOR}.0`)
   })
 })
 
@@ -69,15 +84,23 @@ describe('visão', () => {
   })
 })
 
-describe('comando de releitura (RF-07, D-11)', () => {
-  it('existe, com identificador e título próprios', () => {
-    const comandos = manifesto.contributes?.commands ?? []
-    expect(comandos.map((comando) => comando.command)).toContain('reversaViews.reload')
+describe('comandos da paleta (RF-07, D-11)', () => {
+  const comandos = manifesto.contributes?.commands ?? []
+
+  it('são os dois declarados, e apenas eles', () => {
+    expect(comandos.map((comando) => comando.command)).toEqual([
+      'reversaViews.abrir',
+      'reversaViews.reload',
+    ])
+  })
+
+  it('compartilham a categoria que os agrupa na paleta', () => {
+    expect(comandos.map((comando) => comando.category)).toEqual(['Reversa', 'Reversa'])
   })
 })
 
 describe('as duas unidades de compilação (RF-23, D-04)', () => {
-  it('declara os dez scripts, e apenas eles', () => {
+  it('declara os catorze scripts, e apenas eles', () => {
     expect(Object.keys(manifesto.scripts ?? {})).toEqual([
       'test',
       'typecheck',
@@ -89,6 +112,10 @@ describe('as duas unidades de compilação (RF-23, D-04)', () => {
       'check:heranca:local',
       'sync:heranca',
       'gerar:revisao-heranca',
+      'preview',
+      'empacotar',
+      'observar:webview',
+      'estragar:workspace',
     ])
   })
 
@@ -118,22 +145,49 @@ describe('as duas unidades de compilação (RF-23, D-04)', () => {
   })
 })
 
-describe('o que pertence à feature 005 e não entra aqui', () => {
-  it('nenhum script de empacotamento de extensão', () => {
-    const scripts = Object.keys(manifesto.scripts ?? {})
-    for (const nome of ['package', 'vscode:prepublish', 'vsix']) {
-      expect(scripts).not.toContain(nome)
+describe('o empacotamento, que a feature 005 trouxe', () => {
+  it('o empacotador oficial entra com igualdade exata, e só como ferramenta', () => {
+    expect(manifesto.devDependencies?.['@vscode/vsce']).toMatch(/^\d+\.\d+\.\d+$/)
+    expect(manifesto.dependencies?.['@vscode/vsce']).toBeUndefined()
+  })
+
+  it('o conteúdo do pacote é declarado, e por reinclusão explícita (RN-07)', () => {
+    expect(existsSync('.vscodeignore')).toBe(true)
+    const lista = readFileSync('.vscodeignore', 'utf8')
+      .split('\n')
+      .map((linha) => linha.trim())
+      .filter((linha) => linha.length > 0 && !linha.startsWith('#'))
+    expect(lista[0], 'a primeira regra tem de excluir tudo').toBe('**')
+    expect(lista.slice(1).every((linha) => linha.startsWith('!'))).toBe(true)
+  })
+
+  it('o manifesto nomeia um publicador local e segue privado (RF-04)', () => {
+    expect(manifesto.publisher).toBe('iagoleal-local')
+    expect(manifesto.private).toBe(true)
+  })
+
+  it('nada aqui depende de conta no Marketplace (RN-09)', () => {
+    for (const campo of ['license', 'repository', 'icon']) {
+      expect(manifesto[campo as keyof typeof manifesto]).toBeUndefined()
     }
+    expect(manifesto.scripts?.empacotar ?? '').not.toContain('publish')
   })
 
-  it('nenhuma lista de exclusão de VSIX', () => {
-    expect(existsSync('.vscodeignore')).toBe(false)
-  })
-
-  it('nenhuma ferramenta de empacotamento de extensão em dependências', () => {
+  it('nenhum outro empacotador entrou junto', () => {
     const deps = Object.keys(manifesto.devDependencies ?? {})
-    for (const nome of ['webpack', 'rollup', 'vite', '@vscode/vsce', 'vsce']) {
+    for (const nome of ['webpack', 'rollup', 'vite', 'vsce']) {
       expect(deps).not.toContain(nome)
     }
+  })
+})
+
+describe('a coerência entre o alvo e a versão mínima (RF-16)', () => {
+  it('o empacotamento da webview mira o Chromium do editor mínimo declarado', () => {
+    const build = readFileSync('scripts/build-webview.js', 'utf8')
+    expect(build).toContain('ALVO_DO_NAVEGADOR')
+    expect(
+      ALVO_DO_NAVEGADOR,
+      `o alvo ${ALVO_DO_NAVEGADOR} e a versão mínima ${VERSAO_MINIMA_DO_EDITOR} vêm do mesmo módulo, e é lá que a divergência é conferida`,
+    ).toMatch(/^chrome\d+$/)
   })
 })

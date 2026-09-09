@@ -23,6 +23,20 @@ export interface DocumentOptions {
   cspSource: string
   /** The markup that goes inside the body. */
   body: string
+  /**
+   * Where the panel may open a connection to, when it may at all (D-03).
+   *
+   * Absent means forbidding it, which is what the editor asks for and what
+   * every caller inside the extension passes: inside a webview there is no
+   * host to talk to over the network, and allowing it would be a hole with no
+   * purpose. The preview of feature 005 is the single caller that fills it,
+   * with its own origin, because outside the editor the channel to the
+   * pretend host IS a connection. The divergence is one directive wide, and
+   * the preview declares it on the banner it shows.
+   */
+  connectSource?: string
+  /** A class written on the body, as the editor writes its theme (D-08). */
+  bodyClass?: string
 }
 
 /**
@@ -39,15 +53,16 @@ export function createNonce(): string {
  * @returns the whole HTML document, ready to hand to the editor.
  */
 export function buildDocument(options: DocumentOptions): string {
-  const { nonce, cspSource, body } = options
+  const { nonce, cspSource, body, connectSource, bodyClass } = options
   const policy = [
     "default-src 'none'",
     `img-src ${cspSource} data:`,
     `style-src ${cspSource}`,
     `font-src ${cspSource}`,
     `script-src 'nonce-${nonce}'`,
-    "connect-src 'none'",
+    `connect-src ${connectSource ?? "'none'"}`,
   ].join('; ')
+  const openBody = bodyClass === undefined ? '<body>' : `<body class="${bodyClass}">`
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -57,7 +72,7 @@ export function buildDocument(options: DocumentOptions): string {
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Reversa</title>
 </head>
-<body>
+${openBody}
 ${body}
 </body>
 </html>

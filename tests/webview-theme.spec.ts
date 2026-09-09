@@ -232,3 +232,35 @@ describe('varredura da folha de estilo', () => {
     expect(SEM_COMENTÁRIO).toMatch(/(overflow-wrap|word-break)\s*:/)
   })
 })
+
+/** O corpo de uma regra da folha, pelo seletor exato com que ela foi escrita. */
+function regra(seletor: string): string {
+  const abertura = SEM_COMENTÁRIO.indexOf(`\n${seletor} {`)
+  expect(abertura, `a folha não tem a regra ${seletor}`).toBeGreaterThan(-1)
+  const inicio = SEM_COMENTÁRIO.indexOf('{', abertura)
+  return SEM_COMENTÁRIO.slice(inicio + 1, SEM_COMENTÁRIO.indexOf('}', inicio))
+}
+
+/**
+ * Onde os conjuntos de cor chegam.
+ *
+ * Os quatro conjuntos são definidos em seletores de atributo, e quem escreve
+ * esses atributos é o elemento raiz do painel, `.panel`. Um token nomeado
+ * ACIMA dele não resolve, e cor que não resolve não fica ausente: fica
+ * herdada. Foi assim que o painel apareceu com texto escuro sobre fundo
+ * escuro no tema escuro do editor, e é isso que estas duas regras impedem de
+ * voltar.
+ */
+describe('alcance dos conjuntos de cor (RF-11, D-02)', () => {
+  const TOKEN = /var\(--(fgColor|bgColor|borderColor)-/
+
+  it('o corpo não nomeia nenhum token, porque nenhum chega até ele', () => {
+    expect(regra('body')).not.toMatch(TOKEN)
+  })
+
+  it('a raiz do painel fixa o fundo e o texto herdado, com token', () => {
+    const painel = regra('.panel')
+    expect(painel).toMatch(/background-color:\s*var\(--bgColor-default\)/)
+    expect(painel).toMatch(/(^|\n)\s*color:\s*var\(--fgColor-default\)/)
+  })
+})

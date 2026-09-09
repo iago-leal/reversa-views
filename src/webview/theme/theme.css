@@ -20,22 +20,45 @@
   --panel-hairline: 1px;
 }
 
+/*
+ * The body names NO colour token, and that is a rule, not an oversight. The
+ * colour sets are defined on the element that carries the theme attributes,
+ * which is `.panel`; a token named above it resolves to nothing, and a colour
+ * that resolves to nothing is not a missing colour but an inherited one, which
+ * under the dark theme means dark text on a dark ground. The suite holds this.
+ *
+ * The padding is zeroed here on purpose: the editor gives the body a padding
+ * of its own, and the surface that paints has to be the one that spaces.
+ */
 body {
   margin: 0;
-  padding: var(--panel-gap);
-  background-color: var(--bgColor-default);
-  color: var(--fgColor-default);
+  padding: 0;
   font-family: var(--vscode-font-family, system-ui, sans-serif);
   font-size: var(--vscode-font-size, 0.8125rem);
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
 
+/*
+ * The root of the panel, and the highest element the colour sets reach. It is
+ * therefore the one that paints the ground and fixes the inherited foreground,
+ * so that every descendant without a colour of its own inherits a token, and
+ * not whatever the editor left on the document.
+ *
+ * It fills the view because a surface that stops at the last row would leave
+ * the ground of the sidebar showing below it, which is a seam under every
+ * theme and a contrast failure under some.
+ */
 .panel {
   display: flex;
   flex-direction: column;
   gap: var(--panel-gap);
   max-width: 100%;
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: var(--panel-gap);
+  background-color: var(--bgColor-default);
+  color: var(--fgColor-default);
 }
 
 /* ---------------------------------------------------------------- header */

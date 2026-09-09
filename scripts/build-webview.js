@@ -9,26 +9,27 @@
  *
  * Usage:
  *     node ./scripts/build-webview.js
+ *     node ./scripts/build-webview.js --observar
  *
- * Watch mode, source maps and the size ceiling that stops the build belong to
- * feature 005, not here. What this script owns is the minimum that makes the
- * panel run inside the editor.
+ * The browser target and the size ceiling come from './limites', which is the
+ * single source of both (RF-15, RN-06): the target has to match the Electron
+ * the minimum editor ships, and the ceiling has to be the same number the test
+ * suite checks. Watch mode belongs to feature 005 and lives at the bottom.
  * @module scripts/build-webview
  */
 
-const esbuild = require('esbuild')
+const { statSync } = require('node:fs')
 const path = require('node:path')
 
+const esbuild = require('esbuild')
+
+const { ALVO_DO_NAVEGADOR, TETO_DO_PACOTE_DA_TELA, formatarTamanho } = require('./limites')
 const { trimColourSets } = require('./theme-tokens')
 
 const root = path.resolve(__dirname, '..')
 
-/**
- * VS Code 1.78 ships Electron 22, whose Chromium is 108: nothing newer than
- * that may be emitted. The floor is the one the manifest declares, and
- * diverging from it produces an error only on the user's machine.
- */
-const browserTarget = 'chrome108'
+/** The two files the panel is served from, and what the ceiling measures. */
+const emitted = ['main.js', 'main.css']
 
 const options = {
   absWorkingDir: root,
@@ -37,7 +38,7 @@ const options = {
   bundle: true,
   format: 'iife',
   platform: 'browser',
-  target: browserTarget,
+  target: ALVO_DO_NAVEGADOR,
   jsx: 'automatic',
   minify: true,
   sourcemap: false,
@@ -62,9 +63,55 @@ const options = {
  */
 const buildOptions = { ...options, plugins: [trimColourSets(options)] }
 
+/**
+ * The size guard (RF-14, D-11).
+ *
+ * It runs at the end of the bundling because the bundling is what knows what
+ * it emitted, and failing here is failing before the build goes on. The two
+ * files are summed because the stylesheet and the script travel together: the
+ * panel loads both, and a ceiling on one of them alone measures nothing.
+ *
+ * It stops the process rather than warning. A warning about a bundle that will
+ * only misbehave on the user's machine is a warning nobody reads.
+ * @param {string} outdir - where the bundling wrote, relative to the root.
+ * @returns {number} the measured total, in bytes.
+ */
+function conferirTamanho(outdir) {
+  const total = emitted.reduce(
+    (soma, nome) => soma + statSync(path.join(root, outdir, nome)).size,
+    0,
+  )
+  const medida = `${formatarTamanho(total)}, teto ${formatarTamanho(TETO_DO_PACOTE_DA_TELA)}`
+  if (total > TETO_DO_PACOTE_DA_TELA) {
+    console.error(`O pacote da tela estourou o teto: ${medida}`)
+    console.error('Corte peso na webview ou reveja o teto em scripts/limites.js.')
+    process.exit(1)
+  }
+  console.log(`Pacote da tela: ${medida}`)
+  return total
+}
+
+/**
+ * The watch mode (RF-20, D-16).
+ *
+ * It reuses this very configuration, trimmer included, so that there is no
+ * second place where the webview is bundled. The source map exists only here:
+ * the installed package ships without it, and the ceiling is not measured in
+ * this mode, because a source map is exactly what would blow it.
+ * @returns {Promise<void>} resolves when the watcher is running.
+ */
+async function observar() {
+  const contexto = await esbuild.context({ ...buildOptions, sourcemap: 'inline', minify: false })
+  await contexto.watch()
+  console.log('Observando src/webview: cada alteração reempacota. Ctrl+C encerra.')
+  console.log('Recarregar a página do preview é ato seu: não há canal para o navegador.')
+}
+
 async function main() {
+  if (process.argv.includes('--observar')) return observar()
   await esbuild.build(buildOptions)
-  console.log(`Webview bundled into ${path.join('out', 'res', 'webview')}: main.js, main.css`)
+  console.log(`Webview bundled into ${options.outdir}: ${emitted.join(', ')}`)
+  conferirTamanho(options.outdir)
 }
 
 main().catch((err) => {
