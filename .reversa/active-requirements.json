@@ -1,0 +1,10 @@
+{
+  "schema-version": 1,
+  "feature-dir": "_reversa_forward/001-leitura-do-processo",
+  "feature-id": "001",
+  "short-name": "leitura-do-processo",
+  "started-at": "2026-09-09T11:12:47Z",
+  "current-stage": "requirements",
+  "stages-completed": [],
+  "paused-features": []
+}

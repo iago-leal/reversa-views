@@ -1,0 +1,12 @@
+# Agents
+.claude/
+.agents/
+
+#
+.DS_Store
+
+#Folders
+.devcontainer/
+
+# Reversa config
+.reversa/config.user.toml
