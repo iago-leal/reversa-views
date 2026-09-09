@@ -1,0 +1,21 @@
+{"ts":"2026-09-09T11:49:31Z","action":"T001","status":"done","files":["package.json"]}
+{"ts":"2026-09-09T11:49:31Z","action":"T002","status":"done","files":["tsconfig.json"]}
+{"ts":"2026-09-09T11:49:31Z","action":"T003","status":"done","files":["vitest.config.ts"]}
+{"ts":"2026-09-09T11:49:31Z","action":"T004","status":"done","files":[".gitignore"],"nota":"politica liberou a escrita: allowLegacyEdits true, allowedPaths vazio"}
+{"ts":"2026-09-09T11:49:31Z","action":"T005","status":"done","files":["package-lock.json"],"nota":"node v24.21.0, npm 11.19.0, typescript 5.9.3, vitest 3.2.7, @types/node 20.19.9"}
+{"ts":"2026-09-09T11:50:58Z","action":"T008","status":"done","files":["src/heranca/reversa-domain/src/"],"nota":"14 modulos, diff -r vazio contra a origem"}
+{"ts":"2026-09-09T11:50:58Z","action":"T009","status":"done","files":["src/heranca/reversa-domain/tests/fixtures/"],"nota":"3 fixtures, cmp vazio contra a origem e o .mjs identico ao gancho instalado"}
+{"ts":"2026-09-09T11:50:58Z","action":"T010","status":"done","files":["src/heranca/reversa-domain/tests/"],"nota":"14 suites, diff -r vazio contra a origem"}
+{"ts":"2026-09-09T11:50:58Z","action":"T011","status":"done","files":["src/heranca/reversa-probe/src/"],"nota":"files.ts, index.ts, snapshot.ts; route.ts deliberadamente fora"}
+{"ts":"2026-09-09T11:50:58Z","action":"T012","status":"done","files":["src/heranca/reversa-probe/tests/"],"nota":"files.spec.ts, readonly.spec.ts, snapshot.spec.ts; route.spec.ts deliberadamente fora"}
+{"ts":"2026-09-09T11:50:58Z","action":"T013","status":"done","files":["src/heranca/reversa-probe/src/snapshot.ts"],"nota":"A1: duas importacoes remapeadas para ../../reversa-domain/src/index.ts"}
+{"ts":"2026-09-09T11:50:58Z","action":"T014","status":"done","files":["src/heranca/reversa-probe/tests/snapshot.spec.ts"],"nota":"A2: importacao de readReversa remapeada"}
+{"ts":"2026-09-09T11:50:58Z","action":"T015","status":"done","files":["src/heranca/reversa-probe/src/index.ts"],"nota":"A3: duas linhas de reexportacao da rota removidas"}
+{"ts":"2026-09-09T11:50:58Z","action":"T016","status":"done","files":["src/heranca/**/*.ts"],"nota":"34 arquivos carimbados (28 julgamento, 6 sonda); grep -rL vazio; fixtures sem carimbo"}
+{"ts":"2026-09-09T11:52:51Z","action":"T006","status":"done","files":["tests/paridade-gancho-instalado.spec.ts"]}
+{"ts":"2026-09-09T11:52:51Z","action":"T007","status":"done","files":["tests/desempenho-referencia.spec.ts"]}
+{"ts":"2026-09-09T11:53:26Z","action":"T017","status":"done","files":["out/"],"nota":"typecheck e compile verdes; require da saida CommonJS: installed true, featureDir _reversa_forward/001-leitura-do-processo, refusals/truncated/anomalies vazios"}
+{"ts":"2026-09-09T11:53:26Z","action":"T018","status":"done","files":["src/heranca/","tests/"],"nota":"19 arquivos (17 herdados, 2 locais), 45 blocos herdados, 215 casos (213 herdados, 2 locais), 0 falhas, 0 pulados; caso de desempenho em 44 ms com aquecimento incluido, teto 200 ms"}
+{"ts":"2026-09-09T11:53:49Z","action":"T019","status":"done","files":["src/heranca/"],"nota":"quatro invariantes vazias: sem @scrum-harness/ em import/export, sem route.*, sem .ts descarimbado, sem node:fs no julgamento"}
+{"ts":"2026-09-09T11:53:49Z","action":"T020","status":"done","files":["src/heranca/"],"nota":"34 .ts conferidos, 3 diferem e sao exatamente os adaptados (A1 snapshot.ts, A3 index.ts, A2 snapshot.spec.ts); 3 fixtures identicos por cmp"}
+{"ts":"2026-09-09T11:54:49Z","action":"T021","status":"done","files":["src/heranca/PROCEDENCIA.md"],"nota":"origem, estrutura espelhada, contrato do carimbo, descartes (route.ts 88 linhas, route.spec.ts 12 casos), A1/A2/A3 com trecho original e adaptado, fixtures sem carimbo, escopo da feature 004"}

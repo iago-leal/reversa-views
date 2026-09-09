@@ -1,0 +1,16 @@
+{
+  "name": "reversa-views",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Camada de leitura do processo do Reversa, herdada de scrum-harness",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p ./ --noEmit",
+    "compile": "tsc -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.9",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}

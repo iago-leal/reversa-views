@@ -10,3 +10,9 @@
 
 # Reversa config
 .reversa/config.user.toml
+
+# Build e dependencias
+out/
+node_modules/
+coverage/
+*.vsix
