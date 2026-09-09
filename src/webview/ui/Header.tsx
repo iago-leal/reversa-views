@@ -6,6 +6,11 @@
  * phase of its own, and decides no colour: what it does is place six items,
  * the declaration of how the reading came through, and the named, empty place
  * the dispatch of RF-15 will one day occupy.
+ *
+ * The declaration of integrity is the one item that can be absent, and its
+ * absence is the point: with no reading behind it, `degraded` is false for
+ * want of anything counted, and a header that drew it anyway would announce a
+ * whole reading over the screen that says the reading failed.
  * @module webview/ui/Header
  */
 
@@ -59,15 +64,17 @@ export function Header(props: HeaderProps): ReactNode {
       />
       <Item name="root" label="Raiz observada" value={entry.root} />
       <Item name="read-at" label="Lido em" value={payload?.readAt ?? null} />
-      <p
-        data-item="integrity"
-        data-degraded={String(integrity.degraded)}
-        className="header__integrity"
-      >
-        {integrity.degraded
-          ? `Leitura degradada: ${integrity.anomalies} anomalias, ${integrity.refusals} recusas, ${integrity.truncated} truncamentos.`
-          : 'Leitura íntegra.'}
-      </p>
+      {payload === null ? null : (
+        <p
+          data-item="integrity"
+          data-degraded={String(integrity.degraded)}
+          className="header__integrity"
+        >
+          {integrity.degraded
+            ? `Leitura degradada: ${integrity.anomalies} anomalias, ${integrity.refusals} recusas, ${integrity.truncated} truncamentos.`
+            : 'Leitura íntegra.'}
+        </p>
+      )}
       <p>
         <button type="button" className="button" data-action="reload" onClick={onReload}>
           {entry.rereading ? 'Relendo…' : 'Reler o processo'}

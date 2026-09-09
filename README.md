@@ -120,17 +120,27 @@ o navegador.
 
 ## O portão visual
 
-**Situação em 2026-09-09: devido.** Os sete estados ainda não foram vistos por
-olho humano.
+**Situação em 2026-09-09: cumprido no navegador.** Os sete estados foram vistos
+nos quatro temas, e a conferência achou três defeitos que a suíte verde não
+pegava. Todos foram corrigidos e travados por teste antes de o portão fechar:
+
+| O que a tela mostrava | Onde estava | Como ficou |
+|---|---|---|
+| Falha de leitura sob a declaração de leitura íntegra | `src/webview/ui/Header.tsx` | Sem leitura, o cabeçalho não declara integridade nenhuma |
+| Título das telas de entrada no tamanho que o navegador dá a `h1`, duas vezes o resto | `src/webview/theme/theme.css` | Regra própria, do tamanho do título do cabeçalho |
+| Releitura sem sinal na tela, com o atraso servindo para nada | `scripts/preview/cliente.js` | A abertura da sequência sai antes do pedido, e o botão diz *Relendo…* |
+
+O terceiro é o mais instrutivo: o canal do preview responde uma vez só, e a
+mensagem que abre a sequência chegava no mesmo ciclo do resultado. O painel
+nunca tinha um quadro para pintar a releitura, e o atraso, cuja razão de ser
+era justamente deixá-la ver, não alcançava o estado que prometia.
 
 A regra é que nenhuma versão seja empacotada para uso antes de os sete estados
-terem sido conferidos na tela. Esta feature entrega o instrumento e a lista
-acima; ela não cumpre o portão, porque o ambiente em que estes comandos foram
-escritos não tem navegador.
-
-Quem for cumpri-lo: rode os sete comandos, olhe cada tela e troque este
-parágrafo pela data em que o fez. Enquanto ele disser *devido*, o pacote gerado
-serve para instalar e experimentar, não para tratar como versão conferida.
+terem sido conferidos na tela. Ela vale para cada versão, não uma vez só: quem
+mexer na tela roda os sete comandos de novo, olha cada um e atualiza a data
+acima. O que continua **devido** é a conferência dentro do editor, que o
+preview declara não simular: o ícone na barra de atividades, o comando de
+paleta com a visão oculta e o canal de saída.
 
 ## O ritual da herança
 

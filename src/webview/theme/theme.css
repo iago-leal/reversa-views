@@ -143,6 +143,24 @@ pre {
   overflow-x: auto;
 }
 
+/* --------------------------------------------------------- entry screens */
+
+/* The four entry screens are the only place a heading stands alone, and the
+   browser's own h1 is two sizes too loud for a side panel: the title of a
+   screen is the same size as the title of the header, which is the largest
+   thing the panel ever draws. */
+[data-part='entry'] {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+[data-part='entry'] h1 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--fgColor-default);
+}
+
 /* -------------------------------------------------------------- sections */
 
 .section {

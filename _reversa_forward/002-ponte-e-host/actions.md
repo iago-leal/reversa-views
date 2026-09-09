@@ -200,8 +200,39 @@ code --extensionDevelopmentPath="$PWD" "$PWD"
 
 e percorre os passos 6 a 11 do `onboarding.md`.
 
+### T031 em parte cumprida, pelo preview da 005 (2026-09-09, máquina local)
+
+A nota acima previa uma verificação indivisível. Ela não é: o preview entregue pela feature 005
+alcança tudo o que é da tela, e sobra para o editor só o que o preview declara não simular. Numa
+sessão na máquina local, com navegador, a metade da tela foi percorrida.
+
+**Conferido, e verde:**
+
+| Passo do onboarding | O que foi visto |
+|---|---|
+| 7, painel preenchido | Os seis itens do cabeçalho, os cinco blocos e as duas seções recolhidas, idênticos à captura do painel dentro do editor |
+| 8, o botão de reler | A releitura muda o momento da leitura e conserva o conteúdo, como RN-08 exige |
+| 11, sem pasta aberta | Título, explicação e nenhuma ação oferecida |
+| 11, pasta sem Reversa | Campos em não declarado, e as duas anomalias de configuração ausente nomeando os arquivos |
+| Estado degradado | Cópia do workspace com o estado truncado: cabeçalho vazio, ciclo forward intacto, duas anomalias |
+| Falha de leitura | Mensagem em bloco, sem interpretação de marcação, e a ação de tentar de novo |
+| Carregando e relendo | Alcançados pelo atraso, cada um no seu quadro |
+| Os quatro temas | Claro, escuro e os dois de alto contraste, todos legíveis |
+
+**Três defeitos achados e corrigidos**, cada um travado por teste novo: o cabeçalho declarava
+leitura íntegra sobre a tela de falha; os títulos das telas de entrada saíam no tamanho que o
+navegador dá a `h1`; e a releitura não tinha sinal na tela, porque a mensagem que abre a sequência
+chegava no mesmo ciclo do resultado. O registro em prosa está na seção do portão visual do
+`README.md`.
+
+**Continua devido, e só o editor resolve:** o ícone na barra de atividades, o comando de paleta com
+a visão visível e com ela oculta, o canal de saída com a linha da postergação, o caso da segunda
+raiz do workspace e o do arquivo apagado que o painel aponta. São exatamente os três limites que a
+faixa do preview declara em toda tela.
+
 ## Histórico de alterações
 
 | Data | Alteração | Autor |
 |------|-----------|-------|
 | 2026-09-09 | Versão inicial gerada por `/reversa-to-do` | reversa |
+| 2026-09-09 | T031 cumprida pela metade da tela, pelo preview da 005; três defeitos corrigidos | reversa |

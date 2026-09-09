@@ -43,8 +43,19 @@
     window.postMessage(envelope, '*')
   }
 
-  /** Busca a leitura e entrega, em ordem, o que o host enviaria. */
+  /**
+   * Busca a leitura e entrega, em ordem, o que o host enviaria.
+   *
+   * A abertura da sequência sai daqui, ANTES do pedido, e não da resposta: o
+   * host de verdade envia o estado de leitura antes de tocar o disco, e o
+   * canal do preview responde uma vez só, com a sequência inteira. Entregue
+   * junto com o resto, a abertura chegaria no mesmo ciclo do resultado e o
+   * painel jamais pintaria a releitura em curso, que é justamente o estado que
+   * o atraso existe para deixar ver. Repetir a abertura é inofensivo: sobre
+   * conteúdo já na tela ela apenas levanta a marca de releitura.
+   */
   function buscarProcesso() {
+    entregar({ command: 'setEntry', data: { kind: 'loading' } })
     fetch('/processo', { headers: { accept: 'application/json' } })
       .then(function (resposta) {
         return resposta.json()

@@ -230,6 +230,22 @@ describe('cabeçalho', () => {
     expect(cabeçalho(payload)).toMatch(/data-item="integrity"[^>]*data-degraded="true"/)
   })
 
+  it('não declara integridade alguma quando não houve leitura', () => {
+    // Sem leitura, os três sinais valem zero por falta de contagem, e não por
+    // terem sido contados: um cabeçalho que desenhasse a linha assim mesmo
+    // anunciaria leitura íntegra sobre a tela que diz que a leitura falhou.
+    const markup = render(
+      <Header
+        entry={entrada({ kind: 'error', loaded: null, message: 'disco fora do ar' })}
+        integrity={{ degraded: false, anomalies: 0, refusals: 0, truncated: 0 }}
+        onReload={() => {}}
+      />,
+    )
+    expect(markup).not.toMatch(/data-item="integrity"/)
+    expect(markup).not.toMatch(/Leitura íntegra/)
+    expect(markup, 'o resto do cabeçalho continua de pé').toMatch(/data-item="root"/)
+  })
+
   it('declara leitura degradada diante de recusa e de truncamento, cada uma por si', () => {
     const recusa = payloadFixture({
       probe: probeFixture({ refusals: [{ path: '../fora', reason: 'fora-da-raiz' }] }),

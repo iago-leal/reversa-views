@@ -264,3 +264,24 @@ describe('alcance dos conjuntos de cor (RF-11, D-02)', () => {
     expect(painel).toMatch(/(^|\n)\s*color:\s*var\(--fgColor-default\)/)
   })
 })
+
+
+/**
+ * O tamanho dos títulos, que a folha precisa fixar em toda parte.
+ *
+ * Um cabeçalho sem regra própria sai no tamanho que o navegador dá a `h1`,
+ * duas vezes maior que tudo o mais que o painel desenha. O cabeçalho e as
+ * seções sempre tiveram regra; as quatro telas de entrada não tinham, e a
+ * conferência visual da 005 as encontrou gritando numa coluna estreita.
+ */
+describe('tamanho dos títulos (RF-01, D-02)', () => {
+  it('a folha fixa o tamanho do título das telas de entrada', () => {
+    expect(regra("[data-part='entry'] h1")).toMatch(/font-size:\s*1rem/)
+  })
+
+  it('nenhum título do painel fica no tamanho que o navegador escolheria', () => {
+    for (const seletor of ['.header__title', '.section__title', "[data-part='entry'] h1"]) {
+      expect(regra(seletor), `${seletor} não fixa o tamanho`).toMatch(/font-size:/)
+    }
+  })
+})

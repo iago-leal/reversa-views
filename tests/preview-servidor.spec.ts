@@ -11,6 +11,7 @@
  * o que se meça aqui seja o roteamento, e não a montagem da tela.
  */
 
+import { readFileSync } from 'node:fs'
 import type { Server } from 'node:http'
 import { afterEach, describe, expect, it } from 'vitest'
 import { criarServidor } from '../scripts/preview/servidor.js'
@@ -172,5 +173,33 @@ describe('as recusas do roteador', () => {
     const base = await subir()
     const resposta = await fetch(`${base}/processo`, { headers: { origin: base } })
     expect(resposta.status).toBe(200)
+  })
+})
+
+
+/**
+ * A abertura da sequência, que o host fingido entrega por conta própria.
+ *
+ * O canal responde uma vez só, com a sequência inteira. Se a abertura viesse
+ * apenas na resposta, ela chegaria no mesmo ciclo do resultado e o painel
+ * nunca pintaria a releitura em curso, que é o estado que o atraso existe
+ * para deixar ver. Por isso o cliente entrega o estado de leitura antes do
+ * pedido, como o host de verdade faz antes de tocar o disco.
+ */
+describe('a abertura da sequência no host fingido', () => {
+  const CLIENTE = readFileSync('scripts/preview/cliente.js', 'utf8')
+
+  it('entrega o estado de leitura antes de pedir a leitura', () => {
+    const busca = CLIENTE.slice(CLIENTE.indexOf('function buscarProcesso()'))
+    const abertura = busca.indexOf("kind: 'loading'")
+    const pedido = busca.indexOf("fetch('/processo'")
+    expect(abertura, 'o cliente não abre a sequência').toBeGreaterThan(-1)
+    expect(pedido, 'o cliente não busca a leitura').toBeGreaterThan(-1)
+    expect(abertura, 'a abertura sai depois do pedido').toBeLessThan(pedido)
+  })
+
+  it('a abertura sai pelo mesmo caminho de entrega das demais mensagens', () => {
+    const busca = CLIENTE.slice(CLIENTE.indexOf('function buscarProcesso()'))
+    expect(busca).toMatch(/entregar\(\{\s*command: 'setEntry', data: \{ kind: 'loading' \}\s*\}\)/)
   })
 })
