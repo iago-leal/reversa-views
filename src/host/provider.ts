@@ -19,7 +19,14 @@ import { Bridge } from './bridge.ts'
 import { buildDocument, createNonce } from './document.ts'
 import { openFile } from './open-file.ts'
 import { logLine } from './ports.ts'
-import type { EditorPort, LogPort, VisibilityPort, WorkspacePort } from './ports.ts'
+import type {
+  ClipboardPort,
+  DraftPort,
+  EditorPort,
+  LogPort,
+  VisibilityPort,
+  WorkspacePort,
+} from './ports.ts'
 import { panelBody } from './panel.ts'
 import type { ReadingResult } from './reading.ts'
 import { routeMessage } from './router.ts'
@@ -31,6 +38,15 @@ const ORIGIN = 'provider'
 export interface ProviderDeps {
   workspace: WorkspacePort
   editor: EditorPort
+  /**
+   * The two capabilities of feature 006, received like every other one.
+   *
+   * The provider hands them the text and learns nothing about what it holds:
+   * the summary is composed on the screen, and this side neither reads it nor
+   * decides anything from it (D-11, D-12).
+   */
+  draft: DraftPort
+  clipboard: ClipboardPort
   log: LogPort
   /** Reads one root; bound to the inherited layer by the activation. */
   readRoot: (root: string) => ReadingResult
@@ -93,6 +109,8 @@ export class ProcessViewProvider implements vscode.WebviewViewProvider {
           void this.reload()
         },
         openFile: (path) => void this.open(path),
+        openDraft: (text, title) => void this.draft(text, title),
+        copyText: (text) => void this.copy(text),
         log: this.deps.log,
       }),
     )
@@ -125,6 +143,37 @@ export class ProcessViewProvider implements vscode.WebviewViewProvider {
   dispose(): void {
     this.bridge?.dispose()
     this.bridge = null
+  }
+
+  /**
+   * Open the summary as an unsaved document (RF-12).
+   *
+   * A failure of the editor is captured and named in the channel, and does not
+   * escape into the listener: the panel keeps what it was showing, because a
+   * summary that failed to open is no reason to lose the reading behind it.
+   * @param text - the text the panel composed.
+   * @param title - what the panel would like it called, or nothing.
+   */
+  private async draft(text: string, title: string | null): Promise<void> {
+    try {
+      await this.deps.draft.open(text, title)
+    } catch (cause) {
+      const reason = cause instanceof Error ? cause.message : String(cause)
+      this.deps.log.write(logLine(ORIGIN, 'rascunho recusado', reason))
+    }
+  }
+
+  /**
+   * Put the summary on the clipboard (RF-17).
+   * @param text - the text the panel composed.
+   */
+  private async copy(text: string): Promise<void> {
+    try {
+      await this.deps.clipboard.copy(text)
+    } catch (cause) {
+      const reason = cause instanceof Error ? cause.message : String(cause)
+      this.deps.log.write(logLine(ORIGIN, 'cópia recusada', reason))
+    }
   }
 
   /** Open what the panel points at, inside the observed root (RF-08). */

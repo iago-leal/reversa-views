@@ -17,7 +17,8 @@ import type { ReactElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import type { EffectiveEntry } from '../src/webview/domain/types.ts'
-import { EMPTY_PREFERENCES, SECTION_NAMES } from '../src/webview/domain/types.ts'
+import { COLLAPSIBLE_SECTIONS, EMPTY_PREFERENCES, SECTION_NAMES } from '../src/webview/domain/types.ts'
+import { collapsibleSections } from '../src/webview/domain/sections.ts'
 import { App } from '../src/webview/ui/App.tsx'
 import { EntryScreen } from '../src/webview/ui/EntryScreens.tsx'
 import { Header } from '../src/webview/ui/Header.tsx'
@@ -29,7 +30,9 @@ import { readingIntegrity } from '../src/webview/domain/integrity.ts'
 import { blockingReasons } from '../src/webview/domain/blocking.ts'
 import {
   actionsMd,
+  decompositionFixture,
   emptyProcessFixture,
+  historyFixture,
   payloadFixture,
   probeFixture,
   processFixture,
@@ -176,12 +179,18 @@ describe('as cinco telas de estado de entrada', () => {
 // ---------------------------------------------------------------------------
 
 /** The header on its own, over a payload and the integrity read from it. */
-function cabeçalho(payload = payloadFixture()): string {
+function cabeçalho(payload = payloadFixture(), recolhidas = 4): string {
   return render(
     <Header
       entry={entrada({ loaded: payload })}
       integrity={readingIntegrity(payload)}
       onReload={() => {}}
+      collapsedCount={recolhidas}
+      collapsibleCount={collapsibleSections().length}
+      onExpandAll={() => {}}
+      onCollapseAll={() => {}}
+      onSummary={() => {}}
+      onCopy={() => {}}
     />,
   )
 }
@@ -239,6 +248,12 @@ describe('cabeçalho', () => {
         entry={entrada({ kind: 'error', loaded: null, message: 'disco fora do ar' })}
         integrity={{ degraded: false, anomalies: 0, refusals: 0, truncated: 0 }}
         onReload={() => {}}
+        collapsedCount={0}
+        collapsibleCount={collapsibleSections().length}
+        onExpandAll={() => {}}
+        onCollapseAll={() => {}}
+        onSummary={() => {}}
+        onCopy={() => {}}
       />,
     )
     expect(markup).not.toMatch(/data-item="integrity"/)
@@ -475,5 +490,268 @@ describe('recolhimento inicial das três de diagnóstico', () => {
 
   it('desenha as seis seções de RF-14 na ordem declarada', () => {
     expect(ordemDesenhada(painel())).toEqual([...SECTION_NAMES])
+  })
+})
+
+// ---------------------------------------------------------------------------
+// T040: os dois cartões da feature 006, as quatro ações do cabeçalho e a ordem
+// dos sete recolhíveis. Tudo por ATRIBUTO DE DADOS, e não por texto: o texto é
+// redação, muda sem que a regra mude, e uma suíte presa a ele quebra por
+// motivo errado.
+// ---------------------------------------------------------------------------
+
+/** Uma preferência declarada, com os cartões que o caso quiser recolhidos. */
+function preferência(recolhidas: readonly string[]) {
+  return { declared: true, collapsedSections: [...recolhidas] as never }
+}
+
+describe('as quatro ações novas do cabeçalho (RF-02, RF-03, RF-12, RF-17)', () => {
+  it('desenha as quatro, cada uma acionável por teclado', () => {
+    const markup = cabeçalho()
+    for (const ação of ['expand-all', 'collapse-all', 'summary', 'copy-summary']) {
+      expect(markup, `a ação ${ação} não foi desenhada`).toMatch(
+        new RegExp(`<button[^>]*type="button"[^>]*data-action="${ação}"`),
+      )
+    }
+  })
+
+  it('cada ação declara o próprio efeito por texto, e não por ícone só', () => {
+    const markup = cabeçalho()
+    for (const ação of ['expand-all', 'collapse-all', 'summary', 'copy-summary']) {
+      const casamento = markup.match(new RegExp(`data-action="${ação}"[^>]*>([^<]+)<`))
+      expect(casamento?.[1].trim(), `a ação ${ação} veio sem rótulo`).not.toBe('')
+    }
+  })
+
+  it('com tudo expandido, expandir tudo fica indisponível e recolher tudo, disponível (RF-04)', () => {
+    const markup = cabeçalho(payloadFixture(), 0)
+    expect(markup).toMatch(/data-action="expand-all"[^>]*data-disabled="true"[^>]*disabled/)
+    expect(markup).toMatch(/data-action="collapse-all"[^>]*data-disabled="false"/)
+  })
+
+  it('com tudo recolhido, a indisponibilidade troca de lado', () => {
+    const markup = cabeçalho(payloadFixture(), collapsibleSections().length)
+    expect(markup).toMatch(/data-action="collapse-all"[^>]*data-disabled="true"[^>]*disabled/)
+    expect(markup).toMatch(/data-action="expand-all"[^>]*data-disabled="false"/)
+  })
+
+  it('sem leitura alguma, resumir e copiar ficam indisponíveis', () => {
+    const markup = render(
+      <Header
+        entry={entrada({ kind: 'error', loaded: null, message: 'falhou' })}
+        integrity={{ degraded: false, anomalies: 0, refusals: 0, truncated: 0 }}
+        onReload={() => {}}
+        collapsedCount={0}
+        collapsibleCount={collapsibleSections().length}
+        onExpandAll={() => {}}
+        onCollapseAll={() => {}}
+        onSummary={() => {}}
+        onCopy={() => {}}
+      />,
+    )
+    expect(markup).toMatch(/data-action="summary"[^>]*data-disabled="true"/)
+    expect(markup).toMatch(/data-action="copy-summary"[^>]*data-disabled="true"/)
+  })
+
+  it('o lugar reservado do despacho não se deslocou', () => {
+    const markup = cabeçalho()
+    const despacho = markup.indexOf('data-slot="dispatch"')
+    expect(despacho).toBeGreaterThan(markup.indexOf('data-action="copy-summary"'))
+    expect(markup.slice(despacho)).not.toMatch(/<button/)
+  })
+})
+
+describe('o momento da leitura em horário de Brasília (RF-15, RF-16)', () => {
+  it('mostra o texto convertido, com o fuso declarado', () => {
+    const casamento = cabeçalho().match(/data-item="read-at"[^>]*>([^<]*)</)
+    expect(casamento?.[1].trim()).toBe('09/09/2026 12:00 (Brasília)')
+  })
+
+  it('guarda o instante absoluto no atributo consultável', () => {
+    expect(cabeçalho()).toMatch(/data-item="read-at"[^>]*data-instant="2026-09-09T15:00:00Z"/)
+  })
+
+  it('sem leitura, o item segue declarando ausência e não carrega atributo', () => {
+    const markup = render(
+      <Header
+        entry={entrada({ kind: 'error', loaded: null, message: 'falhou' })}
+        integrity={{ degraded: false, anomalies: 0, refusals: 0, truncated: 0 }}
+        onReload={() => {}}
+        collapsedCount={0}
+        collapsibleCount={7}
+        onExpandAll={() => {}}
+        onCollapseAll={() => {}}
+        onSummary={() => {}}
+        onCopy={() => {}}
+      />,
+    )
+    const casamento = markup.match(/data-item="read-at"[^>]*>([^<]*)</)
+    expect(casamento?.[1].trim()).toBe('não declarado')
+  })
+})
+
+describe('cartão da decomposição (RF-06, RF-07, RF-08, RF-11, RF-13)', () => {
+  it('nasce expandido, por ser núcleo da retomada', () => {
+    expect(seção(painel(), 'decomposition')).toMatch(/data-collapsed="false"/)
+  })
+
+  it('desenha uma linha por ação, com os quatro campos de RF-06', () => {
+    const corpo = seção(painel(), 'decomposition')
+    const linhas = [...corpo.matchAll(/data-action="(T\d+)"/g)].map((m) => m[1])
+    expect(linhas.length).toBeGreaterThan(0)
+
+    for (const parte of ['action-id', 'action-description', 'action-phase', 'action-status']) {
+      expect(corpo, `${parte} não foi desenhado`).toMatch(
+        new RegExp(`data-part="${parte}"[^>]*>[^<]+<`),
+      )
+    }
+  })
+
+  it('lê a situação do marcador da própria linha, e a declara sem cor', () => {
+    const corpo = seção(painel(), 'decomposition')
+    expect(corpo).toMatch(/data-action="T001"[^>]*data-closed="true"/)
+    expect(corpo).toMatch(/data-action="T004"[^>]*data-closed="false"/)
+  })
+
+  it('destaca a primeira aberta como próxima, por atributo e por palavra (RF-07)', () => {
+    const corpo = seção(painel(), 'decomposition')
+    const próximas = [...corpo.matchAll(/data-next="true"/g)]
+    expect(próximas).toHaveLength(1)
+    expect(corpo).toMatch(/data-action="T004"[^>]*data-next="true"/)
+    expect(corpo).toMatch(/data-part="action-next"[^>]*>[^<]+</)
+  })
+
+  it('põe a contagem de fechadas sobre o total à vista (RF-07)', () => {
+    const corpo = seção(painel(), 'decomposition')
+    expect(corpo).toMatch(/data-part="decomposition-counts"/)
+    expect(corpo.replace(/<[^>]+>/g, ' ')).toMatch(/3 de 5/)
+  })
+
+  it('recorta a lista e oferece revelar o resto (RF-11)', () => {
+    const muitas = payloadFixture({
+      process: processFixture({ actionsMd: actionsMd(20, 1) }),
+      decomposition: decompositionFixture(20, 1),
+    })
+    const corpo = seção(painel({ loaded: muitas }), 'decomposition')
+
+    expect([...corpo.matchAll(/data-action="T\d+"/g)]).toHaveLength(6)
+    expect(corpo).toMatch(/data-part="decomposition-total"[^>]*>21</)
+    expect(corpo).toMatch(/<button[^>]*data-action="expand-decomposition"/)
+  })
+
+  it('declara a ausência por nome quando a leitura não aconteceu (RF-13)', () => {
+    const sem = payloadFixture({
+      process: emptyProcessFixture(),
+      decomposition: { lida: false, origem: 'ausente', acoes: [], divergencia: null },
+    })
+    const corpo = seção(painel({ loaded: sem }), 'decomposition')
+
+    expect(corpo).toMatch(/data-part="decomposition-unread"[^>]*>[^<]+</)
+    expect(corpo).not.toMatch(/data-action="T/)
+  })
+
+  it('declara a divergência contra a contagem herdada, sem escolher entre elas (RF-14)', () => {
+    const divergente = payloadFixture({
+      decomposition: { ...decompositionFixture(), divergencia: { contadas: 44, listadas: 5 } },
+    })
+    const corpo = seção(painel({ loaded: divergente }), 'decomposition')
+    expect(corpo).toMatch(/data-part="decomposition-divergence"/)
+  })
+
+  it('declara a leitura degradada quando a lista veio por varredura (RF-14)', () => {
+    const degradada = payloadFixture({
+      decomposition: { ...decompositionFixture(), origem: 'varredura' },
+    })
+    const corpo = seção(painel({ loaded: degradada }), 'decomposition')
+    expect(corpo).toMatch(/data-part="decomposition-source"/)
+  })
+})
+
+describe('cartão do histórico (RF-09, RF-10, RF-13)', () => {
+  it('nasce recolhido, com a contagem no título (RN-11)', () => {
+    const corpo = seção(painel(), 'history')
+    expect(corpo).toMatch(/data-collapsed="true"/)
+    expect(corpo).toMatch(/data-part="count"[^>]*>2</)
+  })
+
+  it('desenha uma linha por pasta de feature, com situação e marca separadas', () => {
+    const corpo = seção(painel(), 'history')
+    const pastas = [...corpo.matchAll(/data-feature="([^"]+)"/g)].map((m) => m[1])
+
+    expect(pastas).toEqual([
+      '_reversa_forward/002-ponte-e-host',
+      '_reversa_forward/001-leitura-do-processo',
+    ])
+    expect(corpo).toMatch(/data-situation="em-aberto"[^>]*data-mark="pausada"/)
+    expect(corpo).toMatch(/data-situation="convergida"[^>]*data-mark="nenhuma"/)
+  })
+
+  it('nomeia a pausada como tal, sem omiti-la (RN-06)', () => {
+    const corpo = seção(painel(), 'history')
+    expect(corpo).toMatch(/data-part="feature-mark"[^>]*>[^<]+</)
+  })
+
+  it('traz contagem, resumo e instante de cada linha, sem deixar branco (RF-13)', () => {
+    const corpo = seção(painel(), 'history')
+    for (const parte of ['feature-actions', 'feature-summary', 'feature-instant']) {
+      expect(corpo, `${parte} ficou em branco`).toMatch(
+        new RegExp(`data-part="${parte}"[^>]*>[^<]+<`),
+      )
+    }
+  })
+
+  it('faz do adendo um alvo clicável que pede a abertura (RF-10)', () => {
+    const corpo = seção(painel(), 'history')
+    expect(corpo).toMatch(/<button[^>]*data-action="open-file"/)
+    expect(corpo).toContain('data-path="_reversa_sdd/addenda/001-leitura-do-processo.md"')
+  })
+
+  it('declara o truncamento quando o teto de pastas cortou a leitura', () => {
+    const truncado = payloadFixture({
+      history: historyFixture(undefined, { truncado: true, total: 53 }),
+    })
+    expect(seção(painel({ loaded: truncado }), 'history')).toMatch(/data-part="history-truncated"/)
+  })
+
+  it('declara por nome o projeto sem pasta de feature alguma (RF-13)', () => {
+    const vazio = payloadFixture({ history: historyFixture([]) })
+    const corpo = seção(painel({ loaded: vazio }), 'history')
+
+    expect(corpo).toMatch(/data-part="history-none"[^>]*>[^<]+</)
+    expect(corpo).not.toMatch(/data-feature="/)
+  })
+})
+
+describe('a ordem dos sete cartões recolhíveis (RF-18)', () => {
+  it('desenha as oito seções na ordem declarada, com a faixa acima de todas', () => {
+    const ordem = ordemDesenhada(painel())
+    expect(ordem).toEqual([...SECTION_NAMES])
+    expect(ordem[0]).toBe('blocking')
+  })
+
+  it('os sete recolhíveis aparecem na ordem da lista derivada, e a faixa não é um deles', () => {
+    const ordem = ordemDesenhada(painel()).filter((nome) => nome !== 'blocking')
+    expect(ordem).toEqual([...COLLAPSIBLE_SECTIONS])
+  })
+
+  it('recolher tudo não esconde a faixa de bloqueio (RN-03)', () => {
+    const markup = painel({}, { preferences: preferência(COLLAPSIBLE_SECTIONS) })
+    expect(ordemDesenhada(markup)).toEqual([...SECTION_NAMES])
+    for (const nome of COLLAPSIBLE_SECTIONS) {
+      expect(seção(markup, nome), `${nome} deveria estar recolhido`).toMatch(
+        /data-collapsed="true"/,
+      )
+    }
+    // A faixa não é cartão, e por isso não tem estado de recolhimento algum.
+    expect(seção(markup, 'blocking')).not.toMatch(/data-collapsed=/)
+  })
+
+  it('expandir tudo deixa os sete abertos, e o estado se sustenta no desenho seguinte (RF-01)', () => {
+    const markup = painel({}, { preferences: preferência([]) })
+    for (const nome of COLLAPSIBLE_SECTIONS) {
+      expect(seção(markup, nome), `${nome} deveria estar expandido`).toMatch(
+        /data-collapsed="false"/,
+      )
+    }
   })
 })

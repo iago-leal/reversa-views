@@ -11,6 +11,7 @@
 
 import type { ReactNode } from 'react'
 import type { ReversaProcess } from '../../heranca/reversa-domain/src/index.ts'
+import { brasiliaInstant } from '../domain/instants.ts'
 import { checkpointMark, phaseMark } from '../domain/labels.ts'
 import { CollapsibleSection } from './CollapsibleSection.tsx'
 
@@ -52,6 +53,7 @@ export function DiscoverySection(props: DiscoverySectionProps): ReactNode {
       <ul className="rows">
         {discovery.checkpoints.map((checkpoint) => {
           const mark = checkpointMark(checkpoint)
+          const instant = brasiliaInstant(mark.instant)
           return (
             <li
               data-checkpoint={checkpoint.agent}
@@ -59,6 +61,14 @@ export function DiscoverySection(props: DiscoverySectionProps): ReactNode {
               key={checkpoint.agent}
             >
               {mark.label.text} <span className="status">{mark.status}</span>
+              {mark.instant === null ? null : (
+                <>
+                  {' '}
+                  <span data-part="checkpoint-instant" data-instant={instant.raw}>
+                    {instant.text}
+                  </span>
+                </>
+              )}
             </li>
           )
         })}

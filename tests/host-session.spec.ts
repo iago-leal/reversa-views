@@ -12,6 +12,7 @@
 
 import { describe, expect, it } from 'vitest'
 import { EMPTY_SNAPSHOT, readReversa } from '../src/heranca/reversa-domain/src/index.ts'
+import { EMPTY_DECOMPOSITION, EMPTY_HISTORY } from '../src/domain/types.ts'
 import { INHERITED_MODEL_REVISION } from '../src/host/inheritance.ts'
 import type { SetEntryData, SetProcessData } from '../src/host/protocol.ts'
 import type { ReadingResult } from '../src/host/reading.ts'
@@ -25,6 +26,8 @@ function instalada(root: string): ReadingResult {
     process: readReversa({ ...EMPTY_SNAPSHOT, stateJson: '{"project":"x"}' }),
     probe: { workspace: root, featureDir: null, sessionDir: null, refusals: [], truncated: [] },
     readAt: '2026-09-09T12:00:00.000Z',
+    decomposition: EMPTY_DECOMPOSITION,
+    history: EMPTY_HISTORY,
   }
 }
 
@@ -90,6 +93,15 @@ describe('leitura que deu certo', () => {
     expect(dados.readAt).toBe('2026-09-09T12:00:00.000Z')
     expect(dados.inheritedRevision).toBe(INHERITED_MODEL_REVISION)
     expect(observedRoot).toBe('/w')
+  })
+
+  it('leva os dois ramos da feature 006, sem alterar a ordem das mensagens', () => {
+    const { messages } = sessionMessages(['/w'], instalada)
+    const dados = messages[1]?.data as SetProcessData
+
+    expect(messages).toHaveLength(2)
+    expect(dados.decomposition).toEqual(EMPTY_DECOMPOSITION)
+    expect(dados.history).toEqual(EMPTY_HISTORY)
   })
 
   it('escolhe a primeira raiz instalada e declara as demais como ignoradas', () => {

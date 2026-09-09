@@ -18,7 +18,8 @@ import { createRoot } from 'react-dom/client'
 import './theme/theme.css'
 import type { DisplayPreferences, EditorTheme, Notice, SectionName } from './domain/types.ts'
 import { INITIAL_ENTRY, nextEntry } from './domain/entry.ts'
-import { readPreferences, withCollapsed } from './domain/preferences.ts'
+import { readPreferences, withAll, withCollapsed } from './domain/preferences.ts'
+import { summaryText } from './domain/summary.ts'
 import { App } from './ui/App.tsx'
 import { createBridge, hostApi, listenToHost } from './bridge/messaging.ts'
 import { panelLine } from './bridge/log.ts'
@@ -26,6 +27,9 @@ import { readEditorTheme, watchEditorTheme } from './theme/contrast.ts'
 
 /** The mount point the host body offers. */
 const MOUNT_ID = 'root'
+
+/** How the panel asks the editor to call the unsaved document (RF-12). */
+const SUMMARY_TITLE = 'Resumo do processo'
 
 /** The class list of the body, and how to hear about it changing (EC-06). */
 const bodyClasses = {
@@ -107,6 +111,42 @@ function Panel(): ReactNode {
     [bridge],
   )
 
+  /**
+   * The two global actions of RF-02 and RF-03.
+   *
+   * What is stored is ALWAYS a declared preference, expanding everything
+   * included: it is exactly the state the old shape could not represent, and
+   * writing it undeclared is what used to undo the gesture on the next draw.
+   */
+  const toggleAll = useCallback(
+    (collapsed: boolean) => {
+      const next = withAll(collapsed)
+      bridge.writeState(next)
+      setPreferences(next)
+    },
+    [bridge],
+  )
+
+  /**
+   * The summary, composed here and sent ready (RF-12, RF-17).
+   *
+   * The text is a pure function of the payload, so the document and the
+   * clipboard receive the same thing; the host learns nothing of what it says.
+   */
+  const summarise = useCallback(
+    (how: 'draft' | 'copy') => {
+      const payload = entry.loaded
+      if (payload === null) {
+        bridge.log(panelLine('main', 'resumo recusado', 'não há leitura para resumir'))
+        return
+      }
+      const text = summaryText(payload)
+      if (how === 'draft') bridge.openDraft(text, SUMMARY_TITLE)
+      else bridge.copyText(text)
+    },
+    [bridge, entry],
+  )
+
   return (
     <App
       entry={entry}
@@ -117,6 +157,10 @@ function Panel(): ReactNode {
       onOpenFile={(path) => bridge.openFile(path)}
       onLog={(message) => bridge.log(message)}
       onToggleSection={toggleSection}
+      onExpandAll={() => toggleAll(false)}
+      onCollapseAll={() => toggleAll(true)}
+      onSummary={() => summarise('draft')}
+      onCopySummary={() => summarise('copy')}
     />
   )
 }

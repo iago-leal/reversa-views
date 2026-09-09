@@ -26,16 +26,18 @@ import type {
 } from '../domain/types.ts'
 import { blockingReasons } from '../domain/blocking.ts'
 import { readingIntegrity } from '../domain/integrity.ts'
-import { initialCollapsed, sectionOrder } from '../domain/sections.ts'
+import { collapsibleSections, effectiveCollapsed, sectionOrder } from '../domain/sections.ts'
 import { themeAttributes } from '../theme/primer-themes.ts'
 import { AnomaliesSection } from './AnomaliesSection.tsx'
 import { BlockingBanner } from './BlockingBanner.tsx'
 import { CollapsibleSection } from './CollapsibleSection.tsx'
+import { DecompositionSection } from './DecompositionSection.tsx'
 import { DiscoverySection } from './DiscoverySection.tsx'
 import { EntryScreen } from './EntryScreens.tsx'
 import { ErrorBoundary } from './ErrorBoundary.tsx'
 import { ForwardSection } from './ForwardSection.tsx'
 import { Header } from './Header.tsx'
+import { HistorySection } from './HistorySection.tsx'
 import { PolicySection } from './PolicySection.tsx'
 import { ProbeSection } from './ProbeSection.tsx'
 
@@ -58,6 +60,12 @@ export interface AppProps {
   onLog: (message: string) => void
   /** Called when a section is collapsed or expanded; the preference is owned upstream. */
   onToggleSection?: (section: SectionName, collapsed: boolean) => void
+  /** The two global actions of RF-02 and RF-03; the preference is owned upstream. */
+  onExpandAll?: () => void
+  onCollapseAll?: () => void
+  /** The two ways out of RF-12 and RF-17; the text is composed upstream. */
+  onSummary?: () => void
+  onCopySummary?: () => void
 }
 
 /**
@@ -69,8 +77,10 @@ export function App(props: AppProps): ReactNode {
   const { entry, notice, preferences, theme, onReload, onOpenFile, onLog } = props
   const payload = entry.loaded
   const integrity = payload === null ? NOTHING_READ : readingIntegrity(payload)
-  const collapsed = new Set(initialCollapsed(preferences, integrity))
-  const [blocking, forward, discovery, policy, anomalies, probe] = sectionOrder()
+  const collapsed = new Set(effectiveCollapsed(preferences, integrity))
+  const cards = collapsibleSections()
+  const [blocking, forward, decomposition, history, discovery, policy, anomalies, probe] =
+    sectionOrder()
 
   /**
    * Toggle one section, if anyone upstream is listening.
@@ -83,7 +93,17 @@ export function App(props: AppProps): ReactNode {
   return (
     <div className="panel" {...themeAttributes(theme)}>
       {entry.root === null ? null : (
-        <Header entry={entry} integrity={integrity} onReload={onReload} />
+        <Header
+          entry={entry}
+          integrity={integrity}
+          onReload={onReload}
+          collapsedCount={collapsed.size}
+          collapsibleCount={cards.length}
+          onExpandAll={() => props.onExpandAll?.()}
+          onCollapseAll={() => props.onCollapseAll?.()}
+          onSummary={() => props.onSummary?.()}
+          onCopy={() => props.onCopySummary?.()}
+        />
       )}
 
       {notice === null ? null : (
@@ -108,6 +128,24 @@ export function App(props: AppProps): ReactNode {
               process={payload.process}
               collapsed={collapsed.has(forward)}
               onToggle={toggle(forward)}
+            />
+          </ErrorBoundary>
+
+          <ErrorBoundary section={decomposition} onLog={onLog}>
+            <DecompositionSection
+              decomposition={payload.decomposition}
+              process={payload.process}
+              collapsed={collapsed.has(decomposition)}
+              onToggle={toggle(decomposition)}
+            />
+          </ErrorBoundary>
+
+          <ErrorBoundary section={history} onLog={onLog}>
+            <HistorySection
+              history={payload.history}
+              collapsed={collapsed.has(history)}
+              onToggle={toggle(history)}
+              onOpenFile={onOpenFile}
             />
           </ErrorBoundary>
 

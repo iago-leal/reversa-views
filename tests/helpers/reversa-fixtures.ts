@@ -13,6 +13,8 @@
 import { EMPTY_SNAPSHOT, readReversa } from '../../src/heranca/reversa-domain/src/index.ts'
 import type { ReversaProcess, ReversaSnapshot } from '../../src/heranca/reversa-domain/src/index.ts'
 import type { ProbeReport } from '../../src/heranca/reversa-probe/src/snapshot.ts'
+import { readDecomposition } from '../../src/domain/decomposition.ts'
+import type { ActiveDecomposition, HistoryEntry, ProjectHistory } from '../../src/domain/types.ts'
 import type { SetProcessData } from '../../src/host/protocol.ts'
 
 /** What a caller may change about the installation the fixture describes. */
@@ -65,13 +67,23 @@ const BASE_ACTIVE_REQUIREMENTS = {
   'paused-features': [],
 }
 
-/** An `actions.md` with the given counts of closed and open actions. */
+/**
+ * An `actions.md` with the given counts of closed and open actions, in the
+ * seven columns the REVERSA template writes.
+ *
+ * The header is the canonical one on purpose: the reader of feature 006
+ * matches it normalized and reads the cells by position, and a fixture with a
+ * shorter header would exercise only the fallback.
+ */
 export function actionsMd(closed: number, open: number): string {
-  const rows: string[] = ['| ID | Descrição | Status |', '|----|-----------|--------|']
-  for (let i = 1; i <= closed; i += 1) rows.push(`| T${String(i).padStart(3, '0')} | feito | \`[X]\` |`)
-  for (let i = 1; i <= open; i += 1) {
-    rows.push(`| T${String(closed + i).padStart(3, '0')} | aberto | \`[ ]\` |`)
-  }
+  const rows: string[] = [
+    '| ID | Descrição | Dependências | Paralelismo | Arquivo alvo | Confidência | Status |',
+    '|----|-----------|--------------|-------------|--------------|-------------|--------|',
+  ]
+  const row = (index: number, what: string, mark: string): string =>
+    `| T${String(index).padStart(3, '0')} | ${what} | - | - | \`src/x${index}.ts\` | - | \`${mark}\` |`
+  for (let i = 1; i <= closed; i += 1) rows.push(row(i, 'feito', '[X]'))
+  for (let i = 1; i <= open; i += 1) rows.push(row(closed + i, 'aberto', '[ ]'))
   return `# Actions: fixture\n\n## Fase 1, Preparação\n\n${rows.join('\n')}\n`
 }
 
@@ -125,6 +137,48 @@ export function probeFixture(overrides: Partial<ProbeReport> = {}): ProbeReport 
   }
 }
 
+/**
+ * The decomposition of the active feature, read by the same function the host
+ * calls, over the same `actions.md` the process fixture describes.
+ */
+export function decompositionFixture(closed = 3, open = 2): ActiveDecomposition {
+  return readDecomposition(actionsMd(closed, open), closed + open)
+}
+
+/** The history of the project, with the entries the caller wants in it. */
+export function historyFixture(
+  entradas: HistoryEntry[] = [...HISTORY_ENTRIES],
+  overrides: Partial<ProjectHistory> = {},
+): ProjectHistory {
+  return { entradas, truncado: false, total: entradas.length, ...overrides }
+}
+
+/** Two features behind the active one: one converged, one paused and open. */
+const HISTORY_ENTRIES: readonly HistoryEntry[] = [
+  {
+    pasta: '_reversa_forward/002-ponte-e-host',
+    id: '002',
+    nomeCurto: 'ponte-e-host',
+    situacao: 'em-aberto',
+    marca: 'pausada',
+    acoes: { total: 32, fechadas: 30, abertas: 2, emendas: 0 },
+    adendo: null,
+    resumo: null,
+    ultimoEvento: '2026-09-09T14:06:13Z',
+  },
+  {
+    pasta: '_reversa_forward/001-leitura-do-processo',
+    id: '001',
+    nomeCurto: 'leitura-do-processo',
+    situacao: 'convergida',
+    marca: 'nenhuma',
+    acoes: { total: 21, fechadas: 21, abertas: 0, emendas: 0 },
+    adendo: '_reversa_sdd/addenda/001-leitura-do-processo.md',
+    resumo: 'A feature entrega a camada de leitura do processo.',
+    ultimoEvento: '2026-09-09T10:00:00Z',
+  },
+]
+
 /** The payload of a successful reading, ready to hand to the panel. */
 export function payloadFixture(overrides: Partial<SetProcessData> = {}): SetProcessData {
   return {
@@ -135,6 +189,8 @@ export function payloadFixture(overrides: Partial<SetProcessData> = {}): SetProc
     root: '/w/reversa-views',
     ignoredRoots: [],
     inheritedRevision: '420305daa6cdd10858b720a34cb8db67d8e5c5e9',
+    decomposition: decompositionFixture(),
+    history: historyFixture(),
     ...overrides,
   }
 }

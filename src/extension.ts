@@ -14,7 +14,14 @@
  */
 
 import * as vscode from 'vscode'
-import { visibilityPort, editorPort, logPort, workspacePort } from './host/adapters.ts'
+import {
+  clipboardPort,
+  draftPort,
+  editorPort,
+  logPort,
+  visibilityPort,
+  workspacePort,
+} from './host/adapters.ts'
 import { ProcessViewProvider } from './host/provider.ts'
 import { readWorkspace } from './host/reading.ts'
 
@@ -50,6 +57,10 @@ export function activate(context: vscode.ExtensionContext): void {
   const provider = new ProcessViewProvider({
     workspace: workspacePort(),
     editor: editorPort(),
+    // The two capabilities of feature 006, wired beside the ones that already
+    // existed. Neither touches disk, and the activation goes on reading none.
+    draft: draftPort(),
+    clipboard: clipboardPort(),
     log,
     readRoot: (root) => readWorkspace(root, { log }),
     localResourceRoots: [outRoot, webviewRoot],

@@ -60,6 +60,8 @@ function bancada(options: { roots?: string[]; readRoot?: (root: string) => Readi
   const provider = new ProcessViewProvider({
     workspace: { roots: () => raizes },
     editor: { open: vi.fn(async () => {}) },
+    draft: { open: vi.fn(async () => {}) },
+    clipboard: { copy: vi.fn(async () => {}) },
     log: { write: (line) => void lines.push(line) },
     readRoot,
     localResourceRoots: localResourceRoots as never,

@@ -1,17 +1,15 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/005-empacotamento-e-verificacao",
-  "feature-id": "005",
-  "short-name": "empacotamento-e-verificacao",
-  "started-at": "2026-09-09T18:11:22Z",
-  "current-stage": "sync",
+  "feature-dir": "_reversa_forward/006-cartoes-e-cronologia",
+  "feature-id": "006",
+  "short-name": "cartoes-e-cronologia",
+  "started-at": "2026-09-09T20:43:22Z",
+  "current-stage": "to-do",
   "stages-completed": [
     "requirements",
     "clarify",
     "plan",
-    "to-do",
-    "coding",
-    "sync"
+    "to-do"
   ],
   "paused-features": [
     {

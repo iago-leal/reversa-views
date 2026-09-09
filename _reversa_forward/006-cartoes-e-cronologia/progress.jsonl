@@ -1,0 +1,47 @@
+{"ts": "2026-09-09T21:42:39Z", "action": "T001", "status": "done", "files": ["src/webview/domain/types.ts"]}
+{"ts": "2026-09-09T21:42:39Z", "action": "T002", "status": "done", "files": ["src/webview/domain/types.ts"]}
+{"ts": "2026-09-09T21:42:39Z", "action": "T003", "status": "done", "files": ["src/domain/types.ts"]}
+{"ts": "2026-09-09T21:42:39Z", "action": "T004", "status": "done", "files": ["src/domain/limits.ts"]}
+{"ts": "2026-09-09T21:43:12Z", "action": "T005", "status": "done", "files": ["tests/webview-preferences.spec.ts"]}
+{"ts": "2026-09-09T21:43:48Z", "action": "T006", "status": "done", "files": ["tests/webview-sections.spec.ts"]}
+{"ts": "2026-09-09T21:44:23Z", "action": "T007", "status": "done", "files": ["tests/webview-instants.spec.ts"]}
+{"ts": "2026-09-09T21:45:00Z", "action": "T008", "status": "done", "files": ["tests/probe-features.spec.ts"]}
+{"ts": "2026-09-09T21:46:03Z", "action": "T009", "status": "done", "files": ["tests/domain-history.spec.ts"]}
+{"ts": "2026-09-09T21:47:30Z", "action": "T010", "status": "done", "files": ["tests/domain-decomposition.spec.ts"]}
+{"ts": "2026-09-09T21:49:52Z", "action": "T011", "status": "done", "files": ["tests/webview-decomposition-view.spec.ts"]}
+{"ts": "2026-09-09T21:49:52Z", "action": "T012", "status": "done", "files": ["tests/webview-summary.spec.ts", "tests/helpers/reversa-fixtures.ts"]}
+{"ts": "2026-09-09T21:50:22Z", "action": "T013", "status": "done", "files": ["tests/host-router.spec.ts"]}
+{"ts": "2026-09-09T21:51:18Z", "action": "T014", "status": "done", "files": ["tests/readonly-local.spec.ts"]}
+{"ts": "2026-09-09T21:51:18Z", "action": "T015", "status": "done", "files": ["tests/host-boundaries.spec.ts"]}
+{"ts": "2026-09-09T21:52:21Z", "action": "T016", "status": "done", "files": ["src/webview/domain/preferences.ts"]}
+{"ts": "2026-09-09T21:52:21Z", "action": "T017", "status": "done", "files": ["src/webview/domain/sections.ts"]}
+{"ts": "2026-09-09T21:52:21Z", "action": "T018", "status": "done", "files": ["src/webview/domain/instants.ts"]}
+{"ts": "2026-09-09T21:52:51Z", "action": "T019", "status": "done", "files": ["src/probe/features.ts"]}
+{"ts": "2026-09-09T21:53:56Z", "action": "T020", "status": "done", "files": ["src/domain/decomposition.ts"]}
+{"ts": "2026-09-09T21:53:56Z", "action": "T021", "status": "done", "files": ["src/domain/decomposition.ts"]}
+{"ts": "2026-09-09T21:56:56Z", "action": "T022", "status": "done", "files": ["src/domain/history.ts"]}
+{"ts": "2026-09-09T21:56:56Z", "action": "T023", "status": "done", "files": ["src/webview/domain/decomposition-view.ts"]}
+{"ts": "2026-09-09T21:56:56Z", "action": "T024", "status": "done", "files": ["src/webview/domain/summary.ts", "src/webview/domain/labels.ts"]}
+{"ts": "2026-09-09T21:58:39Z", "action": "T025", "status": "done", "files": ["src/host/protocol.ts", "tests/host-protocol.spec.ts"]}
+{"ts": "2026-09-09T21:59:48Z", "action": "T026", "status": "done", "files": ["src/host/reading.ts"]}
+{"ts": "2026-09-09T21:59:48Z", "action": "T027", "status": "done", "files": ["src/host/session.ts", "tests/host-session.spec.ts", "scripts/preview/leitura.js"]}
+{"ts": "2026-09-09T22:00:29Z", "action": "T028", "status": "done", "files": ["src/host/ports.ts"]}
+{"ts": "2026-09-09T22:00:29Z", "action": "T029", "status": "done", "files": ["src/host/adapters.ts"]}
+{"ts": "2026-09-09T22:01:47Z", "action": "T030", "status": "done", "files": ["src/host/router.ts"]}
+{"ts": "2026-09-09T22:01:47Z", "action": "T031", "status": "done", "files": ["src/host/provider.ts", "tests/host-provider.spec.ts"]}
+{"ts": "2026-09-09T22:01:47Z", "action": "T032", "status": "done", "files": ["src/extension.ts"]}
+{"ts": "2026-09-09T22:02:05Z", "action": "T033", "status": "done", "files": ["src/webview/bridge/messaging.ts"]}
+{"ts": "2026-09-09T22:05:01Z", "action": "T034", "status": "done", "files": ["src/webview/ui/DecompositionSection.tsx"]}
+{"ts": "2026-09-09T22:05:01Z", "action": "T035", "status": "done", "files": ["src/webview/ui/HistorySection.tsx"]}
+{"ts": "2026-09-09T22:05:01Z", "action": "T036", "status": "done", "files": ["src/webview/ui/Header.tsx"]}
+{"ts": "2026-09-09T22:05:01Z", "action": "T037", "status": "done", "files": ["src/webview/ui/App.tsx"]}
+{"ts": "2026-09-09T22:05:01Z", "action": "T038", "status": "done", "files": ["src/webview/ui/DiscoverySection.tsx", "src/webview/ui/Header.tsx", "src/webview/domain/labels.ts", "tests/webview-labels.spec.ts"]}
+{"ts": "2026-09-09T22:05:21Z", "action": "T039", "status": "done", "files": ["src/webview/main.tsx"]}
+{"ts": "2026-09-09T22:06:41Z", "action": "T040", "status": "done", "files": ["tests/webview-render.spec.tsx"]}
+{"ts": "2026-09-09T22:10:00Z", "action": "T041", "status": "done", "files": ["src/webview/theme/theme.css"]}
+{"ts": "2026-09-09T22:11:53Z", "action": "T042", "status": "done", "files": ["tests/webview-instants-render.spec.tsx"]}
+{"ts": "2026-09-09T22:12:33Z", "action": "T043", "status": "done", "files": ["README.md"]}
+{"ts": "2026-09-09T22:17:45Z", "action": "T022", "status": "corrected", "files": ["src/domain/history.ts", "tests/domain-history.spec.ts"], "note": "O resumo do histórico lia a primeira linha física da seção, e o Reversa quebra a prosa na coluna: a tela mostrava frase pela metade ('As features 001 a'). Passou a desfazer a quebra dura, juntando o parágrafo antes de cortar na primeira frase. Defeito visto no portão visual de T044, não pego por suíte verde."}
+{"ts": "2026-09-09T22:17:45Z", "action": "T044", "status": "evidence", "kind": "tela", "files": [], "note": "Preview fora do editor em http://127.0.0.1:5758, workspace deste repositório, tema escuro, pacote real sob o documento real. Observados: cartão 'Decomposição da feature ativa' com 44 ações, contagem herdada, T044 destacada como próxima a executar; cartão 'Histórico das entregas' com as seis pastas em ordem decrescente, situação, marca, resumo e adendo clicável; as quatro ações do cabeçalho desenhadas, com 'Expandir tudo' indisponível quando nada há a expandir; todo instante em 09/09/2026 hh:mm (Brasília) com o valor cru em data-instant. A 280 px de largura as quatro ações quebram em linha sem corte."}
+{"ts": "2026-09-09T22:17:45Z", "action": "T044", "status": "evidence", "kind": "pacote", "files": ["out/res/webview/main.js", "out/res/webview/main.css"], "note": "Pacote da tela: 176.4 KiB (180659 B), teto 400.0 KiB (409600 B), medido pela guarda de scripts/build-webview.js ao fim de npm run build. Folga de 44%."}
+{"ts": "2026-09-09T22:17:45Z", "action": "T044", "status": "done", "files": ["_reversa_forward/006-cartoes-e-cronologia/progress.jsonl"]}

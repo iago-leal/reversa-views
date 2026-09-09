@@ -17,16 +17,19 @@ import {
   WEBVIEW_COMMANDS,
 } from '../src/host/protocol.ts'
 import type {
+  CopyTextData,
   DispatchData,
   EntryKind,
   HostMessage,
   LogData,
+  OpenDraftData,
   OpenFileData,
   SetEntryData,
   SetNoticeData,
   SetProcessData,
   WebviewMessage,
 } from '../src/host/protocol.ts'
+import { EMPTY_DECOMPOSITION, EMPTY_HISTORY } from '../src/domain/types.ts'
 
 const probe: ProbeReport = {
   workspace: '/w',
@@ -35,6 +38,9 @@ const probe: ProbeReport = {
   refusals: [],
   truncated: [],
 }
+
+/** Os dois ramos que a feature 006 acrescentou, na forma vazia. */
+const ramos = { decomposition: EMPTY_DECOMPOSITION, history: EMPTY_HISTORY }
 
 describe('estados de entrada', () => {
   it('nomeia os cinco de RF-15, na ordem do delta de dados', () => {
@@ -58,8 +64,26 @@ describe('estados de entrada', () => {
 })
 
 describe('comandos da webview', () => {
-  it('traz os cinco nomes, incluindo o reservado', () => {
-    expect(WEBVIEW_COMMANDS).toEqual(['onLoaded', 'reload', 'openFile', 'log', 'dispatch'])
+  it('traz os sete nomes, incluindo o reservado', () => {
+    expect(WEBVIEW_COMMANDS).toEqual([
+      'onLoaded',
+      'reload',
+      'openFile',
+      'log',
+      'dispatch',
+      'openDraft',
+      'copyText',
+    ])
+  })
+
+  it('os cinco de antes seguem na mesma ordem: o contrato cresce por acréscimo', () => {
+    expect(WEBVIEW_COMMANDS.slice(0, 5)).toEqual([
+      'onLoaded',
+      'reload',
+      'openFile',
+      'log',
+      'dispatch',
+    ])
   })
 
   it('declara `dispatch` como reservado (RF-12)', () => {
@@ -71,14 +95,23 @@ describe('comandos da webview', () => {
     const openFile: OpenFileData = { path: 'requirements.md' }
     const log: LogData = { message: 'linha' }
     const dispatch: DispatchData = { agent: 'reversa-coding' }
+    const draft: OpenDraftData = { text: 'resumo', title: 'Reversa' }
+    const copy: CopyTextData = { text: 'resumo' }
     const messages: WebviewMessage[] = [
       { command: 'onLoaded' },
       { command: 'reload' },
       { command: 'openFile', data: openFile },
       { command: 'log', data: log },
       { command: 'dispatch', data: dispatch },
+      { command: 'openDraft', data: draft },
+      { command: 'copyText', data: copy },
     ]
     expect(messages.map((message) => message.command)).toEqual([...WEBVIEW_COMMANDS])
+  })
+
+  it('o título do rascunho é opcional, e a carga sem ele continua válida', () => {
+    const semTitulo: OpenDraftData = { text: 'resumo' }
+    expect(Object.keys(semTitulo)).toEqual(['text'])
   })
 })
 
@@ -96,6 +129,7 @@ describe('comandos do host', () => {
           root: '/w',
           ignoredRoots: [],
           inheritedRevision: '420305daa6cdd10858b720a34cb8db67d8e5c5e9',
+          ...ramos,
         },
       },
       { command: 'setEntry', data: { kind: 'loading' } },
@@ -107,7 +141,7 @@ describe('comandos do host', () => {
 })
 
 describe('carga de dados', () => {
-  it('traz os sete campos de RF-13, RF-03, RF-04 e RF-14, e nenhum a mais', () => {
+  it('traz os nove campos de RF-13, RF-03, RF-04, RF-14 e da feature 006, e nenhum a mais', () => {
     const data: SetProcessData = {
       process: readReversa(EMPTY_SNAPSHOT),
       probe,
@@ -116,10 +150,39 @@ describe('carga de dados', () => {
       root: '/w',
       ignoredRoots: ['/outra'],
       inheritedRevision: '420305daa6cdd10858b720a34cb8db67d8e5c5e9',
+      ...ramos,
     }
-    expect(Object.keys(data).sort()).toEqual(
-      ['entry', 'ignoredRoots', 'inheritedRevision', 'probe', 'process', 'readAt', 'root'],
-    )
+    expect(Object.keys(data).sort()).toEqual([
+      'decomposition',
+      'entry',
+      'history',
+      'ignoredRoots',
+      'inheritedRevision',
+      'probe',
+      'process',
+      'readAt',
+      'root',
+    ])
+  })
+
+  it('os dois ramos novos são acréscimo, e os sete de antes seguem intactos', () => {
+    // A regra do contrato é esta, e é o que autoriza a feature 006: acrescentar
+    // é permitido, renomear e remover não são.
+    const data: SetProcessData = {
+      process: readReversa(EMPTY_SNAPSHOT),
+      probe,
+      readAt: '2026-09-09T12:00:00.000Z',
+      entry: 'installed',
+      root: '/w',
+      ignoredRoots: [],
+      inheritedRevision: 'abc1234',
+      ...ramos,
+    }
+    for (const campo of ['process', 'probe', 'readAt', 'entry', 'root', 'ignoredRoots', 'inheritedRevision']) {
+      expect(Object.keys(data)).toContain(campo)
+    }
+    expect(data.decomposition.lida).toBe(false)
+    expect(data.history.entradas).toEqual([])
   })
 
   it('o campo da revisão herdada é acréscimo: a carga sem processo segue com quatro', () => {

@@ -64,6 +64,40 @@ export interface EditorPort {
 }
 
 /**
+ * The editor as a place to open a document that was never on disk.
+ *
+ * It is a port of its OWN, and not a method of `EditorPort`, so that whoever
+ * reads this file sees three distinct capabilities instead of one that grew:
+ * opening a file of the project, opening a draft, and copying text (D-12).
+ * Widening the first would have erased the reading that it only opens.
+ *
+ * Nothing here writes. The editor keeps an unsaved document in memory and
+ * gives it no path, and saving is a gesture of the user -- which is the only
+ * way the summary of RF-12 can exist without breaking the invariant that the
+ * extension never writes a file.
+ */
+export interface DraftPort {
+  /**
+   * Open an unsaved document with this text, without stealing the focus.
+   * @param text - the content, already composed by the panel.
+   * @param title - how the panel would like it called, when it says.
+   */
+  open(text: string, title: string | null): Promise<void>
+}
+
+/**
+ * The clipboard of the editor.
+ *
+ * Text in, nothing out. It touches no file and opens no dialog: the panel
+ * confirms the copy in its own header, because the extension does not
+ * interrupt the user (RN-09).
+ */
+export interface ClipboardPort {
+  /** Replace the contents of the clipboard with this text. */
+  copy(text: string): Promise<void>
+}
+
+/**
  * The folders the user has open.
  *
  * It answers one question, and returns absolute filesystem paths in the

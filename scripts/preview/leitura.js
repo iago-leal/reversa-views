@@ -19,6 +19,7 @@
  */
 
 const { EMPTY_SNAPSHOT, readReversa } = require('../../out/heranca/reversa-domain/src/index.js')
+const { EMPTY_DECOMPOSITION, EMPTY_HISTORY } = require('../../out/domain/types.js')
 const { INHERITED_MODEL_REVISION } = require('../../out/host/inheritance.js')
 const { readWorkspace } = require('../../out/host/reading.js')
 const { sessionMessages } = require('../../out/host/session.js')
@@ -57,6 +58,11 @@ function forcadas(estado, workspace) {
             root: workspace,
             ignoredRoots: [],
             inheritedRevision: INHERITED_MODEL_REVISION,
+            // Os dois ramos da feature 006, na forma vazia: o estado forçado
+            // não toca disco, e a tela precisa distinguir leitura vazia de
+            // leitura não realizada.
+            decomposition: EMPTY_DECOMPOSITION,
+            history: EMPTY_HISTORY,
           },
         },
       ]

@@ -41,6 +41,10 @@ export interface Bridge {
   reload(): void
   /** Ask the editor to open a path relative to the observed root. */
   openFile(path: string): void
+  /** Ask the editor to open an unsaved document with this text (RF-12). */
+  openDraft(text: string, title: string | null): void
+  /** Ask the editor to put this text on the clipboard (RF-17). */
+  copyText(text: string): void
   /** Write one line to the output channel. */
   log(message: string): void
   /** The stored state, whatever it holds. */
@@ -127,6 +131,18 @@ export function createBridge(options: BridgeOptions): Bridge {
         return
       }
       api.postMessage({ command: 'openFile', data: { path } })
+    },
+
+    // The text travels READY, composed by a pure function of `domain/`. What
+    // crosses here is a value, and this module goes on being the only point of
+    // traversal: neither of the two knows what the text says.
+    openDraft(text: string, title: string | null): void {
+      const data = title === null ? { text } : { text, title }
+      api.postMessage({ command: 'openDraft', data })
+    },
+
+    copyText(text: string): void {
+      api.postMessage({ command: 'copyText', data: { text } })
     },
 
     readState: () => api.getState(),

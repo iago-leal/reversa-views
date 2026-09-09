@@ -105,6 +105,69 @@ describe('disco (RN-01)', () => {
   })
 })
 
+/**
+ * A guarda que a feature 006 acrescenta (D-13).
+ *
+ * Até aqui a suíte cobria a escrita por sistema de arquivos síncrono, e só
+ * ela. Ficavam de fora a via de escrita do PRÓPRIO EDITOR — `workspace.fs`,
+ * `applyEdit`, `WorkspaceEdit` — e a de sistema de arquivos assíncrona, que
+ * ninguém usava e nada impedia. A entrega que acrescenta a capacidade de abrir
+ * documento e de copiar texto é o momento certo de fechar as duas: o
+ * invariante do produto é a extensão nunca escrever arquivo, e capacidade nova
+ * sem guarda nova é o caminho por onde um invariante se perde.
+ */
+describe('a via de escrita do editor e a assíncrona (D-13, RNF de segurança)', () => {
+  /** Cada nome, com o que ele abriria se aparecesse. */
+  const VIAS: Array<[RegExp, string]> = [
+    [/\bworkspace\s*\.\s*fs\b/, 'o sistema de arquivos do editor'],
+    [/\bapplyEdit\b/, 'a aplicação de edição no espaço de trabalho'],
+    [/\bWorkspaceEdit\b/, 'a construção de uma edição no espaço de trabalho'],
+    [/\bTextEdit\b/, 'a construção de uma edição de texto'],
+    [/from\s+['"]node:fs\/promises['"]/, 'o sistema de arquivos assíncrono'],
+    [/\bfs\s*\.\s*promises\b/, 'o sistema de arquivos assíncrono'],
+    [/\bdocument\s*\.\s*save\s*\(/, 'o salvamento de um documento'],
+  ]
+
+  it('nenhuma delas aparece em módulo algum do host', () => {
+    for (const fonte of [...fontesDoHost(), { nome: 'extension.ts', caminho: 'src/extension.ts', texto: readFileSync('src/extension.ts', 'utf8') }]) {
+      for (const [via, oQueAbre] of VIAS) {
+        expect(via.test(fonte.texto), `${fonte.nome} alcança ${oQueAbre}`).toBe(false)
+      }
+    }
+  })
+
+  it('a guarda reconhece cada via quando ela de fato aparece', () => {
+    // Sem este caso, uma expressão regular que não casa com nada passaria por
+    // guarda para sempre. O que se verifica aqui é a guarda, e não o código.
+    const amostras = [
+      'await vscode.workspace.fs.writeFile(uri, bytes)',
+      'await vscode.workspace.applyEdit(edit)',
+      'const edit = new vscode.WorkspaceEdit()',
+      'edit.insert(uri, posicao, texto) // TextEdit',
+      "import { writeFile } from 'node:fs/promises'",
+      'await fs.promises.writeFile(caminho, texto)',
+      'await document.save()',
+    ]
+    expect(amostras).toHaveLength(VIAS.length)
+    for (let i = 0; i < VIAS.length; i += 1) {
+      expect(VIAS[i][0].test(amostras[i]), `a via ${i + 1} não reconhece a própria amostra`).toBe(
+        true,
+      )
+    }
+  })
+
+  it('as duas capacidades novas entram por porta declarada, e nenhuma delas escreve', () => {
+    const portas = readFileSync('src/host/ports.ts', 'utf8')
+    expect(portas).toContain('DraftPort')
+    expect(portas).toContain('ClipboardPort')
+    // A porta que abre arquivo continua expondo apenas abrir (D-12).
+    const editor = portas.slice(portas.indexOf('interface EditorPort'))
+    const corpo = editor.slice(0, editor.indexOf('}'))
+    expect(corpo).toContain('open(')
+    expect(corpo).not.toMatch(/write|save|delete/)
+  })
+})
+
 describe('nada de layout do Reversa no host (RF-14)', () => {
   /** Sem exceção: o corpo provisório que a carregava saiu com a feature 003. */
   const decisores = () => fontesDoHost()

@@ -1,0 +1,261 @@
+/**
+ * What each feature folder of the project means (RF-09, RN-06, D-16, D-18,
+ * D-19).
+ *
+ * It judges what `probe/features.ts` read, and reads no disk of its own: the
+ * same cut the inherited layer already makes between looking and deciding.
+ *
+ * Two axes, and not one. The SITUATION comes from the artifacts of the folder;
+ * the MARK comes from the pointer REVERSA keeps. Neither is called stage, and
+ * that is deliberate: a paused feature can be in any situation, merging the two
+ * would force a choice of which truth to tell, and a third name for the stage
+ * would create a second authority over something the inherited contract
+ * already owns.
+ *
+ * The order is by folder NAME, descending. The prefix is sequential or a date
+ * depending on `setup.json`, and either way it orders chronologically, whereas
+ * the date of an addendum is missing in a feature without one and may come
+ * malformed in the ones that have it.
+ * @module domain/history
+ */
+
+import { ProgressContract, scanActions, splitSections } from '../heranca/reversa-domain/src/index.ts'
+import type { FeatureFolderRead } from '../probe/features.ts'
+import type { FeatureMark, FeatureSituation, HistoryEntry, ProjectHistory } from './types.ts'
+
+/**
+ * The line `/reversa` appends to an addendum once a re-extraction supersedes
+ * it.
+ *
+ * It is the same rule the inherited forward contract applies to the active
+ * feature, restated here because that one is private to its module and this
+ * one has to apply it to every folder. RN-06 makes the consequence normative:
+ * a superseded addendum counts as an absent one.
+ */
+const SUPERSEDED = /^\s*Superado pela re-extração de\s/im
+
+/** A folder named the way the framework names them: a prefix, then a short name. */
+const FRAMEWORK_NAME = /^(\d+)-(.+)$/
+
+/** The heading under which both an addendum and a `requirements.md` put their summary. */
+const SUMMARY_HEADING = /\bresumo\b/
+
+/** What the history needs to know, all of it already read by someone else. */
+export interface HistoryInput {
+  /** The folders, as the local probe read them. */
+  pastas: FeatureFolderRead[]
+  /** Whether the ceiling cut the walk short. */
+  truncado: boolean
+  /** How many folders exist. */
+  total: number
+  /** The active feature, as the pointer declares it. */
+  activeFeatureDir: string | null
+  /** The queue of paused features, by folder. */
+  pausedFeatureDirs: string[]
+  /** The addenda file names, as the inherited probe listed them. */
+  addendaFiles: string[]
+  /** The body of each addendum, by file name. */
+  addendaBodies: Record<string, string>
+  /** The output folder, for the path of an addendum the panel may open. */
+  outputFolder: string
+}
+
+/**
+ * Judge every folder of the project into the history the panel draws.
+ * @param input - what the probes read, plus the pointer REVERSA keeps.
+ * @returns the entries, newest first, and the account of the reading.
+ */
+export function readHistory(input: HistoryInput): ProjectHistory {
+  const active = normalize(input.activeFeatureDir)
+  const paused = new Set(input.pausedFeatureDirs.map(normalize).filter((path) => path !== ''))
+
+  const entradas = input.pastas
+    .map((folder) => entryOf(folder, input, active, paused))
+    .sort((a, b) => (a.pasta < b.pasta ? 1 : a.pasta > b.pasta ? -1 : 0))
+
+  return { entradas, truncado: input.truncado, total: input.total }
+}
+
+/**
+ * One folder, judged.
+ * @param folder - the folder as it was read.
+ * @param input - the rest of the reading, for the addenda and the pointer.
+ * @param active - the active feature folder, already normalized.
+ * @param paused - the paused feature folders, already normalized.
+ * @returns the entry.
+ */
+function entryOf(
+  folder: FeatureFolderRead,
+  input: HistoryInput,
+  active: string,
+  paused: ReadonlySet<string>,
+): HistoryEntry {
+  const named = FRAMEWORK_NAME.exec(folder.nome)
+  const id = named === null ? null : (named[1] ?? null)
+  const nomeCurto = named === null ? folder.nome : (named[2] ?? folder.nome)
+
+  const scan = scanActions(folder.actionsMd)
+  const acoes = {
+    total: scan.total,
+    fechadas: scan.fechadas,
+    abertas: scan.abertas,
+    emendas: scan.emendas,
+  }
+
+  const addendum = addendumOf(id, input)
+  const path = normalize(folder.pasta)
+
+  return {
+    pasta: folder.pasta,
+    id,
+    nomeCurto,
+    situacao: situationOf(folder.actionsMd, scan, addendum !== null),
+    marca: markOf(path, active, paused),
+    acoes,
+    adendo: addendum === null ? null : `${input.outputFolder}/addenda/${addendum.name}`,
+    resumo: summaryOf(addendum === null ? null : addendum.body, folder.requirementsMd),
+    ultimoEvento: lastEventOf(folder.progressJsonl),
+  }
+}
+
+/**
+ * Where the folder stands, by its own artifacts.
+ * @param actionsMd - the file, or null when the folder has none.
+ * @param scan - the inherited tally of that file.
+ * @param hasAddendum - whether an addendum in force was found.
+ * @returns one of the four situations.
+ */
+function situationOf(
+  actionsMd: string | null,
+  scan: ReturnType<typeof scanActions>,
+  hasAddendum: boolean,
+): FeatureSituation {
+  if (actionsMd === null || scan.total === 0) return 'sem-acoes'
+  // An open amendment reopens the feature, with no treatment of its own
+  // (RN-05): the inherited scan already counts it in.
+  if (scan.abertas > 0) return 'em-aberto'
+  return hasAddendum ? 'convergida' : 'entregue-sem-adendo'
+}
+
+/**
+ * What the pointer says about the folder.
+ * @param path - the folder, normalized.
+ * @param active - the active feature folder, normalized.
+ * @param paused - the paused feature folders, normalized.
+ * @returns one of the three marks.
+ */
+function markOf(path: string, active: string, paused: ReadonlySet<string>): FeatureMark {
+  if (path !== '' && path === active) return 'ativa'
+  return paused.has(path) ? 'pausada' : 'nenhuma'
+}
+
+/**
+ * The addendum in force of one feature, by the `<feature-id>-…` naming REVERSA
+ * uses.
+ *
+ * A superseded one comes back as none at all, which is what RN-06 asks: the
+ * extraction it bridged no longer describes the delivery.
+ * @param id - the feature identifier, or null when the folder is unnamed.
+ * @param input - the addenda the inherited probe read.
+ * @returns the addendum, or null when there is none in force.
+ */
+function addendumOf(
+  id: string | null,
+  input: HistoryInput,
+): { name: string; body: string } | null {
+  if (id === null) return null
+
+  const name = input.addendaFiles.find((file) => file.startsWith(id))
+  if (name === undefined) return null
+
+  const body = input.addendaBodies[name] ?? ''
+  return SUPERSEDED.test(body) ? null : { name, body }
+}
+
+/**
+ * The one-line summary, in the three steps of D-18.
+ *
+ * First the summary section of the addendum, then the executive summary of the
+ * feature's own `requirements.md`, and then nothing: the panel shows the short
+ * name rather than inventing a line, because a summary the panel wrote itself
+ * would be the panel making up content.
+ *
+ * Both sources are read as a PARAGRAPH and cut at the first sentence, and the
+ * paragraph is what makes the cut honest. REVERSA hard-wraps its prose at the
+ * column, so the first physical line of a summary ends wherever the wrap fell:
+ * reading it alone produced lines like "As features 001 a" on the screen. The
+ * wrap is typography, not punctuation, and the sentence is what a person means
+ * by one line.
+ * @param addendum - the body of the addendum in force, or null.
+ * @param requirements - the `requirements.md` of the folder, or null.
+ * @returns the line, or null when neither source had one.
+ */
+function summaryOf(addendum: string | null, requirements: string | null): string | null {
+  const first = summarySection(addendum)
+  if (first !== null) return firstSentence(firstParagraph(first) ?? '')
+
+  const second = summarySection(requirements)
+  return second === null ? null : firstSentence(firstParagraph(second) ?? '')
+}
+
+/**
+ * The text of the first section whose heading names a summary.
+ * @param md - the document, or null.
+ * @returns the section text, or null when there is no such heading.
+ */
+function summarySection(md: string | null): string | null {
+  if (md === null) return null
+  for (const [heading, text] of Object.entries(splitSections(md))) {
+    if (heading !== '' && SUMMARY_HEADING.test(heading)) return text
+  }
+  return null
+}
+
+/**
+ * The first stretch of prose, with the hard wrap undone: consecutive non-empty
+ * lines joined by a space, up to the first blank one.
+ * @param text - the section.
+ * @returns the paragraph, or null when the section has no content.
+ */
+function firstParagraph(text: string): string | null {
+  const lines: string[] = []
+
+  for (const line of text.split('\n')) {
+    const trimmed = line.trim()
+    if (trimmed === '') {
+      if (lines.length > 0) break
+      continue
+    }
+    lines.push(trimmed)
+  }
+  return lines.length === 0 ? null : lines.join(' ')
+}
+
+/** The first sentence of a line, or the whole line when it ends without one. */
+function firstSentence(line: string): string | null {
+  if (line === '') return null
+  const sentence = /^(.*?[.!?])(?:\s|$)/.exec(line)
+  return sentence === null ? line : (sentence[1] ?? line)
+}
+
+/**
+ * The most recent instant of the trail, in the absolute form it was written.
+ * @param jsonl - the trail of the folder, or null when it has none.
+ * @returns the instant, or null when no event recorded one.
+ */
+function lastEventOf(jsonl: string | null): string | null {
+  if (jsonl === null) return null
+
+  let latest: string | null = null
+  for (const event of ProgressContract.read(jsonl).events) {
+    if (event.ts === null) continue
+    if (latest === null || event.ts > latest) latest = event.ts
+  }
+  return latest
+}
+
+/** A declared path, comparable: no leading `./`, no trailing separator. */
+function normalize(path: string | null): string {
+  if (typeof path !== 'string') return ''
+  return path.trim().replace(/^\.\//, '').replace(/\/+$/, '')
+}

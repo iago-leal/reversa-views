@@ -67,6 +67,11 @@ export function sessionMessages(
       root,
       ignoredRoots,
       inheritedRevision: INHERITED_MODEL_REVISION,
+      // The two branches of feature 006 travel beside the others, in the same
+      // envelope and in the same order: the sequence is unchanged, and so is
+      // the treatment of the error and of the missing folder below.
+      decomposition: reading.decomposition,
+      history: reading.history,
     },
   })
   return { messages, observedRoot: root }

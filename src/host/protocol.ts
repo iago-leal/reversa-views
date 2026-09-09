@@ -13,6 +13,7 @@
 
 import type { ReversaProcess } from '../heranca/reversa-domain/src/index.ts'
 import type { ProbeReport } from '../heranca/reversa-probe/src/snapshot.ts'
+import type { ActiveDecomposition, ProjectHistory } from '../domain/types.ts'
 
 /**
  * The envelope, identical in both directions and inherited from the kit:
@@ -57,6 +58,16 @@ export interface SetProcessData {
    * this field simply ignores it.
    */
   inheritedRevision: string
+  /**
+   * The actions of the active feature, one by one (feature 006).
+   *
+   * Absent, rather than empty, is what an older host produces, and the panel
+   * has to tell the two apart: "there are no actions" and "I did not read the
+   * actions" are different statements, and only one of them is a defect.
+   */
+  decomposition: ActiveDecomposition
+  /** Every feature folder of the project, newest first (feature 006). */
+  history: ProjectHistory
 }
 
 /** The payload for every situation with no process to show. */
@@ -90,6 +101,24 @@ export interface DispatchData {
   agent: string
 }
 
+/**
+ * The text of a document the editor is to open unsaved, and how to call it.
+ *
+ * The text travels READY: it is composed by a pure function on the screen,
+ * because the host may contain neither a REVERSA path nor a stage name, and
+ * the readable labels live on the other side (D-11).
+ */
+export interface OpenDraftData {
+  text: string
+  /** Optional: a host without one uses a title of its own. */
+  title?: string
+}
+
+/** The text to put on the clipboard of the editor. */
+export interface CopyTextData {
+  text: string
+}
+
 /** What the host sends to the webview. */
 export type HostMessage =
   | { command: 'setProcess'; data: SetProcessData }
@@ -103,6 +132,8 @@ export type WebviewMessage =
   | { command: 'openFile'; data: OpenFileData }
   | { command: 'log'; data: LogData }
   | { command: 'dispatch'; data: DispatchData }
+  | { command: 'openDraft'; data: OpenDraftData }
+  | { command: 'copyText'; data: CopyTextData }
 
 /** The three commands the host may send. */
 export const HOST_COMMANDS = ['setProcess', 'setEntry', 'setNotice'] as const
@@ -111,11 +142,23 @@ export const HOST_COMMANDS = ['setProcess', 'setEntry', 'setNotice'] as const
 export type HostCommand = (typeof HOST_COMMANDS)[number]
 
 /**
- * The five commands the webview may send. `dispatch` is RESERVED: it is
+ * The seven commands the webview may send. `dispatch` is RESERVED: it is
  * declared so that implementing agent dispatch later is writing a handler,
  * not changing the channel (RF-12).
+ *
+ * The two of feature 006 are APPENDED, after the reserved one, because the
+ * contract allows adding and forbids renaming and removing: every name that
+ * was here keeps its place, and the reserved command keeps being reserved.
  */
-export const WEBVIEW_COMMANDS = ['onLoaded', 'reload', 'openFile', 'log', 'dispatch'] as const
+export const WEBVIEW_COMMANDS = [
+  'onLoaded',
+  'reload',
+  'openFile',
+  'log',
+  'dispatch',
+  'openDraft',
+  'copyText',
+] as const
 
 /** One of the webview commands. */
 export type WebviewCommand = (typeof WEBVIEW_COMMANDS)[number]

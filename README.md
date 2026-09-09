@@ -43,6 +43,58 @@ recarregue a janela pela paleta, com `Developer: Reload Window`. Se não estiver
 a instalação falhou: repita-a e leia a saída, que nomeia a causa. Nada disso
 escreve no seu projeto, aqui ou depois: a extensão apenas lê.
 
+## Os dois cartões novos e as quatro ações do cabeçalho
+
+Além do que já mostrava, o painel abre dois cartões que respondem às duas
+perguntas de quem retoma o projeto depois de meses.
+
+**Decomposição da feature ativa.** A lista das ações do plano, uma por linha,
+com o identificador, se está fechada ou aberta, a fase em que mora e os
+arquivos que o registro de progresso associou a ela. A primeira ação aberta
+aparece destacada e nomeada como a próxima a executar. Por padrão o cartão
+mostra as abertas e as cinco fechadas mais recentes; o resto fica atrás de um
+botão, porque uma feature de quarenta ações não cabe numa barra lateral. A
+contagem ao lado do título é a do próprio Reversa, e continua sendo a
+autoridade: se a lista lida divergir dela, o painel declara a divergência em
+vez de escolher um número.
+
+**Histórico das entregas.** Uma linha por pasta de feature, da mais recente
+para a mais antiga, com a situação (convergida, entregue sem adendo, em aberto
+ou sem ações), a marca do ponteiro do Reversa (ativa ou pausada), quantas ações
+fecharam e o adendo vigente, clicável, quando existe. Feature sem adendo não
+some da lista: ela aparece dizendo que não tem. Projetos com muitas pastas
+param num teto de cinquenta, e o cartão avisa quando parou.
+
+O cabeçalho ganhou quatro ações, ao lado do botão de reler:
+
+| Ação | O que faz |
+|---|---|
+| **Expandir tudo** | Abre todos os cartões de uma vez |
+| **Recolher tudo** | Fecha todos de uma vez |
+| **Resumir em documento** | Abre um documento novo, não salvo, com o resumo do processo |
+| **Copiar o resumo** | Põe o mesmo texto na área de transferência |
+
+As duas primeiras gravam a preferência: o painel reabre como você o deixou.
+Uma ação que não teria efeito, como expandir com tudo já aberto, aparece
+indisponível em vez de sumir.
+
+**O que o resumo reúne.** É a parte derivável de uma passagem de bastão: o
+projeto, a raiz observada, o momento da leitura, a etapa e o estado da feature
+ativa com suas ações abertas, e uma linha por entrega anterior com situação e
+adendo. Sai em Markdown, e é o mesmo texto nos dois caminhos, porque a função
+que o compõe não consulta o relógio. O documento aberto não é salvo por
+ninguém além de você, e a extensão continua sem escrever no projeto. O juízo em
+prosa que uma passagem de bastão escrita à mão carrega continua sendo trabalho
+humano: o resumo não tenta imitá-lo.
+
+**Todo instante está no horário de Brasília.** O Reversa grava os momentos em
+tempo universal, que é o certo para um arquivo e o errado para os olhos. O
+painel converte todos eles na leitura, e escreve a zona por extenso, como em
+`09/09/2026 12:00 (Brasília)`. O valor absoluto não se perde: ele fica no
+atributo `data-instant` do elemento, consultável pelo inspetor do editor. Onde
+não houver momento registrado, o painel diz isso, em vez de mostrar campo
+vazio.
+
 ## Instalar, uma vez só
 
 O pacote pronto é o `.vsix` na raiz deste repositório. Instalar é um comando:
@@ -67,7 +119,7 @@ Isto é trabalho de manutenção, e só é preciso depois de mexer no código.
 ```bash
 npm install            # traz as ferramentas, inclusive o empacotador
 npm run build          # confere a herança, compila o host e empacota a tela
-npm test               # 663 testes; nenhum deles abre navegador
+npm test               # 864 testes; nenhum deles abre navegador
 npm run empacotar      # regenera o .vsix e lista o que entrou nele
 ```
 

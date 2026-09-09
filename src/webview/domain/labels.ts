@@ -14,6 +14,7 @@
  */
 
 import type { Checkpoint, Phase } from '../../heranca/reversa-domain/src/index.ts'
+import type { FeatureMark, FeatureSituation } from '../../domain/types.ts'
 import type { Label, StatusMark } from './types.ts'
 
 /** The seven stages of the forward cycle, as the reader names them. */
@@ -34,6 +35,28 @@ const PHASE_LABELS: Record<string, string> = {
   interpretacao: 'Interpretação',
   geracao: 'Geração',
   revisao: 'Revisão',
+}
+
+/**
+ * The four situations of a feature in the history, as words.
+ *
+ * They are NOT stages, and they are not spelled like one on purpose (D-19):
+ * the stage of the active feature goes on coming from the inherited contract,
+ * and a second vocabulary that looked like it would become a second authority
+ * over the same fact.
+ */
+const SITUATION_LABELS: Record<string, string> = {
+  convergida: 'convergida',
+  'entregue-sem-adendo': 'entregue, sem adendo',
+  'em-aberto': 'em aberto',
+  'sem-acoes': 'sem ações',
+}
+
+/** The three marks the pointer of REVERSA gives a feature folder. */
+const MARK_LABELS: Record<string, string> = {
+  ativa: 'feature ativa',
+  pausada: 'pausada',
+  nenhuma: '',
 }
 
 /** The three statuses a phase can be in, as words rather than as colour. */
@@ -75,20 +98,56 @@ export function phaseMark(phase: Phase): StatusMark {
   }
 }
 
+/** A checkpoint turned readable, with the instant kept apart from the word. */
+export interface CheckpointMark extends StatusMark {
+  /** When it finished, absolute and unconverted; null while it still runs. */
+  instant: string | null
+}
+
 /**
  * The agent of a checkpoint, plus when it finished or that it has not.
  *
  * The agent name is the label and is always recognised: it is not a closed
  * vocabulary, and REVERSA adds agents between versions.
+ *
+ * The instant is returned APART from the status since feature 006. It used to
+ * be spliced into the sentence, which put a raw universal-time instant on the
+ * screen in the one place the conversion of RF-15 could not reach it. The word
+ * belongs to this vocabulary; converting the instant belongs to
+ * `domain/instants.ts`; and putting the two side by side belongs to the
+ * component.
  * @param checkpoint - one checkpoint of the discovery.
- * @returns the label and the status.
+ * @returns the label, the status and the instant.
  */
-export function checkpointMark(checkpoint: Checkpoint): StatusMark {
+export function checkpointMark(checkpoint: Checkpoint): CheckpointMark {
   const { agent, completedAt } = checkpoint
   return {
     label: { text: agent, known: true, raw: agent },
-    status: completedAt === null ? 'em andamento' : `concluído em ${completedAt}`,
+    status: completedAt === null ? 'em andamento' : 'concluído em',
+    instant: completedAt,
   }
+}
+
+/**
+ * The readable name of the situation of one feature in the history (RF-09).
+ * @param situacao - the situation as the domain derived it.
+ * @returns the label; never throws, for any input.
+ */
+export function situationLabel(situacao: FeatureSituation | string): Label {
+  return lookUp(situacao, SITUATION_LABELS)
+}
+
+/**
+ * The readable name of the mark of one feature, empty for the plain case.
+ *
+ * The empty text of `nenhuma` is the point: most features carry no mark, and a
+ * line that said so of each of them would be noise where the reader is looking
+ * for the two that do.
+ * @param marca - the mark as the domain derived it.
+ * @returns the label; never throws, for any input.
+ */
+export function markLabel(marca: FeatureMark | string): Label {
+  return lookUp(marca, MARK_LABELS)
 }
 
 /** How many characters of a git revision the header shows. */

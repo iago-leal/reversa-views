@@ -1,0 +1,139 @@
+/**
+ * The text of the summary, composed on the screen and travelling ready (RF-12,
+ * RF-17, D-11).
+ *
+ * Ele é montado por função pura na webview, e não no host, por duas razões que
+ * a suíte de fronteiras já prende: o host não pode conter caminho de arquivo do
+ * Reversa nem nome de estágio, e os rótulos legíveis vivem do lado da tela.
+ * O que atravessa a ponte é texto pronto.
+ *
+ * O determinismo é requisito, e não conveniência: duas montagens sobre o mesmo
+ * processo têm de dar o mesmo texto, senão copiar e abrir o documento
+ * mostrariam coisas diferentes na mesma sessão.
+ * @module tests/webview-summary
+ */
+
+import { describe, expect, it } from 'vitest'
+import { summaryText } from '../src/webview/domain/summary.ts'
+import type { HistoryEntry } from '../src/domain/types.ts'
+import {
+  actionsMd,
+  emptyProcessFixture,
+  historyFixture,
+  payloadFixture,
+  processFixture,
+} from './helpers/reversa-fixtures.ts'
+
+/** Uma entrada de histórico, com o mínimo que cada caso quer dizer. */
+function entrada(partes: Partial<HistoryEntry> = {}): HistoryEntry {
+  return {
+    pasta: '_reversa_forward/001-leitura-do-processo',
+    id: '001',
+    nomeCurto: 'leitura-do-processo',
+    situacao: 'convergida',
+    marca: 'nenhuma',
+    acoes: { total: 21, fechadas: 21, abertas: 0, emendas: 0 },
+    adendo: '_reversa_sdd/addenda/001-leitura-do-processo.md',
+    resumo: 'A feature entrega a camada de leitura.',
+    ultimoEvento: '2026-09-09T10:00:00Z',
+    ...partes,
+  }
+}
+
+const COM_HISTORICO = payloadFixture({
+  history: historyFixture([
+    entrada(),
+    entrada({
+      pasta: '_reversa_forward/002-ponte-e-host',
+      id: '002',
+      nomeCurto: 'ponte-e-host',
+      situacao: 'em-aberto',
+      marca: 'pausada',
+      acoes: { total: 32, fechadas: 30, abertas: 2, emendas: 0 },
+      adendo: null,
+      resumo: null,
+    }),
+  ]),
+})
+
+describe('o que o resumo reúne (RF-12)', () => {
+  it('nomeia o projeto e o momento da leitura, em horário de Brasília', () => {
+    const texto = summaryText(COM_HISTORICO)
+
+    expect(texto).toContain('reversa-views')
+    expect(texto).toContain('(Brasília)')
+    expect(texto).not.toContain('2026-09-09T15:00:00Z')
+  })
+
+  it('diz o estágio da feature ativa pelo rótulo legível, e não pelo valor cru', () => {
+    const texto = summaryText(COM_HISTORICO)
+    expect(texto).toContain('Execução em progresso')
+    expect(texto).not.toContain('coding-em-progresso')
+  })
+
+  it('diz quantas ações fecharam sobre o total da feature ativa', () => {
+    const texto = summaryText(
+      payloadFixture({ process: processFixture({ actionsMd: actionsMd(20, 14) }) }),
+    )
+    expect(texto).toContain('20')
+    expect(texto).toContain('34')
+  })
+
+  it('lista cada feature do histórico com identificador e situação', () => {
+    const texto = summaryText(COM_HISTORICO)
+
+    expect(texto).toContain('001-leitura-do-processo')
+    expect(texto).toContain('002-ponte-e-host')
+    expect(texto).toContain('convergida')
+  })
+
+  it('leva o resumo de uma linha quando há, e o nome curto quando não há', () => {
+    const texto = summaryText(COM_HISTORICO)
+    expect(texto).toContain('A feature entrega a camada de leitura.')
+    expect(texto).toContain('ponte-e-host')
+  })
+
+  it('declara a feature pausada como tal, sem omiti-la', () => {
+    expect(summaryText(COM_HISTORICO).toLowerCase()).toContain('pausada')
+  })
+})
+
+describe('projeto sem feature alguma (RF-13)', () => {
+  it('devolve texto que declara a ausência, em vez de texto vazio', () => {
+    const texto = summaryText(
+      payloadFixture({ process: emptyProcessFixture(), history: historyFixture([]) }),
+    )
+
+    expect(texto.length).toBeGreaterThan(40)
+    expect(texto.toLowerCase()).toContain('nenhuma feature')
+  })
+
+  it('não deixa linha em branco no lugar de um dado ausente', () => {
+    const texto = summaryText(
+      payloadFixture({ process: emptyProcessFixture(), history: historyFixture([]) }),
+    )
+    expect(texto.split('\n').filter((linha) => linha.trim().endsWith(':'))).toEqual([])
+  })
+
+  it('não lança quando o histórico chega ausente, como faria um host anterior', () => {
+    const semRamos = payloadFixture()
+    delete (semRamos as { history?: unknown }).history
+    expect(() => summaryText(semRamos)).not.toThrow()
+  })
+})
+
+describe('determinismo (RF-17)', () => {
+  it('duas montagens sobre o mesmo processo dão o mesmo texto', () => {
+    expect(summaryText(COM_HISTORICO)).toBe(summaryText(COM_HISTORICO))
+  })
+
+  it('não consulta o relógio: o momento vem da carga, e não do agora', () => {
+    const outro = payloadFixture({ ...COM_HISTORICO, readAt: '2020-01-01T00:00:00Z' })
+    expect(summaryText(outro)).toContain('31/12/2019')
+  })
+
+  it('cabe folgadamente no teto que o roteador aplica', () => {
+    const bytes = new TextEncoder().encode(summaryText(COM_HISTORICO)).length
+    expect(bytes).toBeLessThan(65536)
+  })
+})

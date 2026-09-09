@@ -76,12 +76,24 @@ describe('marca de checkpoint', () => {
     expect(checkpointMark(emCurso!).status.toLowerCase()).toContain('andamento')
   })
 
-  it('mostra a data de quem concluiu', () => {
+  it('devolve o instante de quem concluiu à parte, e não dentro da frase', () => {
+    // Desde a feature 006 o instante sai apartado: dentro da frase ele seria
+    // tempo universal cru na tela, no único lugar que a conversão de RF-15 não
+    // alcançaria.
     const processo = processFixture()
     const concluido = processo.discovery.checkpoints.find((c) => c.completedAt !== null)
 
     expect(concluido).toBeDefined()
-    expect(checkpointMark(concluido!).status).toContain('2026-09-09')
+    const marca = checkpointMark(concluido!)
+    expect(marca.instant).toBe('2026-09-09T10:00:00Z')
+    expect(marca.status).not.toContain('2026')
+  })
+
+  it('não declara instante algum para quem ainda corre', () => {
+    const processo = processFixture()
+    const emCurso = processo.discovery.checkpoints.find((c) => c.completedAt === null)
+
+    expect(checkpointMark(emCurso!).instant).toBeNull()
   })
 
   it('usa o nome do agente como rótulo, sempre conhecido', () => {
