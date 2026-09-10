@@ -1,0 +1,40 @@
+# Vocabulário controlado do registro de bugs. `area`, `module` e `feature` de todo bug.md
+# DEVEM vir daqui; o que não couber usa `unclassified` e propõe o termo em Agent Notes.
+#
+# Semeado em 2026-09-09 a partir das cinco specs de `_reversa_sdd/sdd/` (module), das camadas
+# do código (area) e das features do ciclo forward mais as peças nomeadas que elas entregaram
+# (feature). Sem `architecture.md` nem `domain.md` neste projeto: rode `/reversa` para uma
+# extração que permita ressemear.
+version: 1
+
+area:
+  - webview        # a tela do painel (src/webview)
+  - host           # a ponte com o editor (src/host, src/extension.ts)
+  - leitura        # a camada de leitura pura (src/heranca, src/probe, src/domain)
+  - empacotamento  # construção, pacote, versão e atualização (scripts/)
+  - heranca        # ritual de sincronia com o scrum-harness (scripts/heranca, src/heranca)
+
+module:
+  - leitura-do-processo
+  - ponte-e-host
+  - painel-do-processo
+  - heranca-e-sincronia
+  - empacotamento-e-verificacao
+
+feature:
+  - 001-leitura-do-processo
+  - 002-ponte-e-host
+  - 003-painel-do-processo
+  - 004-heranca-e-sincronia
+  - 005-empacotamento-e-verificacao
+  - 006-cartoes-e-cronologia
+  - 007-atualizacao-e-progresso
+  - cabecalho            # itens de procedência, integridade e desfecho da consulta
+  - anomalias            # vocabulário e seção de anomalias
+  - duvidas              # contagem de [DÚVIDA] do requirements e a faixa de bloqueio do clarify (acrescentado 2026-09-10)
+  - consulta-a-origem    # a consulta anônima do host à origem (feature 007)
+  - atualizador          # scripts/atualizar.js e o ritual do README
+  - versao-derivada      # scripts/versao.js e o carimbo da construção
+  - decomposicao
+  - historico
+  - barra-de-progresso

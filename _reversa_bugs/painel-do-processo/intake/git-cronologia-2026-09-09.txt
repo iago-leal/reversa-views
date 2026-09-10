@@ -1,0 +1,11 @@
+# Cronologia (git, horário de Brasília)
+543f0bd 2026-09-09 21:44 docs(sync): adendo da feature 007
+8457e7f 2026-09-09 21:43 feat(007): atualização e progresso visível
+a23711d 2026-09-09 19:37 chore: licença MIT
+6591e1f 2026-09-09 19:37 docs(sync): adendo da feature 006
+9f79366 2026-09-09 19:37 feat(006): cartões e cronologia
+e7c46f8 2026-09-09 17:36 fix(portão visual): três defeitos que a suíte verde não pegava
+
+HEAD: 543f0bdb633a2b9bf28d856ee733e17ab62cc679
+origin/master (ls-remote): 543f0bdb633a2b9bf28d856ee733e17ab62cc679
+carimbo src/host/build.ts: EXTENSION_VERSION = '0.7.0'
