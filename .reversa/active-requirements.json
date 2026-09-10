@@ -1,9 +1,9 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/007-atualizacao-e-progresso",
-  "feature-id": "007",
-  "short-name": "atualizacao-e-progresso",
-  "started-at": "2026-09-09T22:48:40Z",
+  "feature-dir": "_reversa_forward/008-cronologia-do-ciclo-bugs",
+  "feature-id": "008",
+  "short-name": "cronologia-do-ciclo-bugs",
+  "started-at": "2026-09-10T12:08:10Z",
   "current-stage": "to-do",
   "stages-completed": [
     "requirements",

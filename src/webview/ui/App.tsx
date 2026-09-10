@@ -15,6 +15,7 @@
  * @module webview/ui/App
  */
 
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import type { UpdateStatus } from '../../host/protocol.ts'
 import type {
@@ -31,6 +32,7 @@ import { collapsibleSections, effectiveCollapsed, sectionOrder } from '../domain
 import { themeAttributes } from '../theme/primer-themes.ts'
 import { AnomaliesSection } from './AnomaliesSection.tsx'
 import { BlockingBanner } from './BlockingBanner.tsx'
+import { BugsSection } from './BugsSection.tsx'
 import { CollapsibleSection } from './CollapsibleSection.tsx'
 import { DecompositionSection } from './DecompositionSection.tsx'
 import { DiscoverySection } from './DiscoverySection.tsx'
@@ -88,8 +90,19 @@ export function App(props: AppProps): ReactNode {
   const integrity = payload === null ? NOTHING_READ : readingIntegrity(payload)
   const collapsed = new Set(effectiveCollapsed(preferences, integrity))
   const cards = collapsibleSections()
-  const [blocking, forward, decomposition, history, discovery, policy, anomalies, probe] =
+  const [blocking, forward, decomposition, history, bugs, discovery, policy, anomalies, probe] =
     sectionOrder()
+
+  /**
+   * Which context groups of the registry had their rest revealed (D-07).
+   *
+   * It is state of the panel, per group, and NOT a stored preference: the same
+   * decision feature 003 took for the list of anomalies. What one expands to
+   * look at now is not a choice that should outlive the panel, and remembering
+   * an expansion of a group that no longer exists would be remembering the
+   * wrong thing.
+   */
+  const [revealedBugs, setRevealedBugs] = useState<ReadonlySet<string>>(() => new Set())
 
   /**
    * Toggle one section, if anyone upstream is listening.
@@ -128,7 +141,7 @@ export function App(props: AppProps): ReactNode {
         <>
           <ErrorBoundary section={blocking} onLog={onLog}>
             <BlockingBanner
-              reasons={blockingReasons(payload.process)}
+              reasons={blockingReasons(payload.process, payload.bugs)}
               onOpenFile={onOpenFile}
             />
           </ErrorBoundary>
@@ -159,6 +172,19 @@ export function App(props: AppProps): ReactNode {
             />
           </ErrorBoundary>
 
+          <ErrorBoundary section={bugs} onLog={onLog}>
+            <BugsSection
+              bugs={payload.bugs}
+              collapsed={collapsed.has(bugs)}
+              onToggle={toggle(bugs)}
+              onOpenFile={onOpenFile}
+              revealed={revealedBugs}
+              onReveal={(contexto) =>
+                setRevealedBugs((antes) => new Set([...antes, contexto]))
+              }
+            />
+          </ErrorBoundary>
+
           <ErrorBoundary section={discovery} onLog={onLog}>
             <DiscoverySection
               process={payload.process}
@@ -177,7 +203,10 @@ export function App(props: AppProps): ReactNode {
 
           <ErrorBoundary section={anomalies} onLog={onLog}>
             <AnomaliesSection
-              anomalies={payload.process.anomalies}
+              anomalies={[
+                ...payload.process.anomalies,
+                ...(payload.bugs?.anomalias ?? []),
+              ]}
               collapsed={collapsed.has(anomalies)}
               onToggle={toggle(anomalies)}
             />

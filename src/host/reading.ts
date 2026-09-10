@@ -18,9 +18,12 @@ import { readReversa } from '../heranca/reversa-domain/src/index.ts'
 import type { ReversaProcess, ReversaSnapshot } from '../heranca/reversa-domain/src/index.ts'
 import { readReversaSnapshot } from '../heranca/reversa-probe/src/index.ts'
 import type { ProbeReport, ProbeResult } from '../heranca/reversa-probe/src/snapshot.ts'
+import { readBugs } from '../domain/bugs.ts'
 import { readDecomposition } from '../domain/decomposition.ts'
 import { readHistory } from '../domain/history.ts'
-import type { ActiveDecomposition, ProjectHistory } from '../domain/types.ts'
+import type { ActiveDecomposition, BugRegistry, ProjectHistory } from '../domain/types.ts'
+import { readBugFolders } from '../probe/bugs.ts'
+import type { BugsRead } from '../probe/bugs.ts'
 import { readFeatureFolders } from '../probe/features.ts'
 import type { FeatureFoldersRead } from '../probe/features.ts'
 import { logLine } from './ports.ts'
@@ -38,6 +41,8 @@ export interface ReadingDeps {
   readProcess?: (snapshot: ReversaSnapshot) => ReversaProcess
   /** The local probe of feature 006, which walks the other feature folders. */
   readFolders?: (root: string, forwardFolder: string) => FeatureFoldersRead
+  /** The local probe of feature 008, which walks the bug registry. */
+  readBugsFolders?: (root: string) => BugsRead
   /** Where the moment of the reading comes from. */
   clock?: () => Date
 }
@@ -54,6 +59,8 @@ export type ReadingResult =
       decomposition: ActiveDecomposition
       /** Every feature folder of the project (feature 006). */
       history: ProjectHistory
+      /** The bug registry of the project (feature 008). */
+      bugs: BugRegistry
     }
   | { kind: 'error'; message: string }
 
@@ -69,6 +76,8 @@ export function readWorkspace(root: string, deps: ReadingDeps): ReadingResult {
   const readFolders =
     deps.readFolders ??
     ((where: string, forwardFolder: string) => readFeatureFolders({ root: where, forwardFolder }))
+  const readBugsFolders =
+    deps.readBugsFolders ?? ((where: string) => readBugFolders({ root: where }))
   const clock = deps.clock ?? (() => new Date())
 
   try {
@@ -93,6 +102,13 @@ export function readWorkspace(root: string, deps: ReadingDeps): ReadingResult {
       outputFolder: process.discovery.outputFolder,
     })
 
+    // The registry branch runs beside the other two and knows as little as they
+    // do: where the registry lives is a literal of the local code, and nothing
+    // of REVERSA's layout is written here. It sits INSIDE the same try, and for
+    // the same reason: a walk of the disk that throws must become the named
+    // error state and never an exception in the editor.
+    const bugs = readBugs(readBugsFolders(root))
+
     return {
       kind: 'loaded',
       entry: process.installed ? 'installed' : 'no-reversa',
@@ -101,6 +117,7 @@ export function readWorkspace(root: string, deps: ReadingDeps): ReadingResult {
       readAt: clock().toISOString(),
       decomposition: readDecomposition(snapshot.actionsMd, process.forward.actions.total),
       history,
+      bugs,
     }
   } catch (cause) {
     const message = cause instanceof Error ? cause.message : String(cause)

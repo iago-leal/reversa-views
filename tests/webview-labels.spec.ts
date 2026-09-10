@@ -5,8 +5,25 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { checkpointMark, phaseMark, revisionLabel, stageLabel } from '../src/webview/domain/labels.ts'
+import {
+  bugPhaseLabel,
+  bugPriorityLabel,
+  bugSeverityLabel,
+  bugStateLabel,
+  checkpointMark,
+  inconsistencyLabel,
+  phaseMark,
+  revisionLabel,
+  stageLabel,
+} from '../src/webview/domain/labels.ts'
+import type { Label } from '../src/webview/domain/types.ts'
 import { PHASES } from '../src/heranca/reversa-domain/src/index.ts'
+import {
+  BUG_PHASES,
+  BUG_PRIORITIES,
+  BUG_SEVERITIES,
+  BUG_STATES,
+} from '../src/domain/types.ts'
 import { processFixture } from './helpers/reversa-fixtures.ts'
 
 const STAGES = [
@@ -125,5 +142,80 @@ describe('revisão do modelo herdado', () => {
     expect(revisionLabel('')).toBe('')
     expect(revisionLabel(null)).toBe('')
     expect(revisionLabel(undefined)).toBe('')
+  })
+})
+
+/**
+ * Os quatro vocabulários do registro de bugs (RF-12).
+ *
+ * A autoridade sobre eles é o schema do `/reversa-debugger`, e não este painel.
+ * O que estes casos guardam é a consequência disso: valor fora da lista volta
+ * desenhado CRU e marcado como não reconhecido, porque o schema cresce entre
+ * versões e um painel que recusasse o valor novo mostraria menos do que o
+ * arquivo tem. Degradação declarada, e não falha.
+ */
+
+describe('rótulos do registro de bugs (RF-12)', () => {
+  it('dá texto legível e distinto aos três estados', () => {
+    const rotulos = BUG_STATES.map((estado) => bugStateLabel(estado))
+
+    expect(rotulos.every((rotulo) => rotulo.known)).toBe(true)
+    expect(new Set(rotulos.map((rotulo) => rotulo.text)).size).toBe(BUG_STATES.length)
+  })
+
+  it('dá texto legível e distinto às dez fases do schema', () => {
+    const rotulos = BUG_PHASES.map((fase) => bugPhaseLabel(fase))
+
+    expect(BUG_PHASES).toHaveLength(10)
+    expect(rotulos.every((rotulo) => rotulo.known)).toBe(true)
+    expect(new Set(rotulos.map((rotulo) => rotulo.text)).size).toBe(BUG_PHASES.length)
+  })
+
+  it('dá texto legível e distinto às quatro severidades e às quatro prioridades', () => {
+    const severidades = BUG_SEVERITIES.map((valor) => bugSeverityLabel(valor))
+    const prioridades = BUG_PRIORITIES.map((valor) => bugPriorityLabel(valor))
+
+    expect(severidades.every((rotulo) => rotulo.known)).toBe(true)
+    expect(prioridades.every((rotulo) => rotulo.known)).toBe(true)
+    expect(new Set(severidades.map((r) => r.text)).size).toBe(4)
+    expect(new Set(prioridades.map((r) => r.text)).size).toBe(4)
+  })
+
+  it('valor fora do vocabulário volta cru e marcado como não reconhecido', () => {
+    const fora: Array<[(valor: string) => Label, string]> = [
+      [bugStateLabel, 'quase-resolvido'],
+      [bugPhaseLabel, 'quase-la'],
+      [bugSeverityLabel, 'gravissimo'],
+      [bugPriorityLabel, 'P9'],
+    ]
+    for (const [rotular, valor] of fora) {
+      const rotulo = rotular(valor)
+      expect(rotulo.known, valor).toBe(false)
+      expect(rotulo.text, valor).toBe(valor)
+      expect(rotulo.raw, valor).toBe(valor)
+    }
+  })
+
+  it('não lança em entrada alguma, inclusive vazia', () => {
+    for (const rotular of [bugStateLabel, bugPhaseLabel, bugSeverityLabel, bugPriorityLabel]) {
+      expect(() => rotular('')).not.toThrow()
+      expect(rotular('').known).toBe(false)
+    }
+  })
+
+  it('a fase de espera por decisão humana tem texto que a nomeia como espera', () => {
+    // É a fase que RF-10 sobe para a faixa, e o texto dela é o que o leitor lê
+    // nas duas telas: a linha do bug e a linha da faixa.
+    expect(bugPhaseLabel('awaiting-human').text.toLowerCase()).toContain('human')
+  })
+
+  it('as duas inconsistências de RN-04 têm texto que declara qual delas é', () => {
+    const semTrava = inconsistencyLabel('resolvido-sem-trava')
+    const semResolvido = inconsistencyLabel('trava-sem-resolvido')
+
+    expect(semTrava.known).toBe(true)
+    expect(semResolvido.known).toBe(true)
+    expect(semTrava.text).not.toBe(semResolvido.text)
+    expect(inconsistencyLabel('outra-coisa').known).toBe(false)
   })
 })

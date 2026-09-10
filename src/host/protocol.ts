@@ -13,7 +13,7 @@
 
 import type { ReversaProcess } from '../heranca/reversa-domain/src/index.ts'
 import type { ProbeReport } from '../heranca/reversa-probe/src/snapshot.ts'
-import type { ActiveDecomposition, ProjectHistory } from '../domain/types.ts'
+import type { ActiveDecomposition, BugRegistry, ProjectHistory } from '../domain/types.ts'
 
 /**
  * The envelope, identical in both directions and inherited from the kit:
@@ -89,6 +89,23 @@ export interface SetProcessData {
    * be readable from an attribute.
    */
   builtFromCommit: string
+  /**
+   * The bug registry of the project, grouped by context (feature 008, D-10).
+   *
+   * APPENDED at the end, like every field before it: nothing above is renamed
+   * or reordered, a webview built before this feature ignores what it does not
+   * know, and a host built before it does not send the field at all.
+   *
+   * That last case is real rather than hypothetical, which is why the panel has
+   * to tell absence from emptiness: ABSENT means the reading did not happen,
+   * EMPTY means the reading happened and found nothing. Only one of the two is
+   * a defect, and drawing them alike would hide it.
+   *
+   * A bug with `visibility: restricted` never reaches this field: it is
+   * filtered in the reading layer, before the payload is assembled, and what
+   * travels is only how many were left out (D-11).
+   */
+  bugs: BugRegistry
 }
 
 /** The payload for every situation with no process to show. */

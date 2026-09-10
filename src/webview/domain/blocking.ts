@@ -13,6 +13,7 @@
  */
 
 import type { ReversaProcess } from '../../heranca/reversa-domain/src/index.ts'
+import type { BugEntry, BugRegistry } from '../../domain/types.ts'
 import type { BlockingReason } from './types.ts'
 
 /** The stage that means the delivery closed and the addendum never came. */
@@ -104,14 +105,105 @@ function openDoubts(process: ReversaProcess): BlockingReason[] {
 }
 
 /**
+ * The phase of a bug that says, in the registry's own words, that it is waiting
+ * on a person (RF-10).
+ */
+const AWAITING_HUMAN = 'awaiting-human'
+
+/**
+ * The severities that count as high (RF-10).
+ *
+ * The requirement writes "a severidade alta", and the scale has four steps with
+ * `critical` above `high`. A band that raised the second and kept quiet about
+ * the first would name the smaller defect and hide the bigger one, which is the
+ * opposite of what the band exists to do. So the reading is: at or above high.
+ */
+const HIGH_SEVERITIES: ReadonlySet<string> = new Set(['critical', 'high'])
+
+/** The command that acts on one bug of the registry; text to copy, never run. */
+const BUG_COMMAND = '/reversa-debugger-fix'
+
+/**
+ * The three conditions that raise one bug to the band, in the declared order.
+ *
+ * The order is written HERE, in one place, and not left to the order of the
+ * fields of the bug: the band reads top to bottom, and what comes first is a
+ * decision.
+ *
+ * Only the third is gated on the bug not being closed, and the asymmetry is the
+ * requirement's rather than an oversight: a lock over a bug that still declares
+ * a wait or a blocking condition is a registry that contradicts itself, and
+ * saying so is worth a line.
+ * @param bug - the bug being read.
+ * @returns the reasons it carries, as sentences; empty when it carries none.
+ */
+function bugConditions(bug: BugEntry): string[] {
+  const razoes: string[] = []
+
+  // The conditions read the RECOGNISED value, never the raw one. A phase or a
+  // severity the panel does not know is drawn on the line marked unrecognised,
+  // and stays off the band: raising a value whose meaning this version cannot
+  // establish would be the panel guessing what the registrar meant.
+  if (bug.fase === AWAITING_HUMAN) razoes.push('aguarda decisão humana')
+  if (bug.bloqueado) razoes.push('está bloqueado por condição declarada')
+  if (!bug.travado && HIGH_SEVERITIES.has(bug.severidade ?? '')) {
+    razoes.push('tem severidade alta e não foi encerrado')
+  }
+  return razoes
+}
+
+/**
+ * The bugs of the registry that wait on a person (RF-10, D-08).
+ *
+ * ONE LINE PER BUG, whatever the number of conditions it gathers. The band
+ * answers "what is waiting on you", not "how many rules each bug breaks": three
+ * lines about the same bug would send the reader to the same file three times,
+ * and the reasons are named in the one line so that nothing is lost by joining
+ * them.
+ * @param registry - the registry, or its absence.
+ * @returns zero or more reasons.
+ */
+function bugReasons(registry: BugRegistry | undefined): BlockingReason[] {
+  if (registry === undefined || !registry.presente) return []
+
+  const reasons: BlockingReason[] = []
+  for (const contexto of registry.contextos) {
+    for (const bug of contexto.bugs) {
+      const razoes = bugConditions(bug)
+      if (razoes.length === 0) continue
+
+      const nome = bug.id ?? bug.pasta
+      reasons.push({
+        text: `O bug ${nome} ${razoes.join(' e ')}.`,
+        artifact: bug.arquivo,
+        command: bug.id === null ? BUG_COMMAND : `${BUG_COMMAND} ${bug.id}`,
+      })
+    }
+  }
+  return reasons
+}
+
+/**
  * Every reason the process is waiting on a human, in the declared order.
+ *
+ * The registry arrives as a SECOND ARGUMENT, beside the process and not inside
+ * it (D-08): it does not live in what the inherited reader produces, and
+ * putting it there would create a second authority over that shape. It is
+ * optional because a host older than feature 008 does not send it, and a panel
+ * that treated its absence as an empty registry would be affirming that no bug
+ * waits when it simply did not look.
  * @param process - the process the panel received.
+ * @param registry - the bug registry, or its absence.
  * @returns the reasons; an empty list means no banner, not an empty banner.
  */
-export function blockingReasons(process: ReversaProcess): BlockingReason[] {
+export function blockingReasons(
+  process: ReversaProcess,
+  registry?: BugRegistry,
+): BlockingReason[] {
   return [
     ...deliveredWithoutAddendum(process),
     ...migrationReasons(process),
     ...openDoubts(process),
+    ...bugReasons(registry),
   ]
 }

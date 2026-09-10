@@ -1,6 +1,6 @@
 /**
  * Every anomaly the reading met, with the cut RF-21 fixes (RF-08, RF-21,
- * RN-05, D-19).
+ * RN-05, D-19, D-04 of feature 008).
  *
  * Ten are shown, the total is stated, and the rest are one click away. The cut
  * is a named constant of this module, and expanding it is LOCAL state: it is
@@ -9,13 +9,19 @@
  * remembering the wrong thing.
  *
  * An anomaly code outside the vocabulary is drawn raw, and does not break the
- * list: RN-05 again.
+ * list: RN-05 again. Feature 008 leans on exactly that. It takes the COMMON
+ * STRUCTURAL SHAPE -- a file, a code as TEXT, an optional detail -- and draws
+ * the two origins in one list: the anomalies of the process, whose codes come
+ * from the closed union of the inherited package, and the anomalies of the bug
+ * registry, whose codes are a local union of their own (D-04). Neither
+ * vocabulary has to learn about the other, and no translation table is added
+ * here, because there never was one: the code has always been drawn as it came.
  * @module webview/ui/AnomaliesSection
  */
 
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import type { Anomaly } from '../../heranca/reversa-domain/src/index.ts'
+import type { DisplayAnomaly } from '../../domain/types.ts'
 import { CollapsibleSection } from './CollapsibleSection.tsx'
 
 /** How many anomalies the section shows before asking (RF-21). */
@@ -23,7 +29,8 @@ const CUT = 10
 
 /** What the section draws. */
 export interface AnomaliesSectionProps {
-  anomalies: Anomaly[]
+  /** Both origins, already joined by the caller, in the common shape. */
+  anomalies: readonly DisplayAnomaly[]
   collapsed: boolean
   onToggle: () => void
 }

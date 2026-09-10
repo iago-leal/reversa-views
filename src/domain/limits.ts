@@ -34,3 +34,33 @@ export const FEATURE_FOLDER_CAP = 50
  * refuses, and says the size it received beside the ceiling.
  */
 export const SUMMARY_TEXT_CAP = 65536
+
+/**
+ * The most bug folders read in one pass, across every context (RF-15, D-13).
+ *
+ * It is the same fifty of `FEATURE_FOLDER_CAP` and of the inherited addenda,
+ * for the same reason: a registry that grew past what anyone reads must not
+ * turn one panel reading into an unbounded walk of the disk. Above it the
+ * reading stops and DECLARES itself partial, saying how many exist beside how
+ * many were read -- a ceiling that hid what it cut would be worse than none.
+ *
+ * Three bugs exist in this project today, so the guard is far from binding.
+ */
+export const BUG_CAP = 50
+
+/**
+ * The folder the bug registry lives in, relative to the observed root.
+ *
+ * The literal is written HERE and not imported, and that is a DUPLICATION in
+ * relation to the inherited package: `policy.ts` names the same folder among
+ * the ones REVERSA owns, and does not export it. Reaching into a vendored file
+ * for the value, or editing it to export one, would cost a declared adaptation
+ * in `src/heranca/PROCEDENCIA.md` and a conflict at the next resynchronisation
+ * -- a price out of proportion to one string.
+ *
+ * The duplication is therefore accepted and declared, and it is contained by
+ * living in exactly one place on the local side: if the registry is ever
+ * renamed, this module is the only local file to change, and the divergence
+ * with the inherited one becomes visible at that moment rather than never.
+ */
+export const BUGS_FOLDER = '_reversa_bugs'

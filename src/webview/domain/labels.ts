@@ -246,3 +246,111 @@ export function updateLabel(status: UpdateStatus): UpdateLabel {
       return { text: 'Desfecho da conferência não reconhecido por esta versão.', command: null }
   }
 }
+
+/* ------------------------------------------- the vocabularies of the registry */
+
+/**
+ * The four vocabularies of the bug registry, plus the two inconsistencies of
+ * RN-04 (RF-12).
+ *
+ * The AUTHORITY over the first four is the schema of `/reversa-debugger`, and
+ * what stands here is the copy the panel needs in order to know what a
+ * recognised label is. The consequence is declared and deliberate: if the
+ * schema grows, the panel draws the new value RAW and marks it unrecognised,
+ * which is degradation rather than failure, and reconciling the two lists is
+ * one line. A panel that refused the value would show less than the file holds.
+ */
+
+/** The three states of the life cycle; blocking is a condition, never a fourth. */
+const BUG_STATE_LABELS: Record<string, string> = {
+  open: 'aberto',
+  active: 'em tratamento',
+  resolved: 'resolvido',
+}
+
+/** The ten phases that detail an active bug, in the words of the reader. */
+const BUG_PHASE_LABELS: Record<string, string> = {
+  triaging: 'em triagem',
+  mitigating: 'em mitigação',
+  reproducing: 'em reprodução',
+  diagnosing: 'em diagnóstico',
+  planning: 'em planejamento',
+  testing: 'em teste',
+  patching: 'em correção',
+  delivering: 'em entrega',
+  observing: 'em observação',
+  'awaiting-human': 'aguardando decisão humana',
+}
+
+/** How big the damage is, which is not how urgent the fix is. */
+const BUG_SEVERITY_LABELS: Record<string, string> = {
+  critical: 'severidade crítica',
+  high: 'severidade alta',
+  medium: 'severidade média',
+  low: 'severidade baixa',
+}
+
+/** How urgent the fix is, which is not how big the damage is. */
+const BUG_PRIORITY_LABELS: Record<string, string> = {
+  P0: 'prioridade imediata',
+  P1: 'prioridade alta',
+  P2: 'prioridade média',
+  P3: 'prioridade baixa',
+}
+
+/**
+ * The two asymmetries of the lock, as sentences that say WHICH one was found.
+ *
+ * Neither text resolves the disagreement, and that is the point of RN-04: the
+ * panel states that the registry contradicts itself and leaves the reading to
+ * the person who can open the folder.
+ */
+const BUG_INCONSISTENCY_LABELS: Record<string, string> = {
+  'resolvido-sem-trava': 'declarado resolvido e sem a trava de encerramento',
+  'trava-sem-resolvido': 'com a trava de encerramento e sem estar resolvido',
+}
+
+/**
+ * The readable name of the state of one bug (RF-12).
+ * @param estado - the value as it arrived from the registry.
+ * @returns the label; never throws, for any input.
+ */
+export function bugStateLabel(estado: string): Label {
+  return lookUp(estado, BUG_STATE_LABELS)
+}
+
+/**
+ * The readable name of the phase of one bug (RF-12).
+ * @param fase - the value as it arrived from the registry.
+ * @returns the label; never throws, for any input.
+ */
+export function bugPhaseLabel(fase: string): Label {
+  return lookUp(fase, BUG_PHASE_LABELS)
+}
+
+/**
+ * The readable name of the severity of one bug (RF-12).
+ * @param severidade - the value as it arrived from the registry.
+ * @returns the label; never throws, for any input.
+ */
+export function bugSeverityLabel(severidade: string): Label {
+  return lookUp(severidade, BUG_SEVERITY_LABELS)
+}
+
+/**
+ * The readable name of the priority of one bug (RF-12).
+ * @param prioridade - the value as it arrived from the registry.
+ * @returns the label; never throws, for any input.
+ */
+export function bugPriorityLabel(prioridade: string): Label {
+  return lookUp(prioridade, BUG_PRIORITY_LABELS)
+}
+
+/**
+ * The sentence that names which inconsistency of RN-04 a bug carries.
+ * @param inconsistencia - the inconsistency the reading declared.
+ * @returns the label; never throws, for any input.
+ */
+export function inconsistencyLabel(inconsistencia: string): Label {
+  return lookUp(inconsistencia, BUG_INCONSISTENCY_LABELS)
+}

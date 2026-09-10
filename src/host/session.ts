@@ -100,6 +100,10 @@ export function sessionMessages(
       // the treatment of the error and of the missing folder below.
       decomposition: reading.decomposition,
       history: reading.history,
+      // The registry of feature 008 travels beside them, in the same envelope
+      // and in the same order: the sequence is unchanged, and so is the
+      // treatment of the error and of the missing folder above.
+      bugs: reading.bugs,
       // The provenance of feature 007, travelling beside the inherited
       // revision because RF-17 asks for it "like the inherited model".
       extensionVersion: build.version,

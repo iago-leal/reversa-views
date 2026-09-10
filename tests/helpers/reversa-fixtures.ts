@@ -14,7 +14,15 @@ import { EMPTY_SNAPSHOT, readReversa } from '../../src/heranca/reversa-domain/sr
 import type { ReversaProcess, ReversaSnapshot } from '../../src/heranca/reversa-domain/src/index.ts'
 import type { ProbeReport } from '../../src/heranca/reversa-probe/src/snapshot.ts'
 import { readDecomposition } from '../../src/domain/decomposition.ts'
-import type { ActiveDecomposition, HistoryEntry, ProjectHistory } from '../../src/domain/types.ts'
+import type {
+  ActiveDecomposition,
+  BugContext,
+  BugEntry,
+  BugRegistry,
+  HistoryEntry,
+  ProjectHistory,
+} from '../../src/domain/types.ts'
+import { EMPTY_BUG_COUNTS } from '../../src/domain/types.ts'
 import type { SetProcessData } from '../../src/host/protocol.ts'
 
 /** What a caller may change about the installation the fixture describes. */
@@ -193,6 +201,155 @@ export function payloadFixture(overrides: Partial<SetProcessData> = {}): SetProc
     history: historyFixture(),
     extensionVersion: '0.6.1',
     builtFromCommit: 'a23711d481021a978720c0bc478b6dabed94fec3',
+    bugs: bugsFixture(),
     ...overrides,
   }
 }
+
+/**
+ * One bug of the registry, with only what the caller cares to say.
+ *
+ * Everything else gets a usable default, which is what keeps a case about the
+ * order from having to declare a severity it does not care about. The one field
+ * with no default is the identifier: a bug without one is a case of its own and
+ * has to be asked for.
+ */
+export function bugFixture(partes: Partial<BugEntry> & { id: string | null }): BugEntry {
+  const nome = partes.id ?? 'BUG-SEM-ID'
+  const entrada: BugEntry = {
+    pasta: `_reversa_bugs/painel-do-processo/bugs/${nome}`,
+    arquivo: `_reversa_bugs/painel-do-processo/bugs/${nome}/bug.md`,
+    apelido: 1,
+    titulo: `Defeito ${nome}`,
+    estado: 'resolved',
+    estadoBruto: 'resolved',
+    fase: 'delivering',
+    faseBruta: 'delivering',
+    severidade: 'low',
+    severidadeBruta: 'low',
+    prioridade: 'P2',
+    prioridadeBruta: 'P2',
+    registrado: '2026-09-09',
+    alterado: '2026-09-10',
+    travado: true,
+    encerrado: '2026-09-10',
+    bloqueado: false,
+    inconsistencia: null,
+    ...partes,
+  }
+
+  // The raw value follows the recognised one unless the case asked for a raw of
+  // its own. Without this, a case that overrides only `estado` would leave the
+  // pair disagreeing -- a row whose attribute says `open` and whose text reads
+  // "resolvido" -- and the disagreement would be the fixture's, not the code's.
+  // The case that wants an unrecognised value states both, which is exactly what
+  // an unrecognised value is: a raw with no recognised counterpart.
+  return {
+    ...entrada,
+    estadoBruto: 'estadoBruto' in partes ? entrada.estadoBruto : entrada.estado,
+    faseBruta: 'faseBruta' in partes ? entrada.faseBruta : entrada.fase,
+    severidadeBruta: 'severidadeBruta' in partes ? entrada.severidadeBruta : entrada.severidade,
+    prioridadeBruta: 'prioridadeBruta' in partes ? entrada.prioridadeBruta : entrada.prioridade,
+  }
+}
+
+/** One context group, with the tally derived from the bugs it receives. */
+export function bugContextFixture(
+  contexto: string,
+  bugs: BugEntry[],
+  overrides: Partial<BugContext> = {},
+): BugContext {
+  const datas = bugs.map((bug) => bug.alterado).filter((data): data is string => data !== null)
+  return {
+    contexto,
+    pasta: `_reversa_bugs/${contexto}`,
+    bugs,
+    contagem: {
+      total: bugs.length,
+      abertos: bugs.filter((bug) => bug.estado === 'open').length,
+      ativos: bugs.filter((bug) => bug.estado === 'active').length,
+      resolvidos: bugs.filter((bug) => bug.estado === 'resolved').length,
+      restritos: 0,
+    },
+    ultimoMovimento:
+      datas.length === 0 ? null : datas.reduce((maior, data) => (data > maior ? data : maior)),
+    ...overrides,
+  }
+}
+
+/**
+ * The registry of the project, whose tally is SUMMED from the groups.
+ *
+ * Summed, and not declared, because that is what the reading does: RN-05 makes
+ * the disk the authority, and a fixture that let the two disagree by accident
+ * would be exercising the divergence in every case instead of in the one that
+ * asks for it. The case that wants a divergence overrides `contagem` on
+ * purpose.
+ */
+export function bugsFixture(
+  contextos: BugContext[] = [...BUG_CONTEXTS],
+  overrides: Partial<BugRegistry> = {},
+): BugRegistry {
+  const bugs = contextos.flatMap((contexto) => contexto.bugs)
+  const soma = (campo: 'total' | 'abertos' | 'ativos' | 'resolvidos' | 'restritos'): number =>
+    contextos.reduce((total, contexto) => total + contexto.contagem[campo], 0)
+
+  return {
+    presente: true,
+    contextos,
+    contagem: {
+      total: soma('total'),
+      abertos: soma('abertos'),
+      ativos: soma('ativos'),
+      resolvidos: soma('resolvidos'),
+      restritos: soma('restritos'),
+    },
+    lidos: bugs.length,
+    truncado: false,
+    anomalias: [],
+    ...overrides,
+  }
+}
+
+/** The registry of a project that has no registry folder at all. */
+export function absentBugsFixture(): BugRegistry {
+  return {
+    presente: false,
+    contextos: [],
+    contagem: { ...EMPTY_BUG_COUNTS },
+    lidos: 0,
+    truncado: false,
+    anomalias: [],
+  }
+}
+
+/**
+ * The registry this project actually had on 2026-09-10: one context, three
+ * bugs, all resolved and all locked.
+ *
+ * It is the shape the onboarding walks the reader through, so a case drawn over
+ * it is a case anyone can check against the panel by opening it.
+ */
+const BUG_CONTEXTS: readonly BugContext[] = [
+  bugContextFixture('painel-do-processo', [
+    bugFixture({
+      id: 'BUG-20260910-74UL',
+      apelido: 3,
+      titulo: 'Painel conta uma dúvida na feature 007 por menção ao marcador',
+      alterado: '2026-09-10',
+      registrado: '2026-09-10',
+    }),
+    bugFixture({
+      id: 'BUG-20260909-VHII',
+      apelido: 2,
+      titulo: 'Extensão instalada anterior à feature 007 não declara procedência',
+      severidade: 'medium',
+      prioridade: 'P1',
+    }),
+    bugFixture({
+      id: 'BUG-20260909-FJBD',
+      apelido: 1,
+      titulo: 'Cabeçalho declara leitura degradada por anomalia cenario-ambiguo',
+    }),
+  ]),
+]

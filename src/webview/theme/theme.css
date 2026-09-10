@@ -410,3 +410,66 @@ pre {
   border-radius: var(--panel-radius);
   padding: 0 0.25rem;
 }
+
+/* ------------------------------------------- o bloco de bugs (feature 008) */
+
+/* The block reuses `.action` and `.action--next` for its rows, so what is named
+   here is only what it adds: the group, its subtitle and the mark of the bug to
+   treat next.
+
+   Every colour comes from a token this sheet already imports. That is not a
+   preference: the pruner of the build keeps only the sets a token is reached
+   from, and a colour written by hand here would be a value it cannot prune and
+   cannot follow into the other three sets. */
+
+/* One context of the registry. The rule that separates the groups is heavier
+   than the hairline between rows, because a group is a change of subject and a
+   row is not. */
+.bug-group {
+  border-block-start: 0.0625rem solid var(--borderColor-default);
+  padding-block-start: 0.5rem;
+  margin-block-start: 0.5rem;
+}
+
+.bug-group:first-child {
+  border-block-start: none;
+  padding-block-start: 0;
+  margin-block-start: 0;
+}
+
+/* The name of the context, which is a heading and has to read as one without
+   growing to the size of the card title above it. */
+.bug-group__name {
+  font-size: 1em;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* The mark of the next bug to treat, which is single in the whole block
+   (RN-10). It repeats the shape `.action--next` already gives the next action of
+   the decomposition, so that the two blocks say "this one" in the same way; the
+   row also carries the words "próximo a tratar", and colour is never asked to
+   carry the fact by itself (RNF de acessibilidade). */
+.bug--next {
+  border-inline-start: 0.1875rem solid var(--fgColor-accent);
+  padding-inline-start: 0.375rem;
+  background-color: var(--bgColor-accent-muted);
+}
+
+/* An inconsistency of the registry is drawn as a notice and not as an error:
+   RN-04 has the panel DECLARE the disagreement, and a red row would read as the
+   panel having decided which of the two readings is the wrong one. It inherits
+   `.notice`, so what is named here is only the room it needs inside a row. */
+.bug__inconsistency {
+  margin-block-start: 0.25rem;
+}
+
+/* Below 300 px the fields of a row wrap instead of pushing the column sideways,
+   which is the same rule the header actions already follow. The row is a stack
+   of blocks, so the only thing that could scroll sideways is a long identifier:
+   it breaks instead. */
+@media (max-width: 300px) {
+  .bug__id {
+    overflow-wrap: anywhere;
+  }
+}

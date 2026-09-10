@@ -121,3 +121,66 @@ export function brasiliaInstant(value: string | null | undefined): ReadableInsta
     return { text: value, raw: value, known: true }
   }
 }
+
+/* ------------------------------------------------------- a data do registro */
+
+/** What the panel says when there is no date to show (RF-13, RN-06). */
+export const DATE_ABSENT = 'data não registrada'
+
+/** The form the registry writes a date in: a day, and never an instant. */
+const DAY = /^(\d{4})-(\d{2})-(\d{2})$/
+
+/** The widest month and the widest day any calendar has. */
+const LAST_MONTH = 12
+const LAST_DAY = 31
+
+/**
+ * A date of the bug registry, reformatted WITHOUT building a `Date` and without
+ * touching a time zone (RN-06, D-05).
+ *
+ * The sister of `brasiliaInstant`, and its opposite in exactly one respect: it
+ * converts nothing. The reason is a trap that would fail in silence.
+ * `new Date('2026-09-10')` is midnight in universal time, and converted to
+ * Brasília it reads as the ninth: every date of the registry would be drawn one
+ * day behind, with no exception, no anomaly and nothing on screen to say
+ * anything was wrong. RN-06 already states that a zone conversion does not
+ * apply to a value with no clock in it; this function is what makes the code
+ * agree with the rule.
+ *
+ * So the day, the month and the year are the three groups of the value itself,
+ * reordered. A value that is not a date comes back declared absent, with the
+ * original beside it, rather than as a blank field or an invalid date. That
+ * includes a day that passes the form and does not exist -- the thirtieth of
+ * February -- which is drawn as it was written, because a reader that
+ * normalised it would show a day the file does not hold.
+ *
+ * It lives in THIS module, beside the conversion it deliberately is not,
+ * because the note that one place converts is only useful where the reason for
+ * a second function is visible next to it.
+ * @param value - the date as the registry wrote it, or the absence of one.
+ * @returns the readable date, with the original beside it.
+ */
+export function readableDate(value: string | null | undefined): ReadableInstant {
+  if (typeof value !== 'string' || value.trim() === '') {
+    return { text: DATE_ABSENT, raw: '', known: false }
+  }
+
+  const day = DAY.exec(value.trim())
+  if (day === null) return { text: DATE_ABSENT, raw: value, known: false }
+
+  const [, year, month, date] = day
+  // The ranges are checked LEXICALLY, which is where the line is drawn between
+  // a value that is not a date and one the calendar happens not to have. A
+  // thirteenth month is not a date and is declared absent; the thirtieth of
+  // February passes, because telling THAT apart would take building a `Date`,
+  // and a `Date` would normalise it into the second of March -- drawing a day
+  // the file does not hold, which is worse than repeating one it does.
+  if (Number(month) < 1 || Number(month) > LAST_MONTH) {
+    return { text: DATE_ABSENT, raw: value, known: false }
+  }
+  if (Number(date) < 1 || Number(date) > LAST_DAY) {
+    return { text: DATE_ABSENT, raw: value, known: false }
+  }
+
+  return { text: `${date}/${month}/${year}`, raw: value, known: true }
+}

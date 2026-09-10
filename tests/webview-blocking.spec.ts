@@ -6,6 +6,8 @@
 
 import { describe, expect, it } from 'vitest'
 import { blockingReasons } from '../src/webview/domain/blocking.ts'
+import type { BugEntry, BugRegistry } from '../src/domain/types.ts'
+import { EMPTY_BUG_COUNTS } from '../src/domain/types.ts'
 import { actionsMd, processFixture, requirementsMd } from './helpers/reversa-fixtures.ts'
 
 /**
@@ -107,5 +109,235 @@ describe('razões de bloqueio humano', () => {
   it('não produz razão quando não há feature ativa', () => {
     const processo = processFixture({ activeRequirements: null })
     expect(blockingReasons(processo)).toEqual([])
+  })
+})
+
+/**
+ * As três condições do registro de bugs (RF-10, D-08).
+ *
+ * A faixa passa a receber o registro AO LADO do processo, e não dentro dele: o
+ * registro não vive no que o leitor herdado devolve, e enfiá-lo lá criaria uma
+ * segunda autoridade sobre o processo.
+ *
+ * A fusão numa linha só é a regra que mais custa acertar. Um bug que reúna duas
+ * condições ocupa UMA linha, com as duas razões nomeadas, porque a faixa
+ * responde "o que aguarda você" e não "quantas regras cada bug infringe": três
+ * linhas sobre o mesmo bug fariam o leitor conferir três vezes o mesmo arquivo.
+ */
+
+/**
+ * Um bug do registro, com só o que cada caso precisa dizer.
+ *
+ * O valor bruto acompanha o reconhecido, salvo quando o caso pede um bruto
+ * próprio. Sem isso, um caso que só declara `fase` deixaria o par em desacordo,
+ * e a faixa seria exercitada contra um bug que a leitura de verdade não produz.
+ */
+function bugDeRegistro(partes: Partial<BugEntry> & { id: string }): BugEntry {
+  const bug: BugEntry = {
+    pasta: `_reversa_bugs/ctx/bugs/${partes.id}`,
+    arquivo: `_reversa_bugs/ctx/bugs/${partes.id}/bug.md`,
+    apelido: null,
+    titulo: `Defeito ${partes.id}`,
+    estado: 'open',
+    estadoBruto: 'open',
+    fase: 'triaging',
+    faseBruta: 'triaging',
+    severidade: 'low',
+    severidadeBruta: 'low',
+    prioridade: 'P3',
+    prioridadeBruta: 'P3',
+    registrado: '2026-09-01',
+    alterado: '2026-09-01',
+    travado: false,
+    encerrado: null,
+    bloqueado: false,
+    inconsistencia: null,
+    ...partes,
+  }
+  return {
+    ...bug,
+    estadoBruto: 'estadoBruto' in partes ? bug.estadoBruto : bug.estado,
+    faseBruta: 'faseBruta' in partes ? bug.faseBruta : bug.fase,
+    severidadeBruta: 'severidadeBruta' in partes ? bug.severidadeBruta : bug.severidade,
+  }
+}
+
+/** Um registro de um contexto só, com os bugs dados. */
+function registroCom(bugs: BugEntry[]): BugRegistry {
+  return {
+    presente: true,
+    contextos: [
+      {
+        contexto: 'ctx',
+        pasta: '_reversa_bugs/ctx',
+        bugs,
+        contagem: { ...EMPTY_BUG_COUNTS, total: bugs.length },
+        ultimoMovimento: '2026-09-01',
+      },
+    ],
+    contagem: { ...EMPTY_BUG_COUNTS, total: bugs.length },
+    lidos: bugs.length,
+    truncado: false,
+    anomalias: [],
+  }
+}
+
+/** As razões que vieram do registro, separadas das do processo. */
+function razoesDeBug(bugs: BugEntry[]) {
+  return blockingReasons(processFixture(), registroCom(bugs)).filter((razao) =>
+    (razao.artifact ?? '').startsWith('_reversa_bugs/'),
+  )
+}
+
+describe('as três condições de bug na faixa (RF-10)', () => {
+  it('a fase de espera por decisão humana produz linha', () => {
+    const razoes = razoesDeBug([bugDeRegistro({ id: 'BUG-ESPERA', fase: 'awaiting-human' })])
+
+    expect(razoes).toHaveLength(1)
+    expect(razoes[0].text).toContain('BUG-ESPERA')
+    expect(razoes[0].artifact).toBe('_reversa_bugs/ctx/bugs/BUG-ESPERA/bug.md')
+  })
+
+  it('o bloqueio declarado produz linha', () => {
+    const razoes = razoesDeBug([bugDeRegistro({ id: 'BUG-TRAVADO', bloqueado: true })])
+
+    expect(razoes).toHaveLength(1)
+    expect(razoes[0].text).toContain('BUG-TRAVADO')
+  })
+
+  it('a severidade alta enquanto o bug não estiver encerrado produz linha', () => {
+    const razoes = razoesDeBug([bugDeRegistro({ id: 'BUG-GRAVE', severidade: 'high' })])
+
+    expect(razoes).toHaveLength(1)
+    expect(razoes[0].text).toContain('BUG-GRAVE')
+  })
+
+  /**
+   * A leitura de "severidade alta" que este caso fixa. A escala tem quatro
+   * degraus, e `critical` é mais grave que `high`: uma faixa que subisse o
+   * segundo e calasse o primeiro nomearia o defeito menor e esconderia o maior,
+   * que é o contrário do que a faixa existe para fazer.
+   */
+  it('a severidade crítica sobe pela mesma condição da alta', () => {
+    const razoes = razoesDeBug([bugDeRegistro({ id: 'BUG-CRITICO', severidade: 'critical' })])
+    expect(razoes).toHaveLength(1)
+  })
+
+  it('severidade alta em bug encerrado não produz linha', () => {
+    const razoes = razoesDeBug([
+      bugDeRegistro({
+        id: 'BUG-FECHADO',
+        severidade: 'high',
+        estado: 'resolved',
+        travado: true,
+        encerrado: '2026-09-10',
+      }),
+    ])
+    expect(razoes).toEqual([])
+  })
+
+  it('sem nenhuma das três, a faixa não ganha linha de bug', () => {
+    const razoes = razoesDeBug([
+      bugDeRegistro({ id: 'BUG-COMUM' }),
+      bugDeRegistro({ id: 'BUG-MEDIO', severidade: 'medium' }),
+    ])
+    expect(razoes).toEqual([])
+  })
+})
+
+describe('um bug que reúne condições ocupa uma linha só (RF-10)', () => {
+  it('duas condições, uma linha, as duas razões nomeadas', () => {
+    const razoes = razoesDeBug([
+      bugDeRegistro({ id: 'BUG-DUPLO', fase: 'awaiting-human', bloqueado: true }),
+    ])
+
+    expect(razoes).toHaveLength(1)
+    expect(razoes[0].text.toLowerCase()).toContain('decisão')
+    expect(razoes[0].text.toLowerCase()).toContain('bloque')
+  })
+
+  it('as três condições no mesmo bug continuam sendo uma linha só', () => {
+    const razoes = razoesDeBug([
+      bugDeRegistro({
+        id: 'BUG-TRIPLO',
+        fase: 'awaiting-human',
+        bloqueado: true,
+        severidade: 'high',
+      }),
+    ])
+
+    expect(razoes).toHaveLength(1)
+    expect(razoes[0].text).toContain('BUG-TRIPLO')
+  })
+
+  it('bugs distintos ocupam linhas distintas', () => {
+    const razoes = razoesDeBug([
+      bugDeRegistro({ id: 'BUG-UM', fase: 'awaiting-human' }),
+      bugDeRegistro({ id: 'BUG-DOIS', bloqueado: true }),
+    ])
+
+    expect(razoes).toHaveLength(2)
+    expect(razoes.map((razao) => razao.artifact)).toEqual([
+      '_reversa_bugs/ctx/bugs/BUG-UM/bug.md',
+      '_reversa_bugs/ctx/bugs/BUG-DOIS/bug.md',
+    ])
+  })
+
+  it('toda razão de bug traz arquivo e comando, como as do processo', () => {
+    for (const razao of razoesDeBug([
+      bugDeRegistro({ id: 'BUG-X', fase: 'awaiting-human', bloqueado: true }),
+    ])) {
+      expect(razao.text.length).toBeGreaterThan(0)
+      expect(razao.artifact).not.toBeNull()
+      expect(razao.command?.startsWith('/reversa')).toBe(true)
+    }
+  })
+})
+
+describe('registro ausente e registro não lido', () => {
+  it('sem o registro, a faixa continua sendo só a do processo', () => {
+    const comProcesso = blockingReasons(processFixture({ requirementsMd: requirementsMd(1) }))
+    const comRegistroAusente = blockingReasons(
+      processFixture({ requirementsMd: requirementsMd(1) }),
+      undefined,
+    )
+
+    expect(comRegistroAusente).toEqual(comProcesso)
+  })
+
+  it('registro presente e vazio não produz linha de bug alguma', () => {
+    expect(razoesDeBug([])).toEqual([])
+  })
+
+  it('as razões do registro vêm depois das do processo, na ordem declarada', () => {
+    const razoes = blockingReasons(
+      processFixture({ requirementsMd: requirementsMd(1) }),
+      registroCom([bugDeRegistro({ id: 'BUG-ESPERA', fase: 'awaiting-human' })]),
+    )
+
+    expect(razoes).toHaveLength(2)
+    expect(razoes[0].command).toBe('/reversa-clarify')
+    expect(razoes[1].artifact).toContain('_reversa_bugs/')
+  })
+
+  it('bug de contexto diferente também sobe, e nomeia o próprio arquivo', () => {
+    const registro = registroCom([bugDeRegistro({ id: 'BUG-A', fase: 'awaiting-human' })])
+    registro.contextos.push({
+      contexto: 'outro',
+      pasta: '_reversa_bugs/outro',
+      bugs: [
+        {
+          ...bugDeRegistro({ id: 'BUG-B', bloqueado: true }),
+          pasta: '_reversa_bugs/outro/bugs/BUG-B',
+          arquivo: '_reversa_bugs/outro/bugs/BUG-B/bug.md',
+        },
+      ],
+      contagem: { ...EMPTY_BUG_COUNTS, total: 1 },
+      ultimoMovimento: '2026-09-01',
+    })
+    const razoes = blockingReasons(processFixture(), registro)
+
+    expect(razoes).toHaveLength(2)
+    expect(razoes[1].artifact).toBe('_reversa_bugs/outro/bugs/BUG-B/bug.md')
   })
 })

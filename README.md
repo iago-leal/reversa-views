@@ -240,6 +240,10 @@ consulta à origem. Cada um se alcança por um comando:
 | Relendo | `npm run preview -- --atraso=3000`, e então o botão de reler no painel |
 | Instalado | `npm run preview` |
 | Instalado e degradado | `node scripts/preview.js --workspace="$(node scripts/estragar-workspace.js)"` |
+| Sem registro de bugs | `node scripts/preview.js --workspace="$(node scripts/estragar-registro.js --caso=ausente)"` |
+| Com bug restrito | `node scripts/preview.js --workspace="$(node scripts/estragar-registro.js --caso=restrito)"` |
+| Com registro inconsistente | `node scripts/preview.js --workspace="$(node scripts/estragar-registro.js --caso=inconsistente)"` |
+| Com leitura de bugs no teto | `node scripts/preview.js --workspace="$(node scripts/estragar-registro.js --caso=teto)"` |
 
 | Desfecho da consulta | Comando |
 |---|---|

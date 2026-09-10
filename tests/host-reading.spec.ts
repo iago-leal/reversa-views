@@ -152,3 +152,123 @@ describe('momento da leitura', () => {
     expect(primeiro.readAt).toBe('2026-09-09T10:00:00.000Z')
   })
 })
+
+/**
+ * O registro de bugs no payload da leitura (feature 008, D-01, RF-13).
+ *
+ * O ramo do registro corre AO LADO do herdado e sabe tão pouco quanto ele:
+ * onde o registro fica é literal do código local, e a sonda entra por parâmetro
+ * como as duas herdadas, para que a suíte a exercite sem tocar disco.
+ *
+ * O caso do projeto sem pasta de registro é o que separa duas afirmações que a
+ * tela precisa distinguir: "não há registro" e "não li o registro". A camada de
+ * leitura sempre devolve a primeira, com o campo presente e `presente: false`;
+ * a segunda é o campo ausente, que só um host anterior a esta feature produz.
+ */
+describe('registro de bugs na leitura', () => {
+  /** Uma leitura de bugs, com o mínimo que a camada precisa receber. */
+  function bugsRead(overrides: Partial<Parameters<typeof readWorkspace>[1]> = {}) {
+    const log = logSpy()
+    return readWorkspace('/w', {
+      readSnapshot: () => probeResult(INSTALLED),
+      readProcess: readReversa,
+      log: log.port,
+      ...overrides,
+    })
+  }
+
+  it('devolve o registro no resultado da leitura', () => {
+    const resultado = bugsRead({
+      readBugsFolders: () => ({
+        presente: true,
+        contextos: [{ contexto: 'ctx', pasta: '_reversa_bugs/ctx' }],
+        pastas: [
+          {
+            contexto: 'ctx',
+            pastaDoContexto: '_reversa_bugs/ctx',
+            pasta: '_reversa_bugs/ctx/bugs/BUG-1',
+            nome: 'BUG-1',
+            temBugMd: true,
+            bugMd: [
+              '---',
+              'id: BUG-20260910-AAAA',
+              'status: open',
+              'phase: triaging',
+              'severity: low',
+              'priority: P3',
+              'created: 2026-09-10',
+              'updated: 2026-09-10',
+              'visibility: normal',
+              'blocking: []',
+              '---',
+            ].join('\n'),
+            temTrava: false,
+            travaMd: null,
+          },
+        ],
+        truncado: false,
+        total: 1,
+      }),
+    })
+
+    if (resultado.kind !== 'loaded') throw new Error('esperava leitura bem-sucedida')
+    expect(resultado.bugs.presente).toBe(true)
+    expect(resultado.bugs.contagem.total).toBe(1)
+    expect(resultado.bugs.contextos[0].bugs[0].id).toBe('BUG-20260910-AAAA')
+  })
+
+  it('projeto sem pasta de registro devolve registro ausente, sem anomalia e sem exceção', () => {
+    const resultado = bugsRead({
+      readBugsFolders: () => ({ presente: false, contextos: [], pastas: [], truncado: false, total: 0 }),
+    })
+
+    if (resultado.kind !== 'loaded') throw new Error('esperava leitura bem-sucedida')
+    expect(resultado.bugs.presente).toBe(false)
+    expect(resultado.bugs.contextos).toEqual([])
+    expect(resultado.bugs.anomalias).toEqual([])
+  })
+
+  it('a sonda do registro recebe a raiz observada, e nada mais', () => {
+    const sonda = vi.fn(() => ({
+      presente: false,
+      contextos: [],
+      pastas: [],
+      truncado: false,
+      total: 0,
+    }))
+    bugsRead({ readBugsFolders: sonda })
+
+    expect(sonda).toHaveBeenCalledTimes(1)
+    expect(sonda).toHaveBeenCalledWith('/w')
+  })
+
+  it('uma varredura do registro que lança vira o estado de erro, e não exceção no editor', () => {
+    const log = logSpy()
+    const resultado = readWorkspace('/w', {
+      readSnapshot: () => probeResult(INSTALLED),
+      readProcess: readReversa,
+      log: log.port,
+      readBugsFolders: () => {
+        throw new Error('registro recusou')
+      },
+    })
+
+    expect(resultado.kind).toBe('error')
+    if (resultado.kind !== 'error') return
+    expect(resultado.message).toContain('registro recusou')
+    expect(log.lines[0]).toContain('reading ·')
+  })
+
+  it('o campo do registro viaja mesmo num workspace sem Reversa instalado', () => {
+    const resultado = readWorkspace('/w', {
+      readSnapshot: () => probeResult(null),
+      readProcess: readReversa,
+      log: logSpy().port,
+      readBugsFolders: () => ({ presente: false, contextos: [], pastas: [], truncado: false, total: 0 }),
+    })
+
+    if (resultado.kind !== 'loaded') throw new Error('esperava leitura bem-sucedida')
+    expect(resultado.entry).toBe('no-reversa')
+    expect(resultado.bugs).toBeDefined()
+  })
+})

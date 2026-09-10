@@ -16,6 +16,13 @@
  *     node ./scripts/preview.js
  *     node ./scripts/preview.js --workspace=/outro --tema=claro --atraso=1200
  *     node ./scripts/preview.js --estado=sem-reversa
+ *
+ * Os estados que nenhum workspace saudável produz chegam por cópia adoecida, e
+ * não por argumento: `scripts/estragar-workspace.js` para a leitura degradada,
+ * `scripts/estragar-registro.js --caso=<nome>` para os quatro do registro de
+ * bugs. Quem escreve são eles; o preview não escreve nada, em lugar nenhum.
+ *
+ *     node ./scripts/preview.js --workspace=$(node ./scripts/estragar-registro.js --caso=teto)
  * @module scripts/preview
  */
 

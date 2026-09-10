@@ -19,35 +19,43 @@ import type {
 } from '../../host/protocol.ts'
 
 /**
- * The eight sections, in the order RF-18 fixes. The order of this array IS the
+ * The nine sections, in the order RF-18 fixes. The order of this array IS the
  * order of the panel: `sectionOrder()` returns it, and the markup suite reads
  * the rendered document against it.
  *
  * Feature 006 inserted `decomposition` and `history` right after the forward
  * cycle, which is where the reader looks next: what the active feature is made
  * of, and what came before it.
+ *
+ * Feature 008 APPENDS `bugs` right after the history, and appends is the word:
+ * no name above it moves, is renamed or is removed. The place is the one RF-01
+ * fixes, and it is the one the reader's eye reaches next -- what was delivered,
+ * and then what came back broken from what was delivered.
  */
 export const SECTION_NAMES = [
   'blocking',
   'forward',
   'decomposition',
   'history',
+  'bugs',
   'discovery',
   'policy',
   'anomalies',
   'probe',
 ] as const
 
-/** One of the eight sections. */
+/** One of the nine sections. */
 export type SectionName = (typeof SECTION_NAMES)[number]
 
 /**
- * The seven collapsible cards, which are every section but the blocking band.
+ * The eight collapsible cards, which are every section but the blocking band.
  *
  * The band occupies a section name for the sake of failure isolation, and is
  * NOT a card: RN-03 forbids any global action from hiding what waits on a
  * decision of the user. Deriving the list here, rather than writing it twice,
- * is what keeps `types.ts` the one place that names the sections (RF-18).
+ * is what keeps `types.ts` the one place that names the sections (RF-18), and
+ * is why the card of feature 008 entered the two global actions with no work
+ * of its own.
  */
 export const COLLAPSIBLE_SECTIONS: readonly SectionName[] = SECTION_NAMES.filter(
   (name) => name !== 'blocking',
@@ -57,14 +65,24 @@ export const COLLAPSIBLE_SECTIONS: readonly SectionName[] = SECTION_NAMES.filter
 export const DIAGNOSTIC_SECTIONS: readonly SectionName[] = ['policy', 'anomalies', 'probe']
 
 /**
- * What starts collapsed while NO preference has been declared (RN-02, RN-11).
+ * What starts collapsed while NO preference has been declared (RN-02, RN-11,
+ * RF-01 of feature 008).
  *
  * The three diagnostic ones, as before, plus the history: it is long reading,
  * and the decomposition beside it is the core of a resumption, so the one
- * opens and the other does not. The default only ever applies to a preference
- * that was never declared -- `effectiveCollapsed()` is where that is decided.
+ * opens and the other does not. The bug registry joins it for the same reason
+ * and by the same measure: it is a chronology of what is already closed most of
+ * the time, and what it has to say when it is not is said in the blocking band,
+ * which nothing may collapse.
+ *
+ * The default only ever applies to a preference that was never declared --
+ * `effectiveCollapsed()` is where that is decided.
  */
-export const DEFAULT_COLLAPSED: readonly SectionName[] = ['history', ...DIAGNOSTIC_SECTIONS]
+export const DEFAULT_COLLAPSED: readonly SectionName[] = [
+  'history',
+  'bugs',
+  ...DIAGNOSTIC_SECTIONS,
+]
 
 /**
  * What the panel is showing, which is one of the five entry states of the

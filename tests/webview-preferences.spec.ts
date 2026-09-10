@@ -134,3 +134,44 @@ describe('as duas ações globais (RF-02, RF-03)', () => {
     expect(withAll(true).collapsedSections.length).toBe(COLLAPSIBLE_SECTIONS.length)
   })
 })
+
+/**
+ * O nome de seção que a feature 008 acrescenta.
+ *
+ * O acréscimo é compatível nos dois sentidos, e é isso que os casos fixam.
+ * Preferência gravada por versão anterior continua válida, porque nada foi
+ * renomeado nem removido; e `bugs` passa a ser nome ACEITO, quando antes seria
+ * descartado por desconhecido. A segunda metade é a que teria passado
+ * despercebida: o descarte de EC-09 é silencioso por desenho, de modo que um
+ * nome novo esquecido em `SECTION_NAMES` sumiria da preferência sem aviso.
+ */
+describe('o nome de seção da feature 008', () => {
+  it('`bugs` é nome aceito, e sobrevive à leitura', () => {
+    const lido = readPreferences({ declared: true, collapsedSections: ['bugs', 'probe'] })
+    expect(lido.collapsedSections).toEqual(['bugs', 'probe'])
+  })
+
+  it('preferência gravada por versão anterior continua inteiramente válida', () => {
+    const anterior = { declared: true, collapsedSections: ['history', 'policy', 'anomalies', 'probe'] }
+    const lido = readPreferences(anterior)
+
+    expect(lido.collapsedSections).toEqual(anterior.collapsedSections)
+    expect(lido.declared).toBe(true)
+  })
+
+  it('recolher e expandir o cartão novo funciona como o de qualquer outro', () => {
+    const recolhido = withCollapsed({ declared: false, collapsedSections: [] }, 'bugs', true)
+    expect(recolhido).toEqual({ declared: true, collapsedSections: ['bugs'] })
+    expect(withCollapsed(recolhido, 'bugs', false).collapsedSections).toEqual([])
+  })
+
+  it('as duas ações globais alcançam o cartão novo', () => {
+    expect(withAll(true).collapsedSections).toContain('bugs')
+    expect(withAll(false).collapsedSections).toEqual([])
+  })
+
+  it('nome de seção que esta versão não tem continua descartado', () => {
+    const lido = readPreferences({ declared: true, collapsedSections: ['bugs', 'secao-extinta'] })
+    expect(lido.collapsedSections).toEqual(['bugs'])
+  })
+})

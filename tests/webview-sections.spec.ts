@@ -37,17 +37,32 @@ function degradado(signal: 'anomalies' | 'refusals' | 'truncated') {
 }
 
 describe('ordem das seções', () => {
-  it('devolve os oito nomes na ordem de RF-18', () => {
+  it('devolve os nove nomes na ordem de RF-18', () => {
     expect(sectionOrder()).toEqual([
       'blocking',
       'forward',
       'decomposition',
       'history',
+      'bugs',
       'discovery',
       'policy',
       'anomalies',
       'probe',
     ])
+  })
+
+  /**
+   * O acréscimo da feature 008 é ACRÉSCIMO, e este caso é o que o prende: o
+   * nome novo entra depois do histórico e nada acima dele se move. Um teste que
+   * só conferisse a lista inteira aceitaria uma reordenação silenciosa contanto
+   * que os nomes continuassem lá.
+   */
+  it('o nome novo entra depois do histórico, sem mover nome algum acima dele', () => {
+    const ordem = sectionOrder()
+    const antes = ['blocking', 'forward', 'decomposition', 'history']
+
+    expect(ordem.slice(0, antes.length)).toEqual(antes)
+    expect(ordem[antes.length]).toBe('bugs')
   })
 
   it('não depende do processo recebido', () => {
@@ -55,12 +70,13 @@ describe('ordem das seções', () => {
   })
 })
 
-describe('os sete cartões recolhíveis (RN-03)', () => {
+describe('os oito cartões recolhíveis (RN-03)', () => {
   it('são todas as seções menos a faixa de bloqueio', () => {
     expect(collapsibleSections()).toEqual([
       'forward',
       'decomposition',
       'history',
+      'bugs',
       'discovery',
       'policy',
       'anomalies',
@@ -68,10 +84,18 @@ describe('os sete cartões recolhíveis (RN-03)', () => {
     ])
   })
 
-  it('são sete, e a faixa de bloqueio não é um deles', () => {
-    expect(collapsibleSections()).toHaveLength(7)
+  it('são oito, e a faixa de bloqueio não é um deles', () => {
+    expect(collapsibleSections()).toHaveLength(8)
     expect(collapsibleSections()).not.toContain('blocking')
     expect(collapsibleSections()).toEqual([...COLLAPSIBLE_SECTIONS])
+  })
+
+  it('o cartão de bugs entrou nos recolhíveis sem trabalho próprio', () => {
+    // A lista deriva da ordem por exclusão da faixa, e é por isso que o nome
+    // novo alcança as duas ações globais só por existir em `SECTION_NAMES`.
+    expect(collapsibleSections()).toContain('bugs')
+    expect(withAll(true).collapsedSections).toContain('bugs')
+    expect(withAll(false).collapsedSections).not.toContain('bugs')
   })
 
   it('mantêm a ordem em que a tela os desenha', () => {
@@ -100,9 +124,15 @@ describe('leitura íntegra ou degradada', () => {
 })
 
 describe('conjunto efetivo de recolhidas, sem escolha declarada (RN-02, RN-11)', () => {
-  it('recolhe o histórico e as três de diagnóstico, em leitura íntegra', () => {
+  it('recolhe o histórico, os bugs e as três de diagnóstico, em leitura íntegra', () => {
     const recolhidas = effectiveCollapsed(SEM_ESCOLHA, INTEGRA)
-    expect(new Set(recolhidas)).toEqual(new Set(['history', 'policy', 'anomalies', 'probe']))
+    expect(new Set(recolhidas)).toEqual(
+      new Set(['history', 'bugs', 'policy', 'anomalies', 'probe']),
+    )
+  })
+
+  it('o bloco de bugs nasce recolhido, como o histórico (RF-01)', () => {
+    expect(effectiveCollapsed(SEM_ESCOLHA, INTEGRA)).toContain('bugs')
   })
 
   it('deixa a decomposição expandida, por ser núcleo da retomada', () => {
@@ -112,7 +142,7 @@ describe('conjunto efetivo de recolhidas, sem escolha declarada (RN-02, RN-11)',
   it('deixa as anomalias expandidas em leitura degradada', () => {
     for (const sinal of ['anomalies', 'refusals', 'truncated'] as const) {
       const recolhidas = effectiveCollapsed(SEM_ESCOLHA, readingIntegrity(degradado(sinal)))
-      expect(new Set(recolhidas)).toEqual(new Set(['history', 'policy', 'probe']))
+      expect(new Set(recolhidas)).toEqual(new Set(['history', 'bugs', 'policy', 'probe']))
     }
   })
 })
