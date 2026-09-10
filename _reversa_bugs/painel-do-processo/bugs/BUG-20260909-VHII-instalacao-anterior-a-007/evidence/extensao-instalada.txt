@@ -1,0 +1,59 @@
+# Extensão instalada no VS Code em 2026-09-09 21:5x (Brasília)
+
+## Pasta e data de instalação
+drwxr-xr-x@ 7 iagoleal  staff  224  9 set 19:31 /Users/iagoleal/.vscode/extensions/iagoleal-local.reversa-views-0.0.1
+
+## Versão no manifesto instalado
+"version": "0.0.1"
+
+## Módulos do host presentes no pacote instalado
+adapters.js
+adapters.js.map
+bridge.js
+bridge.js.map
+document.js
+document.js.map
+inheritance.js
+inheritance.js.map
+open-file.js
+open-file.js.map
+panel.js
+panel.js.map
+ports.js
+ports.js.map
+protocol.js
+protocol.js.map
+provider.js
+provider.js.map
+reading.js
+reading.js.map
+root.js
+root.js.map
+router.js
+router.js.map
+session.js
+session.js.map
+
+## Módulos da feature 007 ausentes (update.js, net.js, build.js)
+update.js: AUSENTE
+net.js: AUSENTE
+build.js: AUSENTE
+
+## Ocorrências de setUpdate no pacote instalado
+nenhuma
+
+## Pacotes .vsix na raiz do clone
+reversa-views-0.0.1.vsix
+reversa-views-0.6.1.vsix
+
+## Conteúdo dos pacotes da raiz (conferido às 22:0x)
+-rw-r--r--@ 1 iagoleal  staff  156604  9 set 19:31 reversa-views-0.0.1.vsix
+-rw-r--r--@ 1 iagoleal  staff  172089  9 set 21:29 reversa-views-0.6.1.vsix
+== reversa-views-0.0.1.vsix
+(sem os módulos da 007)
+== reversa-views-0.6.1.vsix
+     5429  09-09-2026 21:27   extension/out/host/update.js
+     8850  09-09-2026 21:27   extension/out/host/net.js
+     1410  09-09-2026 21:27   extension/out/host/build.js
+EXTENSION_VERSION = '0.6.1'
+BUILT_FROM_COMMIT = 'a23711d481021a978720c0bc478b6dabed94fec3'

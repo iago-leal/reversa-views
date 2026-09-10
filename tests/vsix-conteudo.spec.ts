@@ -38,6 +38,11 @@ describe('o conteúdo do pacote gerado (RF-21)', () => {
       'extension/out/extension.js',
       'extension/out/res/webview/main.js',
       'extension/out/res/webview/main.css',
+      // BUG-20260909-VHII: um pacote sem a consulta à origem e sem o carimbo da
+      // construção instala um painel que não sabe dizer que ficou atrás.
+      'extension/out/host/update.js',
+      'extension/out/host/net.js',
+      'extension/out/host/build.js',
     ]) {
       expect(caminhos, `${exigido} ficou de fora do pacote`).toContain(exigido)
     }

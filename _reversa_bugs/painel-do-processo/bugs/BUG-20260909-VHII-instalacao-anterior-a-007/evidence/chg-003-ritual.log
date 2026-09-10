@@ -1,0 +1,122 @@
+### npm run build (22:09:00)
+
+> reversa-views@0.0.1 build
+> npm run check:heranca:local && npm run gerar:revisao-heranca && npm run gerar:carimbo && npm run compile && npm run build:webview
+
+
+> reversa-views@0.0.1 check:heranca:local
+> node scripts/verificar-heranca.js --local
+
+Herança vendorizada
+  modo: local (só o que está versionado aqui)
+  as origens não foram consultadas: rode npm run check:heranca para confrontá-las
+
+  scrum-harness (código): não verificado
+    [informa] paridade-externa src/heranca/reversa-domain/tests/fixtures/check-legacy-policy.mjs
+              este arquivo é o espelho de .reversa/hooks/check-legacy-policy.mjs, e os dois andam juntos
+              → ao mexer num lado, confira o outro na mesma passada
+
+  vscode-kanban (padrão): não verificado
+    nada a relatar
+
+  veredito: divergente (0 impedem, 1 apenas informam)
+
+> reversa-views@0.0.1 gerar:revisao-heranca
+> node scripts/gerar-revisao-heranca.js
+
+src/host/inheritance.ts gerado com a revisão 420305daa6cdd10858b720a34cb8db67d8e5c5e9
+
+> reversa-views@0.0.1 gerar:carimbo
+> node scripts/gerar-carimbo-da-construcao.js
+
+src/host/build.ts gerado: versão 0.7.0, commit 543f0bd, origem iago-leal/reversa-views, ramo master
+
+> reversa-views@0.0.1 compile
+> tsc -p ./
+
+
+> reversa-views@0.0.1 build:webview
+> node scripts/build-webview.js
+
+
+  out/res/webview/main.js   170.6kb
+  out/res/webview/main.css   10.1kb
+
+⚡ Done in 49ms
+Colour sets trimmed to what the panel asks for:
+  dark-high-contrast.css: 121648 B -> 3600 B (97% dropped)
+  dark.css: 121114 B -> 3532 B (97% dropped)
+  light-high-contrast.css: 121805 B -> 3593 B (97% dropped)
+  light.css: 121331 B -> 3525 B (97% dropped)
+  4 sets in total: 485898 B -> 14250 B (97% dropped)
+Webview bundled into out/res/webview: main.js, main.css
+Pacote da tela: 180.7 KiB (184992 B), teto 400.0 KiB (409600 B)
+exit=0
+
+### npm test (22:09:02)
+ ✓ src/heranca/reversa-domain/tests/migration.spec.ts (16 tests) 5ms
+ ✓ src/heranca/reversa-domain/tests/watch.spec.ts (9 tests) 5ms
+ ✓ tests/host-open-file.spec.ts (9 tests) 5ms
+ ✓ tests/host-root.spec.ts (6 tests) 6ms
+ ✓ tests/host-session.spec.ts (10 tests) 4ms
+ ✓ tests/heranca-verificador-local.spec.ts (11 tests) 9ms
+ ✓ src/heranca/reversa-domain/tests/forward.spec.ts (16 tests) 6ms
+ ✓ tests/empacotamento-versao.spec.ts (10 tests) 6ms
+ ✓ tests/heranca-ritual.spec.ts (11 tests) 2ms
+ ✓ tests/webview-build.spec.ts (15 tests) 6ms
+ ✓ src/heranca/reversa-domain/tests/table.spec.ts (12 tests) 6ms
+ ✓ src/heranca/reversa-domain/tests/actions.spec.ts (11 tests) 3ms
+ ✓ tests/host-document.spec.ts (10 tests) 3ms
+ ✓ src/heranca/reversa-probe/tests/readonly.spec.ts (5 tests) 6ms
+ ✓ tests/host-panel.spec.ts (10 tests) 2ms
+ ✓ tests/heranca-adaptacoes.spec.ts (7 tests) 2ms
+ ✓ tests/heranca-relatorio.spec.ts (7 tests) 5ms
+ ✓ tests/paridade-gancho-instalado.spec.ts (1 test) 2ms
+ ✓ tests/heranca-revisao-gerada.spec.ts (4 tests) 2ms
+
+ Test Files  75 passed (75)
+      Tests  1123 passed (1123)
+   Start at  22:09:03
+   Duration  3.45s (transform 1.30s, setup 0ms, collect 5.01s, tests 1.65s, environment 10ms, prepare 4.92s)
+
+exit=0 (1123 passed, 75 files; a linha vazia anterior veio de PIPESTATUS inexistente no zsh)
+
+### npm run empacotar (22:09:47)
+  extension/out/host/net.js.map  (3443 B)
+  extension/out/host/open-file.js  (2060 B)
+  extension/out/host/open-file.js.map  (947 B)
+  extension/out/host/panel.js  (1078 B)
+  extension/out/host/panel.js.map  (312 B)
+  extension/out/host/ports.js  (1558 B)
+  extension/out/host/ports.js.map  (273 B)
+  extension/out/host/protocol.js  (2400 B)
+  extension/out/host/protocol.js.map  (696 B)
+  extension/out/host/provider.js  (9042 B)
+  extension/out/host/provider.js.map  (5491 B)
+  extension/out/host/reading.js  (3652 B)
+  extension/out/host/reading.js.map  (2101 B)
+  extension/out/host/root.js  (1864 B)
+  extension/out/host/root.js.map  (987 B)
+  extension/out/host/router.js  (5215 B)
+  extension/out/host/router.js.map  (3362 B)
+  extension/out/host/session.js  (3444 B)
+  extension/out/host/session.js.map  (1571 B)
+  extension/out/host/update.js  (5429 B)
+  extension/out/host/update.js.map  (2299 B)
+  extension/out/probe/features.js  (4140 B)
+  extension/out/probe/features.js.map  (1786 B)
+  extension/out/res/webview/main.css  (10327 B)
+  extension/out/res/webview/main.js  (174665 B)
+  extension/package.json  (2944 B)
+  extension/readme.md  (19344 B)
+
+Pacote da extensão: 168.5 KiB (172498 B), teto 2048.0 KiB (2097152 B), versão 0.7.0
+Instale com: code --install-extension reversa-views-0.7.0.vsix
+exit=0
+
+### code --install-extension reversa-views-0.7.0.vsix (22:09:48)
+Installing extensions...
+Extension 'reversa-views-0.7.0.vsix' was successfully installed.
+(node:76959) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `Code --trace-deprecation ...` to show where the warning was created)
+exit=0

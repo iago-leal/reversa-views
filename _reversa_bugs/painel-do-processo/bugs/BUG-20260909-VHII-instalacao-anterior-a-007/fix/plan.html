@@ -1,0 +1,44 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Plano de correção · BUG-20260909-VHII</title>
+<style>body{margin:0;background:#0d1117;color:#e6edf3;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;padding:24px;max-width:1100px}h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 8px;border-bottom:1px solid #30363d;padding-bottom:4px}.meta{color:#8b949e;font-size:12px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border:1px solid #30363d;padding:6px 8px;text-align:left;vertical-align:top}th{background:#161b22}a{color:#58a6ff}code{background:#161b22;padding:1px 4px;border-radius:4px}.box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px 16px;margin:8px 0}.ok{color:#3fb950}.warn{color:#d29922}.bad{color:#f85149}.svgwrap{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:8px;overflow-x:auto}</style></head><body>
+<h1>Plano de correção · nº 2 · BUG-20260909-VHII</h1>
+<p class="meta">Contexto painel-do-processo · 2026-09-09 · severidade medium · prioridade P1 · closure policy local-software · control_mode gated</p>
+
+<h2>1. O defeito</h2>
+<div class="box">O painel instalado não mostra <i>Extensão</i>, <i>Construída de</i> nem a linha do desfecho da consulta à origem, que a feature 007 entregou. Quem lê o painel não tem como saber que ficou atrás, que é exatamente o que a feature existe para dizer.</div>
+
+<h2>2. Causa raiz</h2>
+<div class="box"><b>Estado: <span class="ok">confirmed</span>.</b> A extensão instalada é a <code>0.0.1</code>, instalada às 19:31 de 2026-09-09; o commit da feature 007 é das 21:43. O pacote instalado não contém <code>out/host/update.js</code>, <code>net.js</code> nem <code>build.js</code>. Um pacote <code>0.6.1</code> com os três módulos foi gerado às 21:29, mas o último passo do ritual, <code>code --install-extension</code>, é manual por decisão da spec de empacotamento (fluxo principal, passo 6) e não foi executado. Não é defeito de código: é o caso de bootstrap que a feature não cobriu, uma instalação anterior a ela não se anuncia atrasada.
+<br><br>Evidências: <code>evidence/extensao-instalada.txt</code> (inventário e datas), <code>evidence/git-cronologia.txt</code> (commits com hora), <code>evidence/reproducao-antes.txt</code> (o script de reprodução em vermelho), <code>evidence/origem-compare.json</code> (a origem responde <code>identical</code> à construção atual).</div>
+
+<h2>3. Estratégia escolhida</h2>
+<div class="box"><b>Correção direta, em três peças.</b> O ritual que já existe é executado até o fim (construir, testar, empacotar, instalar a <code>0.7.0</code>); a suíte passa a recusar pacote sem os módulos da feature; e o README ganha a ressalva do bootstrap, para que o próximo mantenedor com instalação antiga saiba que a primeira atualização é manual. Debate multiagente dispensado: causa única e sem hipótese concorrente.</div>
+
+<h2>4. Correction Change Set proposto</h2>
+<table><tr><th>CHG</th><th>Tipo</th><th>Artefato</th><th>Propósito</th></tr>
+<tr><td>CHG-001</td><td>test</td><td><code>tests/vsix-conteudo.spec.ts</code></td><td>Exigir <code>out/host/update.js</code>, <code>net.js</code> e <code>build.js</code> no pacote gerado (regressão)</td></tr>
+<tr><td>CHG-002</td><td>documentation</td><td><code>README.md</code>, seção "O ritual da atualização"</td><td>Ressalva do bootstrap: instalação anterior à 0.7.0 não anuncia; conferir com <code>code --list-extensions --show-versions</code> e atualizar à mão uma vez</td></tr>
+<tr><td>CHG-003</td><td>infrastructure</td><td>pacote <code>reversa-views-0.7.0.vsix</code> e instalação no editor</td><td><code>npm run build</code>, <code>npm test</code>, <code>npm run empacotar</code>, <code>code --install-extension</code>; recarga da janela pelo usuário</td></tr>
+<tr><td>CHG-004</td><td>specification</td><td><code>_reversa_sdd/addenda/bug-BUG-20260909-VHII-v001.md</code></td><td>Só se o veredito for <code>spec-gap</code>: adendo aditivo registrando o bootstrap manual. Rascunho em <code>fix/adendo-proposto.md</code>; aguarda decisão humana</td></tr></table>
+
+<h2>5. Testes planejados</h2>
+<table><tr><th>Teste</th><th>Prova</th></tr>
+<tr><td>Reprodução: <code>fix/reproducao.sh</code></td><td>Sai com 1 enquanto a instalação não carregar os três módulos; sai com 0 depois da instalação da 0.7.0</td></tr>
+<tr><td>Regressão: <code>tests/vsix-conteudo.spec.ts</code>, "leva o que a extensão precisa para rodar"</td><td>Vermelho contra <code>reversa-views-0.0.1.vsix</code> (demonstrado em pasta temporária, <code>evidence/gate1-vermelho-contra-0.0.1.txt</code>); verde contra o pacote 0.7.0</td></tr></table>
+
+<h2>6. Riscos</h2>
+<div class="box"><b>change_risk: <span class="ok">baixa</span>.</b> Nenhum código de produção muda. A instalação substitui a 0.0.1 pela 0.7.0 e é reversível: os pacotes anteriores ficam na raiz, e <code>code --install-extension reversa-views-0.0.1.vsix</code> desfaz. Blast radius: a instalação local desta máquina. Sem contrato externo, sem dado, sem concorrência.
+<br><br>Fora da correção (Agent Notes): <code>npm run atualizar -- --aplicar</code> não serve aqui, porque o clone está em dia e ele só constrói quando há commit a trazer; a linha de exemplo do README com <code>reversa-views-0.6.1.vsix</code> na seção "Instalar" fica como está, por ser exemplo da regra da versão derivada.</div>
+
+<h2>7. Mini-grafo do bug</h2>
+<div class="svgwrap"><svg viewBox="0 0 700 160" width="100%" role="img" aria-label="Mini-grafo"><defs><marker id="s" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8b949e"/></marker></defs>
+<line x1="270" y1="80" x2="430" y2="80" stroke="#8b949e" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#s)"/><text x="350" y="70" fill="#8b949e" font-size="11" text-anchor="middle">related-to (proposed)</text>
+<a href="../bug.md"><rect x="20" y="30" width="250" height="100" rx="8" fill="#161b22" stroke="#d29922" stroke-width="3"/><text x="32" y="55" fill="#e6edf3" font-size="13" font-weight="600">nº 2 · VHII (este bug)</text><text x="32" y="75" fill="#c9d1d9" font-size="11">Instalação anterior à 007</text><text x="32" y="95" fill="#8b949e" font-size="11">medium · empacotamento</text><text x="32" y="115" fill="#d29922" font-size="11" font-weight="600">active · patching</text></a>
+<a href="../../BUG-20260909-FJBD-anomalia-cenario-ambiguo/bug.md"><rect x="430" y="30" width="250" height="100" rx="8" fill="#161b22" stroke="#30363d" stroke-width="2"/><text x="442" y="55" fill="#e6edf3" font-size="13" font-weight="600">nº 1 · FJBD</text><text x="442" y="75" fill="#c9d1d9" font-size="11">Anomalia cenario-ambiguo</text><text x="442" y="95" fill="#8b949e" font-size="11">low · leitura</text><text x="442" y="115" fill="#f85149" font-size="11" font-weight="600">open · triaging</text></a></svg></div>
+
+<h2>8. Matriz de relações</h2>
+<table><tr><th>Origem</th><th>Tipo</th><th>Destino</th><th>Estado</th></tr>
+<tr><td><a href="../bug.md">BUG-20260909-VHII</a></td><td>related-to</td><td><a href="../../BUG-20260909-FJBD-anomalia-cenario-ambiguo/bug.md">BUG-20260909-FJBD</a></td><td>proposed (mesmo relato e mesma tela; sem hipótese causal)</td></tr></table>
+
+<h2>9. Ordem sugerida nesta sessão</h2>
+<div class="box">1º este bug (P1, correção operacional, sem decisão de spec pendente antes do change set); 2º <a href="../../BUG-20260909-FJBD-anomalia-cenario-ambiguo/bug.md">BUG-20260909-FJBD</a>, cuja estratégia depende do veredito de spec e fica em <code>awaiting-human</code> com os diffs preparados.</div>
+</body></html>

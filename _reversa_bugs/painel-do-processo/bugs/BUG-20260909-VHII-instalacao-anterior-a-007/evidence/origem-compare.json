@@ -1,0 +1,8 @@
+{
+  "consulta": "GET https://api.github.com/repos/iago-leal/reversa-views/compare/543f0bd...master (anônima, 2026-09-09 21:5x)",
+  "http": 200,
+  "status": "identical",
+  "ahead_by": 0,
+  "behind_by": 0,
+  "total_commits": 0
+}

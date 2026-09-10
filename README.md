@@ -171,6 +171,16 @@ e de leitura, ocorre uma vez por leitura do processo, e a chave
 `reversaViews.conferirAtualizacao` a desliga; desligada, o cabeçalho declara
 que está desligada, e não que está em dia.
 
+Uma ressalva de bootstrap, aprendida com o BUG-20260909-VHII. Instalação
+anterior à `0.7.0` não tem a consulta nem o carimbo: o cabeçalho dela não
+mostra *Extensão* nem *Construída de*, e nada nela anuncia que ficou atrás,
+porque quem anunciaria é a construção que ainda não está instalada.
+`code --list-extensions --show-versions` diz qual versão está instalada;
+abaixo de `0.7.0`, a primeira atualização é manual, uma vez só: `npm run
+build`, `npm test`, `npm run empacotar` e `code --install-extension` com o
+pacote gerado, seguidos de recarga da janela do editor. Daí em diante o painel
+avisa.
+
 ### Aplicar
 
 ```bash

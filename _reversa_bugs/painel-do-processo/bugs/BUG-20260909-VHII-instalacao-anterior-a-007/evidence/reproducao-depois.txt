@@ -1,0 +1,6 @@
+instalação: /Users/iagoleal/.vscode/extensions/iagoleal-local.reversa-views-0.7.0
+versão:     "version": "0.7.0"
+  out/host/update.js: presente
+  out/host/net.js: presente
+  out/host/build.js: presente
+ok: a instalação carrega a feature 007

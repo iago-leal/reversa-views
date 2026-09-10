@@ -1,0 +1,30 @@
+
+ RUN  v3.2.7 /private/tmp/claude-501/-Users-iagoleal-dev-reversa-views/b95100ae-0481-4064-bd6e-8693f6ee7020/scratchpad/gate1-vhii
+
+ ❯ tests/vsix-conteudo.spec.ts (4 tests | 1 failed) 6ms
+   ✓ o conteúdo do pacote gerado (RF-21) > não leva caminho fora da lista prevista 1ms
+   × o conteúdo do pacote gerado (RF-21) > leva o que a extensão precisa para rodar 4ms
+     → extension/out/host/update.js ficou de fora do pacote: expected [ 'extension.vsixmanifest', …(78) ] to include 'extension/out/host/update.js'
+   ✓ o conteúdo do pacote gerado (RF-21) > cabe no teto do pacote da extensão 0ms
+   ✓ o conteúdo do pacote gerado (RF-21) > avisa quando não há pacote para conferir 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/vsix-conteudo.spec.ts > o conteúdo do pacote gerado (RF-21) > leva o que a extensão precisa para rodar
+AssertionError: extension/out/host/update.js ficou de fora do pacote: expected [ 'extension.vsixmanifest', …(78) ] to include 'extension/out/host/update.js'
+ ❯ tests/vsix-conteudo.spec.ts:47:62
+     45|       'extension/out/host/build.js',
+     46|     ]) {
+     47|       expect(caminhos, `${exigido} ficou de fora do pacote`).toContain…
+       |                                                              ^
+     48|     }
+     49|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 3 passed (4)
+   Start at  22:07:38
+   Duration  252ms (transform 25ms, setup 0ms, collect 21ms, tests 6ms, environment 0ms, prepare 64ms)
+

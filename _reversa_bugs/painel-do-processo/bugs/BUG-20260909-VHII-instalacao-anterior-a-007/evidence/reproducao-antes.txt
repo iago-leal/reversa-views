@@ -1,0 +1,6 @@
+instalação: /Users/iagoleal/.vscode/extensions/iagoleal-local.reversa-views-0.0.1
+versão:     "version": "0.0.1"
+  out/host/update.js: AUSENTE
+  out/host/net.js: AUSENTE
+  out/host/build.js: AUSENTE
+DEFEITO PRESENTE: a instalação é anterior à feature 007 (3 módulos ausentes)
