@@ -1,4 +1,4 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-10T17:04:46.033Z a partir de 5 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-10T17:35:38.192Z a partir de 5 bugs -->
 # Matriz de relações · painel-do-processo
 
 Lista esparsa de arestas. Inversas derivadas estão marcadas. Relação `proposed` é hipótese e não entra em priorização.

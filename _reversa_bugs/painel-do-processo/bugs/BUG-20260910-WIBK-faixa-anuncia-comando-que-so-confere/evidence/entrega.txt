@@ -1,0 +1,34 @@
+== estado apos a entrega, 2026-09-10
+
+-- npm run atualizar -- --aplicar (resumo; percurso completo em entrega-aplicar.log)
+Clone em 466c0c0, ramo master.
+Em dia com a origem: não há commit a trazer.
+== construção: npm run build
+== suíte: npm test
+ Test Files  83 passed (83)
+      Tests  1318 passed (1318)
+== empacotamento: npm run empacotar
+ DONE  Packaged: /Users/iagoleal/dev/reversa-views/reversa-views-0.8.3.vsix (91 files, 187.48 KB)
+Instale com: code --install-extension reversa-views-0.8.3.vsix
+Instale com: code --install-extension reversa-views-0.8.3.vsix
+Extension 'reversa-views-0.8.3.vsix' was successfully installed.
+codigo de saida: 0
+
+-- conferencia
+Clone em 466c0c0, ramo master.
+Em dia com a origem: não há commit a trazer.
+
+-- extensao instalada
+iagoleal-local.reversa-views@0.8.3
+
+-- carimbo da instalada
+17:exports.DEFAULT_BRANCH = exports.ORIGIN_REPOSITORY = exports.BUILT_FROM_COMMIT = exports.EXTENSION_VERSION = void 0;
+19:exports.EXTENSION_VERSION = '0.8.3';
+21:exports.BUILT_FROM_COMMIT = '466c0c08d97212077f5378bb7fa2091036e101c0';
+
+-- o comando que a tela instalada carrega (grep no pacote da webview em out/)
+npm run atualizar -- --aplicar
+
+-- clone e origem
+HEAD:   466c0c08d97212077f5378bb7fa2091036e101c0
+origin: 466c0c08d97212077f5378bb7fa2091036e101c0

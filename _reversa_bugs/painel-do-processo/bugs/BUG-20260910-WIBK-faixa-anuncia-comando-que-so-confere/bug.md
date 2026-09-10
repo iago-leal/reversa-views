@@ -3,7 +3,7 @@ schema_version: 1
 id: BUG-20260910-WIBK
 display_number: 5
 title: Faixa de atualização do painel anuncia o comando que apenas confere
-status: active
+status: resolved
 phase: delivering
 severity: high
 priority: P1
@@ -84,6 +84,21 @@ traceability:
 
 spec_verdict: spec-correta
 
+delivery:
+  branch: master
+  commit: 466c0c08d97212077f5378bb7fa2091036e101c0
+  pull_request: null
+  ci: "npm test local, 1318 casos em 83 arquivos, rodado de novo pelo próprio ritual antes de empacotar"
+  merged: 2026-09-10
+  published: 2026-09-10
+
+versions:
+  fixed_in: "0.8.3"
+  affected: "0.7.0 a 0.8.2"
+  installed: "0.8.3, carimbada em 466c0c0"
+
+backports: []
+
 change_set:
   - id: CHG-001
     kind: test
@@ -95,11 +110,16 @@ change_set:
     artifact: src/webview/domain/labels.ts
     purpose: "A constante UPDATE_COMMAND soletra o segundo ato; comentários dizem por quê"
     diff: fix/CHG-002.diff
+  - id: CHG-003
+    kind: infrastructure
+    artifact: reversa-views-0.8.3.vsix
+    purpose: "Commit 466c0c0 enviado à origem; npm run atualizar -- --aplicar construiu, testou, empacotou e instalou"
+    diff: evidence/entrega-aplicar.log
 
 closure:
   policy: package
-  satisfied: false
-resolution_kind: null
+  satisfied: true
+resolution_kind: fixed
 ---
 
 # Faixa de atualização do painel anuncia o comando que apenas confere
@@ -249,6 +269,24 @@ E a suíte inteira do projeto, mais a verificação de tipos da tela:
  Test Files  83 passed (83)
       Tests  1318 passed (1318)
 ```
+
+### Entrega (closure policy: package)
+
+A política exige a versão corrigida empacotada e publicada, e aqui publicar é empacotar o `.vsix` e
+instalá-lo pelo executável do editor. O commit `466c0c0` foi enviado à origem e o percurso foi feito
+pelo próprio ritual: com o clone em dia, `npm run atualizar -- --aplicar` construiu, rodou a suíte,
+empacotou a `0.8.3` e a instalou. A tela instalada carrega a linha
+`npm run atualizar -- --aplicar`, conferida no pacote da webview.
+
+| Eixo | Antes | Depois |
+|---|---|---|
+| Clone (HEAD) | `849fc5b` | `466c0c0` |
+| Origem | `849fc5b` | `466c0c0` |
+| Extensão instalada | `0.8.2`, carimbada em `849fc5b` | `0.8.3`, carimbada em `466c0c0` |
+
+Os três eixos coincidem, e a conferência declara em dia. Evidência em `evidence/entrega.txt`; o
+percurso completo em `evidence/entrega-aplicar.log`. A faixa corrigida só se verá no editor na
+próxima vez em que a instalação ficar atrás da origem, o que é o comportamento esperado.
 
 ## Agent Notes
 

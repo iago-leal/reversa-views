@@ -1,0 +1,301 @@
+
+> reversa-views@0.0.1 atualizar
+> node scripts/atualizar.js --aplicar
+
+Clone em 466c0c0, ramo master.
+Em dia com a origem: não há commit a trazer.
+Nada a trazer da origem, e ainda assim há o que fazer: quem pode estar atrás deste clone é a
+construção instalada, que é o que o painel compara. Refazendo a construção deste clone.
+
+== construção: npm run build
+
+> reversa-views@0.0.1 build
+> npm run check:heranca:local && npm run gerar:revisao-heranca && npm run gerar:carimbo && npm run compile && npm run build:webview
+
+
+> reversa-views@0.0.1 check:heranca:local
+> node scripts/verificar-heranca.js --local
+
+Herança vendorizada
+  modo: local (só o que está versionado aqui)
+  as origens não foram consultadas: rode npm run check:heranca para confrontá-las
+
+  scrum-harness (código): não verificado
+    [informa] paridade-externa src/heranca/reversa-domain/tests/fixtures/check-legacy-policy.mjs
+              este arquivo é o espelho de .reversa/hooks/check-legacy-policy.mjs, e os dois andam juntos
+              → ao mexer num lado, confira o outro na mesma passada
+
+  vscode-kanban (padrão): não verificado
+    nada a relatar
+
+  veredito: divergente (0 impedem, 1 apenas informam)
+
+> reversa-views@0.0.1 gerar:revisao-heranca
+> node scripts/gerar-revisao-heranca.js
+
+src/host/inheritance.ts gerado com a revisão 420305daa6cdd10858b720a34cb8db67d8e5c5e9
+
+> reversa-views@0.0.1 gerar:carimbo
+> node scripts/gerar-carimbo-da-construcao.js
+
+src/host/build.ts gerado: versão 0.8.3, commit 466c0c0, origem iago-leal/reversa-views, ramo master
+
+> reversa-views@0.0.1 compile
+> tsc -p ./
+
+
+> reversa-views@0.0.1 build:webview
+> node scripts/build-webview.js
+
+
+  out/res/webview/main.js   178.9kb
+  out/res/webview/main.css   10.6kb
+
+⚡ Done in 61ms
+Colour sets trimmed to what the panel asks for:
+  dark-high-contrast.css: 121648 B -> 3600 B (97% dropped)
+  dark.css: 121114 B -> 3532 B (97% dropped)
+  light-high-contrast.css: 121805 B -> 3593 B (97% dropped)
+  light.css: 121331 B -> 3525 B (97% dropped)
+  4 sets in total: 485898 B -> 14250 B (97% dropped)
+Webview bundled into out/res/webview: main.js, main.css
+Pacote da tela: 189.5 KiB (194031 B), teto 400.0 KiB (409600 B)
+
+== suíte: npm test
+
+> reversa-views@0.0.1 pretest
+> npm run gerar:carimbo
+
+
+> reversa-views@0.0.1 gerar:carimbo
+> node scripts/gerar-carimbo-da-construcao.js
+
+src/host/build.ts gerado: versão 0.8.3, commit 466c0c0, origem iago-leal/reversa-views, ramo master
+
+> reversa-views@0.0.1 test
+> vitest run
+
+
+ RUN  v3.2.7 /Users/iagoleal/dev/reversa-views
+
+ ✓ tests/preview-servidor.spec.ts (17 tests) 76ms
+ ✓ tests/versao.spec.ts (23 tests) 189ms
+ ✓ tests/bugs-sem-projecao.spec.ts (6 tests) 90ms
+ ✓ tests/preview-registro.spec.ts (7 tests) 229ms
+ ✓ tests/webview-render.spec.tsx (67 tests) 126ms
+ ✓ tests/webview-boundaries.spec.ts (18 tests) 178ms
+ ✓ tests/domain-bugs.spec.ts (34 tests) 519ms
+ ✓ tests/probe-features.spec.ts (11 tests) 69ms
+ ✓ tests/limites.spec.ts (9 tests) 67ms
+ ✓ src/heranca/reversa-probe/tests/snapshot.spec.ts (16 tests) 103ms
+ ✓ tests/host-boundaries.spec.ts (20 tests) 94ms
+ ✓ tests/desempenho-referencia.spec.ts (3 tests) 824ms
+   ✓ desempenho no workspace de referência > lê o disco e julga o retrato em menos de 200 ms  336ms
+ ✓ tests/webview-messaging.spec.ts (18 tests) 86ms
+ ✓ tests/webview-bugs-section.spec.tsx (31 tests) 57ms
+ ✓ tests/heranca-manifesto.spec.ts (13 tests) 53ms
+ ✓ tests/heranca-ressincronizador.spec.ts (15 tests) 48ms
+ ✓ tests/webview-theme-tokens.spec.ts (13 tests) 22ms
+ ✓ tests/webview-instants-render.spec.tsx (17 tests) 60ms
+ ✓ tests/host-update.spec.ts (30 tests) 33ms
+ ✓ tests/domain-front-matter.spec.ts (26 tests) 57ms
+ ✓ tests/webview-error-boundary.spec.tsx (11 tests) 97ms
+ ✓ tests/webview-header.spec.tsx (28 tests) 40ms
+ ✓ src/heranca/reversa-probe/tests/files.spec.ts (18 tests) 24ms
+ ✓ tests/webview-instants.spec.ts (24 tests) 20ms
+ ✓ tests/readonly-local.spec.ts (11 tests) 53ms
+ ✓ tests/host-provider.spec.ts (29 tests) 28ms
+ ✓ tests/heranca-relatorio.spec.ts (7 tests) 2ms
+ ✓ tests/host-reading.spec.ts (12 tests) 19ms
+ ✓ tests/heranca-verificador-origem.spec.ts (10 tests) 9ms
+ ✓ src/heranca/reversa-domain/tests/readonly.spec.ts (5 tests) 38ms
+ ✓ tests/webview-summary.spec.ts (12 tests) 30ms
+ ✓ tests/webview-progress-cards.spec.tsx (11 tests) 22ms
+ ✓ tests/host-router.spec.ts (23 tests) 9ms
+ ✓ src/heranca/reversa-probe/tests/readonly.spec.ts (5 tests) 11ms
+ ✓ tests/forward-marcador-de-duvida-citado.spec.ts (9 tests) 14ms
+ ✓ tests/host-protocol.spec.ts (18 tests) 8ms
+ ✓ tests/webview-blocking.spec.ts (23 tests) 8ms
+ ✓ tests/heranca-origens.spec.ts (10 tests) 15ms
+ ✓ tests/atualizador.spec.ts (34 tests) 16ms
+ ✓ tests/webview-entry.spec.ts (15 tests) 8ms
+ ✓ tests/host-net.spec.ts (28 tests) 11ms
+ ✓ tests/webview-theme.spec.ts (26 tests) 10ms
+ ✓ tests/host-open-file.spec.ts (9 tests) 6ms
+ ✓ tests/host-session.spec.ts (10 tests) 5ms
+ ✓ tests/host-manifest.spec.ts (27 tests) 9ms
+ ✓ tests/domain-history.spec.ts (29 tests) 6ms
+ ✓ tests/host-bridge.spec.ts (17 tests) 12ms
+ ✓ src/heranca/reversa-domain/tests/compose.spec.ts (7 tests) 12ms
+ ✓ tests/webview-labels.spec.ts (20 tests) 8ms
+ ✓ src/heranca/reversa-domain/tests/hook-parity.spec.ts (4 tests) 10ms
+ ✓ tests/webview-preferences.spec.ts (21 tests) 4ms
+ ✓ tests/webview-decomposition-view.spec.ts (35 tests) 6ms
+ ✓ src/heranca/reversa-domain/tests/forward.spec.ts (16 tests) 3ms
+ ✓ src/heranca/reversa-domain/tests/ideation.spec.ts (12 tests) 4ms
+ ✓ src/heranca/reversa-domain/tests/watch.spec.ts (9 tests) 6ms
+ ✓ tests/webview-sections.spec.ts (21 tests) 6ms
+ ✓ src/heranca/reversa-domain/tests/policy.spec.ts (22 tests) 6ms
+ ✓ tests/domain-decomposition.spec.ts (19 tests) 6ms
+ ✓ tests/webview-progress-bar.spec.tsx (22 tests) 5ms
+ ✓ tests/heranca-verificador-local.spec.ts (11 tests) 4ms
+ ✓ src/heranca/reversa-domain/tests/state.spec.ts (19 tests) 8ms
+ ✓ tests/vsix-conteudo.spec.ts (4 tests) 4ms
+ ✓ tests/webview-bugs-view.spec.ts (22 tests) 6ms
+ ✓ src/heranca/reversa-domain/tests/impact.spec.ts (15 tests) 5ms
+ ✓ src/heranca/reversa-domain/tests/migration.spec.ts (16 tests) 5ms
+ ✓ tests/vsix-leitor.spec.ts (5 tests) 4ms
+ ✓ tests/host-root.spec.ts (6 tests) 4ms
+ ✓ tests/preview-config.spec.ts (19 tests) 7ms
+ ✓ src/heranca/reversa-domain/tests/table.spec.ts (12 tests) 5ms
+ ✓ src/heranca/reversa-domain/tests/progress.spec.ts (14 tests) 6ms
+ ✓ tests/webview-build.spec.ts (15 tests) 5ms
+ ✓ tests/heranca-carimbo.spec.ts (12 tests) 4ms
+ ✓ src/heranca/reversa-domain/tests/glob.spec.ts (12 tests) 3ms
+ ✓ tests/empacotamento-versao.spec.ts (10 tests) 5ms
+ ✓ tests/host-panel.spec.ts (10 tests) 4ms
+ ✓ tests/host-document.spec.ts (10 tests) 3ms
+ ✓ tests/preview-leitura.spec.ts (7 tests) 5ms
+ ✓ src/heranca/reversa-domain/tests/actions.spec.ts (11 tests) 3ms
+ ✓ tests/paridade-gancho-instalado.spec.ts (1 test) 2ms
+ ✓ tests/heranca-ritual.spec.ts (11 tests) 3ms
+ ✓ tests/heranca-adaptacoes.spec.ts (7 tests) 2ms
+ ✓ tests/leitura-impacto-nota-greenfield.spec.ts (2 tests) 3ms
+ ✓ tests/heranca-revisao-gerada.spec.ts (4 tests) 2ms
+
+ Test Files  83 passed (83)
+      Tests  1318 passed (1318)
+   Start at  14:34:58
+   Duration  5.23s (transform 1.37s, setup 0ms, collect 5.86s, tests 3.69s, environment 11ms, prepare 7.84s)
+
+
+== empacotamento: npm run empacotar
+
+> reversa-views@0.0.1 empacotar
+> node scripts/empacotar.js
+
+ WARNING  LICENSE, LICENSE.md, or LICENSE.txt not found
+ INFO  Files included in the VSIX:
+reversa-views-0.8.3.vsix
+├─ [Content_Types].xml 
+├─ extension.vsixmanifest 
+└─ extension/
+   ├─ package.json [2.94 KB]
+   ├─ readme.md [20.5 KB]
+   ├─ media/
+   │  └─ reversa.svg [0.31 KB]
+   └─ out/
+      ├─ extension.js [4.38 KB]
+      ├─ extension.js.map [2.04 KB]
+      ├─ domain/ (12 files) [65.94 KB]
+      ├─ heranca/ (34 files) [117.86 KB]
+      ├─ host/ (32 files) [82.28 KB]
+      ├─ probe/ (4 files) [14.14 KB]
+      └─ res/ (2 files) [189.48 KB]
+
+=> Run vsce ls --tree to see all included files.
+
+ DONE  Packaged: /Users/iagoleal/dev/reversa-views/reversa-views-0.8.3.vsix (91 files, 187.48 KB)
+
+Conteúdo de reversa-views-0.8.3.vsix, 91 arquivos:
+  [Content_Types].xml  (522 B)
+  extension.vsixmanifest  (1756 B)
+  extension/media/reversa.svg  (317 B)
+  extension/out/domain/bugs.js  (14558 B)
+  extension/out/domain/bugs.js.map  (8428 B)
+  extension/out/domain/decomposition.js  (6701 B)
+  extension/out/domain/decomposition.js.map  (4485 B)
+  extension/out/domain/front-matter.js  (6875 B)
+  extension/out/domain/front-matter.js.map  (3215 B)
+  extension/out/domain/history.js  (8978 B)
+  extension/out/domain/history.js.map  (5171 B)
+  extension/out/domain/limits.js  (3240 B)
+  extension/out/domain/limits.js.map  (341 B)
+  extension/out/domain/types.js  (4066 B)
+  extension/out/domain/types.js.map  (1469 B)
+  extension/out/extension.js  (4490 B)
+  extension/out/extension.js.map  (2086 B)
+  extension/out/heranca/reversa-domain/src/actions.js  (3466 B)
+  extension/out/heranca/reversa-domain/src/actions.js.map  (2002 B)
+  extension/out/heranca/reversa-domain/src/anomaly.js  (1614 B)
+  extension/out/heranca/reversa-domain/src/anomaly.js.map  (645 B)
+  extension/out/heranca/reversa-domain/src/forward.js  (5230 B)
+  extension/out/heranca/reversa-domain/src/forward.js.map  (3608 B)
+  extension/out/heranca/reversa-domain/src/glob.js  (2819 B)
+  extension/out/heranca/reversa-domain/src/glob.js.map  (856 B)
+  extension/out/heranca/reversa-domain/src/ideation.js  (4801 B)
+  extension/out/heranca/reversa-domain/src/ideation.js.map  (2479 B)
+  extension/out/heranca/reversa-domain/src/impact.js  (5639 B)
+  extension/out/heranca/reversa-domain/src/impact.js.map  (3772 B)
+  extension/out/heranca/reversa-domain/src/index.js  (9869 B)
+  extension/out/heranca/reversa-domain/src/index.js.map  (3238 B)
+  extension/out/heranca/reversa-domain/src/json.js  (2757 B)
+  extension/out/heranca/reversa-domain/src/json.js.map  (1498 B)
+  extension/out/heranca/reversa-domain/src/migration.js  (6158 B)
+  extension/out/heranca/reversa-domain/src/migration.js.map  (4066 B)
+  extension/out/heranca/reversa-domain/src/policy.js  (6606 B)
+  extension/out/heranca/reversa-domain/src/policy.js.map  (3658 B)
+  extension/out/heranca/reversa-domain/src/progress.js  (4163 B)
+  extension/out/heranca/reversa-domain/src/progress.js.map  (3072 B)
+  extension/out/heranca/reversa-domain/src/state.js  (5552 B)
+  extension/out/heranca/reversa-domain/src/state.js.map  (3833 B)
+  extension/out/heranca/reversa-domain/src/table.js  (4043 B)
+  extension/out/heranca/reversa-domain/src/table.js.map  (2615 B)
+  extension/out/heranca/reversa-domain/src/watch.js  (3132 B)
+  extension/out/heranca/reversa-domain/src/watch.js.map  (1908 B)
+  extension/out/heranca/reversa-probe/src/files.js  (3757 B)
+  extension/out/heranca/reversa-probe/src/files.js.map  (1638 B)
+  extension/out/heranca/reversa-probe/src/index.js  (2374 B)
+  extension/out/heranca/reversa-probe/src/index.js.map  (340 B)
+  extension/out/heranca/reversa-probe/src/snapshot.js  (5787 B)
+  extension/out/heranca/reversa-probe/src/snapshot.js.map  (3690 B)
+  extension/out/host/adapters.js  (4630 B)
+  extension/out/host/adapters.js.map  (2154 B)
+  extension/out/host/bridge.js  (2840 B)
+  extension/out/host/bridge.js.map  (1703 B)
+  extension/out/host/build.js  (1410 B)
+  extension/out/host/build.js.map  (320 B)
+  extension/out/host/document.js  (2011 B)
+  extension/out/host/document.js.map  (755 B)
+  extension/out/host/inheritance.js  (841 B)
+  extension/out/host/inheritance.js.map  (192 B)
+  extension/out/host/net.js  (8850 B)
+  extension/out/host/net.js.map  (3443 B)
+  extension/out/host/open-file.js  (2060 B)
+  extension/out/host/open-file.js.map  (947 B)
+  extension/out/host/panel.js  (1078 B)
+  extension/out/host/panel.js.map  (312 B)
+  extension/out/host/ports.js  (1558 B)
+  extension/out/host/ports.js.map  (273 B)
+  extension/out/host/protocol.js  (2400 B)
+  extension/out/host/protocol.js.map  (696 B)
+  extension/out/host/provider.js  (9042 B)
+  extension/out/host/provider.js.map  (5491 B)
+  extension/out/host/reading.js  (4343 B)
+  extension/out/host/reading.js.map  (2397 B)
+  extension/out/host/root.js  (1864 B)
+  extension/out/host/root.js.map  (987 B)
+  extension/out/host/router.js  (5215 B)
+  extension/out/host/router.js.map  (3362 B)
+  extension/out/host/session.js  (3711 B)
+  extension/out/host/session.js.map  (1641 B)
+  extension/out/host/update.js  (5429 B)
+  extension/out/host/update.js.map  (2299 B)
+  extension/out/probe/bugs.js  (5875 B)
+  extension/out/probe/bugs.js.map  (2681 B)
+  extension/out/probe/features.js  (4140 B)
+  extension/out/probe/features.js.map  (1786 B)
+  extension/out/res/webview/main.css  (10841 B)
+  extension/out/res/webview/main.js  (183190 B)
+  extension/package.json  (3006 B)
+  extension/readme.md  (20997 B)
+
+Pacote da extensão: 187.5 KiB (191984 B), teto 2048.0 KiB (2097152 B), versão 0.8.3
+Instale com: code --install-extension reversa-views-0.8.3.vsix
+
+Instale com: code --install-extension reversa-views-0.8.3.vsix
+Installing extensions...
+Extension 'reversa-views-0.8.3.vsix' was successfully installed.
+(node:6508) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `Code --trace-deprecation ...` to show where the warning was created)
+Instalado. Recarregue a janela do editor para a versão nova valer.
