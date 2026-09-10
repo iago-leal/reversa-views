@@ -1,0 +1,10 @@
+diff --git a/_reversa_forward/007-atualizacao-e-progresso/requirements.md b/_reversa_forward/007-atualizacao-e-progresso/requirements.md
+index 7b4a4cd..d8e59ea 100644
+--- a/_reversa_forward/007-atualizacao-e-progresso/requirements.md
++++ b/_reversa_forward/007-atualizacao-e-progresso/requirements.md
+@@ -404,4 +404,4 @@ de requisito:
+ | Data | Alteração | Autor |
+ |------|-----------|-------|
+ | 2026-09-09 | Versão inicial gerada por `/reversa-requirements` | reversa |
+-| 2026-09-09 | Sessão de esclarecimentos por `/reversa-clarify`: cinco respostas integradas, três `[DÚVIDA]` resolvidos, emenda ao PRD registrada na seção 2, requisitos renumerados e agrupados por frente | reversa |
++| 2026-09-09 | Sessão de esclarecimentos por `/reversa-clarify`: cinco respostas integradas, três marcadores de dúvida resolvidos, emenda ao PRD registrada na seção 2, requisitos renumerados e agrupados por frente | reversa |

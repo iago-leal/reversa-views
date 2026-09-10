@@ -1,0 +1,4 @@
+countDoubts: 1
+linha 407: | 2026-09-09 | Sessão de esclarecimentos por `/reversa-clarify`: cinco respostas integradas, três `[DÚVIDA]` resolvidos, emenda ao PRD regis
+seção Lacunas diz: "Nenhuma lacuna aberta"
+DEFEITO PRESENTE: dúvida contada sem dúvida aberta

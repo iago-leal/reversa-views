@@ -404,4 +404,4 @@ de requisito:
 | Data | Alteração | Autor |
 |------|-----------|-------|
 | 2026-09-09 | Versão inicial gerada por `/reversa-requirements` | reversa |
-| 2026-09-09 | Sessão de esclarecimentos por `/reversa-clarify`: cinco respostas integradas, três `[DÚVIDA]` resolvidos, emenda ao PRD registrada na seção 2, requisitos renumerados e agrupados por frente | reversa |
+| 2026-09-09 | Sessão de esclarecimentos por `/reversa-clarify`: cinco respostas integradas, três marcadores de dúvida resolvidos, emenda ao PRD registrada na seção 2, requisitos renumerados e agrupados por frente | reversa |

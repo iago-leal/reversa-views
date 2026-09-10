@@ -1,0 +1,45 @@
+
+ RUN  v3.2.7 /Users/iagoleal/dev/reversa-views
+
+ ❯ tests/forward-marcador-de-duvida-citado.spec.ts (8 tests | 1 failed) 12ms
+   ✓ o marcador de dúvida citado em texto (BUG-20260910-74UL) > conta como dúvida quando está fora de crases, que é a regra herdada 1ms
+   ✓ o marcador de dúvida citado em texto (BUG-20260910-74UL) > 001-leitura-do-processo: o requirements não cita o marcador entre crases 1ms
+   ✓ o marcador de dúvida citado em texto (BUG-20260910-74UL) > 002-ponte-e-host: o requirements não cita o marcador entre crases 1ms
+   ✓ o marcador de dúvida citado em texto (BUG-20260910-74UL) > 003-painel-do-processo: o requirements não cita o marcador entre crases 1ms
+   ✓ o marcador de dúvida citado em texto (BUG-20260910-74UL) > 004-heranca-e-sincronia: o requirements não cita o marcador entre crases 1ms
+   ✓ o marcador de dúvida citado em texto (BUG-20260910-74UL) > 005-empacotamento-e-verificacao: o requirements não cita o marcador entre crases 1ms
+   ✓ o marcador de dúvida citado em texto (BUG-20260910-74UL) > 006-cartoes-e-cronologia: o requirements não cita o marcador entre crases 1ms
+   × o marcador de dúvida citado em texto (BUG-20260910-74UL) > 007-atualizacao-e-progresso: o requirements não cita o marcador entre crases 6ms
+     → o contador de dúvidas leria como dúvida aberta o marcador citado em:
+linha 407: | 2026-09-09 | Sessão de esclarecimentos por `/reversa-clarify`: cinco respostas integradas, três `[: expected [ Array(1) ] to deeply equal []
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/forward-marcador-de-duvida-citado.spec.ts > o marcador de dúvida citado em texto (BUG-20260910-74UL) > 007-atualizacao-e-progresso: o requirements não cita o marcador entre crases
+AssertionError: o contador de dúvidas leria como dúvida aberta o marcador citado em:
+linha 407: | 2026-09-09 | Sessão de esclarecimentos por `/reversa-clarify`: cinco respostas integradas, três `[: expected [ Array(1) ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   "linha 407: | 2026-09-09 | Sessão de esclarecimentos por `/reversa-clarify`: cinco respostas integradas, três `[",[39m
+[31m+ ][39m
+
+ ❯ tests/forward-marcador-de-duvida-citado.spec.ts:39:7
+     37|       citacoes,
+     38|       `o contador de dúvidas leria como dúvida aberta o marcador citad…
+     39|     ).toEqual([])
+       |       ^
+     40|     expect(countDoubts(md)).toBe((md.match(/\[DÚVIDA\]/g) ?? []).lengt…
+     41|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  08:23:22
+   Duration  272ms (transform 32ms, setup 0ms, collect 27ms, tests 12ms, environment 0ms, prepare 62ms)
+

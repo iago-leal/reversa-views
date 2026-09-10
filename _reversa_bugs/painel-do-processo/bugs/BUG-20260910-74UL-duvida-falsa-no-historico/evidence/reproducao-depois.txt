@@ -1,0 +1,3 @@
+countDoubts: 0
+seção Lacunas diz: "Nenhuma lacuna aberta"
+ok: zero dúvidas

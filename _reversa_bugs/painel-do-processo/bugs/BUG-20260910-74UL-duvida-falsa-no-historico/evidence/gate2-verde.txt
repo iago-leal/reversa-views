@@ -1,0 +1,12 @@
+
+ RUN  v3.2.7 /Users/iagoleal/dev/reversa-views
+
+ ✓ src/heranca/reversa-domain/tests/actions.spec.ts (11 tests) 3ms
+ ✓ tests/forward-marcador-de-duvida-citado.spec.ts (8 tests) 6ms
+ ✓ tests/webview-blocking.spec.ts (9 tests) 5ms
+
+ Test Files  3 passed (3)
+      Tests  28 passed (28)
+   Start at  08:23:23
+   Duration  392ms (transform 114ms, setup 0ms, collect 183ms, tests 14ms, environment 0ms, prepare 245ms)
+
