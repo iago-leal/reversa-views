@@ -1,0 +1,30 @@
+== code --list-extensions --show-versions
+iagoleal-local.reversa-views@0.7.5
+
+== carimbo da construcao INSTALADA (0.7.5)
+
+== versao declarada no pacote instalado
+"version": "0.7.5"
+
+== carimbo da ARVORE
+17:export const EXTENSION_VERSION = '0.8.0'
+20:export const BUILT_FROM_COMMIT = '3cec3734014ca10188308f343250501e055bac7e'
+
+== clone
+3cec373 docs(sync): adendo da feature 008 na extração
+1c196e2 feat(bugs): cronologia do ciclo de bugs no painel
+9bd7648 docs(bugs): views do registro e espelho do lado da spec
+       1
+== npm run atualizar (conferencia)
+
+> reversa-views@0.0.1 atualizar
+> node scripts/atualizar.js
+
+Clone em 3cec373, ramo master.
+Em dia com a origem: não há commit a trazer.
+codigo de saida: 
+
+== carimbo compilado da extensao instalada 0.7.5
+17:exports.DEFAULT_BRANCH = exports.ORIGIN_REPOSITORY = exports.BUILT_FROM_COMMIT = exports.EXTENSION_VERSION = void 0;
+19:exports.EXTENSION_VERSION = '0.7.5';
+21:exports.BUILT_FROM_COMMIT = '9bd764815b3d227e4fee794871221917084de38a';

@@ -211,10 +211,71 @@ describe('a aplicação é um segundo ato (RF-04)', () => {
     expect(m.feito).toEqual([])
   })
 
-  it('em dia, --aplicar não tem o que aplicar e sai em zero', () => {
+  it('em dia, --aplicar não incorpora coisa alguma e sai em zero', () => {
     const m = mundo()
     expect(principal(['--aplicar'], '/repo', m.ferramentas)).toBe(SAIDA_EM_DIA)
+    expect(m.feito).not.toContain('incorporar origin/master')
+  })
+})
+
+/**
+ * O segundo eixo do ritual (BUG-20260910-SVZU).
+ *
+ * A conferência mede clone contra origem; o painel mede construção instalada
+ * contra origem. Os dois divergem sempre que se constrói ou se incorpora sem
+ * instalar, e o caso em que divergem com o clone à frente era o que nenhum
+ * comando alcançava: `aplicar` devolvia o código da conferência antes de
+ * qualquer passo, e o aviso do painel ficava insanável.
+ *
+ * A aplicação passa a significar "deixe a instalação em dia com este clone".
+ * Incorporar continua condicionado a haver o que incorporar; construir, testar,
+ * empacotar e instalar deixam de ser consequência da incorporação e passam a
+ * ser o corpo do ato.
+ */
+describe('o segundo eixo: a construção instalada (BUG-20260910-SVZU)', () => {
+  it('em dia, --aplicar refaz a construção deste clone e a instala', () => {
+    const m = mundo({ editor: true })
+    expect(principal(['--aplicar'], '/repo', m.ferramentas)).toBe(SAIDA_EM_DIA)
+    expect(m.feito).toEqual([
+      'buscar',
+      'npm run build',
+      'npm test',
+      'npm run empacotar',
+      'instalar reversa-views-0.6.2.vsix',
+    ])
+  })
+
+  it('em dia, o percurso roda sem incorporar nada: a incorporação segue condicionada (W004)', () => {
+    const m = mundo()
+    aplicar('/repo', m.ferramentas)
+    expect(m.feito).toContain('npm run build')
+    expect(m.feito).not.toContain('incorporar origin/master')
+  })
+
+  it('sem --aplicar, o clone em dia continua sem efeito colateral algum (W001)', () => {
+    const m = mundo()
+    expect(principal([], '/repo', m.ferramentas)).toBe(SAIDA_EM_DIA)
     expect(m.feito).toEqual(['buscar'])
+  })
+
+  it('em dia com árvore suja: recusa antes de construir, para não empacotar procedência falsa', () => {
+    const m = mundo({ sujeira: [' M src/a.ts'] })
+    expect(aplicar('/repo', m.ferramentas)).toBe(SAIDA_REPROVADO)
+    expect(m.erro()).toContain('src/a.ts')
+    expect(m.feito).toEqual(['buscar'])
+  })
+
+  it('impossível conferir não constrói às cegas, e continua saindo em dois (W002, W003)', () => {
+    const m = mundo({ remoto: null })
+    expect(aplicar('/repo', m.ferramentas)).toBe(SAIDA_IMPOSSIVEL)
+    expect(m.feito).toEqual([])
+  })
+
+  it('em dia com commit próprio: constrói, porque a recusa de RF-05 é da incorporação', () => {
+    const m = mundo({ aFrente: 1 })
+    expect(aplicar('/repo', m.ferramentas)).toBe(SAIDA_EM_DIA)
+    expect(m.feito).toContain('npm run build')
+    expect(m.erro()).toBe('')
   })
 })
 

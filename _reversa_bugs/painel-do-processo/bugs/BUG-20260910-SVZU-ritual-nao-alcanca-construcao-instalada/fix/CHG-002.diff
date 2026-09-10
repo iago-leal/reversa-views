@@ -1,0 +1,161 @@
+diff --git a/scripts/atualizar.js b/scripts/atualizar.js
+index a0ca66f..1b75ada 100644
+--- a/scripts/atualizar.js
++++ b/scripts/atualizar.js
+@@ -5,10 +5,19 @@
+  * O primeiro ato CONFERE: busca as referências da origem sem tocar a árvore de
+  * trabalho e diz, em três desfechos nomeados, se o clone está em dia, atrás de
+  * N commits, ou se não deu para saber. O segundo ato APLICA, e só existe atrás
+- * de `--aplicar`: incorpora os commits, reinstala as dependências quando o
+- * arquivo de trava mudou, constrói, roda a suíte e empacota, parando na
+- * primeira falha. Ao final imprime o comando de instalação com o nome do pacote
+- * gerado, e tenta a instalação quando o executável do editor está no caminho.
++ * de `--aplicar`: deixa a INSTALAÇÃO em dia com este clone, incorporando antes
++ * quando há o que incorporar. Constrói, roda a suíte, empacota, imprime o
++ * comando de instalação com o nome do pacote gerado e tenta a instalação quando
++ * o executável do editor está no caminho, parando na primeira falha.
++ *
++ * Que o percurso rode mesmo sem commits a trazer é a correção do
++ * BUG-20260910-SVZU, e a razão é que o ritual mede um eixo e o painel mede
++ * outro. A conferência compara CLONE e origem; o cabeçalho do painel compara
++ * CONSTRUÇÃO INSTALADA e origem. Os dois divergem sempre que se constrói ou se
++ * incorpora sem instalar, e enquanto a aplicação era consequência da
++ * incorporação o clone em dia com instalação atrasada não tinha comando algum
++ * que o alcançasse: o painel pedia atualização a cada recarga e nada a
++ * satisfazia.
+  *
+  * Três códigos de saída, no esquema que `verificar-heranca.js` já usa: zero
+  * quando nada há a fazer, um quando há algo a aplicar ou a aplicação foi
+@@ -16,18 +25,20 @@
+  * um e dois é o que permite a um script de fora saber se deve tentar de novo
+  * (dois) ou chamar alguém (um).
+  *
+- * A aplicação recusa árvore suja e commit local à frente da origem antes de
+- * tocar em qualquer coisa (RF-05), porque a incorporação sobre trabalho não
+- * registrado é exatamente a decisão que script nenhum toma (RN-04). Nada aqui
+- * escreve fora do clone: a árvore versionada, a pasta de saída e o pacote são
+- * os únicos destinos (RN-03).
++ * A aplicação recusa antes de tocar em qualquer coisa (RF-05), e as duas
++ * recusas têm alcances distintos porque guardam coisas distintas: a árvore suja
++ * recusa sempre, para que nenhum pacote saia declarando procedência que o
++ * conteúdo não tem, e o commit local à frente recusa só no ramo que incorpora,
++ * porque a incorporação sobre trabalho não registrado é exatamente a decisão que
++ * script nenhum toma (RN-04). Nada aqui escreve fora do clone: a árvore
++ * versionada, a pasta de saída e o pacote são os únicos destinos (RN-03).
+  *
+  * Todo acesso ao mundo entra por `FERRAMENTAS`, para que a suíte exercite os
+  * desfechos sem rede, sem clone e sem editor.
+  *
+  * Uso:
+  *     npm run atualizar               # confere, e nada mais
+- *     npm run atualizar -- --aplicar  # confere e, se houver o que trazer, aplica
++ *     npm run atualizar -- --aplicar  # confere, incorpora se houver, e reinstala
+  * @module scripts/atualizar
+  */
+ 
+@@ -299,10 +310,20 @@ function codigoDaConferencia(resultado) {
+ /**
+  * O segundo ato: aplicar, depois de conferir de novo (RF-04 a RF-07).
+  *
+- * As duas recusas vêm ANTES de qualquer escrita, e nomeiam o que encontraram:
+- * arquivo por arquivo no caso da árvore suja, contagem no caso dos commits
+- * locais. Depois delas, o percurso é o de RF-06 e para na primeira falha, com
+- * o pacote anterior intacto porque o empacotamento é o último passo.
++ * As duas recusas vêm ANTES de qualquer escrita, e nomeiam o que encontraram.
++ * Elas guardam coisas diferentes, e por isso valem em alcances diferentes. A
++ * árvore suja recusa SEMPRE, inclusive com o clone em dia, porque o carimbo da
++ * construção declara o commit da cabeça e um pacote feito sobre alteração não
++ * registrada anunciaria no painel uma procedência que o conteúdo não tem. O
++ * commit local à frente recusa apenas quando há incorporação a fazer, porque o
++ * que ele proíbe é incorporar por cima de trabalho que a origem não conhece, e
++ * não construir o próprio trabalho.
++ *
++ * Não conseguir conferir, essa sim, interrompe tudo: construir às cegas, sem
++ * saber o estado da origem, é o oposto do que o ritual existe para fazer.
++ *
++ * Depois das guardas o percurso é o de RF-06 e para na primeira falha, com o
++ * pacote anterior intacto porque o empacotamento é o último passo.
+  * @param {string} raiz - a raiz do clone.
+  * @param {typeof FERRAMENTAS} [ferramentas] - o acesso ao mundo.
+  * @returns {number} o código de saída.
+@@ -310,44 +331,54 @@ function codigoDaConferencia(resultado) {
+ function aplicar(raiz, ferramentas = FERRAMENTAS) {
+   const resultado = conferir(raiz, ferramentas)
+   ferramentas.escrever(relatar(resultado))
+-  if (resultado.desfecho !== 'atrasada') return codigoDaConferencia(resultado)
++  if (resultado.desfecho === 'impossivel') return codigoDaConferencia(resultado)
+ 
+   const sujeira = ferramentas.sujeira(raiz)
+   if (sujeira.length > 0) {
+     ferramentas.escreverErro(
+       `Aplicação recusada: a árvore de trabalho tem ${sujeira.length} alteração(ões) não registrada(s).\n` +
+         sujeira.map((linha) => `  ${linha}\n`).join('') +
+-        'Registre, guarde (git stash) ou desfaça antes de aplicar.\n',
++        'Registre, guarde (git stash) ou desfaça antes de aplicar: o carimbo da construção declara o\n' +
++        'commit da cabeça, e um pacote feito daqui anunciaria no painel uma procedência que não tem.\n',
+     )
+     return SAIDA_REPROVADO
+   }
+ 
+-  if (resultado.aFrente > 0) {
+-    ferramentas.escreverErro(
+-      `Aplicação recusada: este clone tem ${resultado.aFrente} commit(s) que a origem não tem.\n` +
+-        'Incorporar por cima deles é decisão sua, não deste script: envie-os (git push) ou desfaça-os antes.\n',
+-    )
+-    return SAIDA_REPROVADO
+-  }
++  const passos = [...PASSOS]
+ 
+-  const antes = resultado.commit
+-  const referencia = `${REMOTO}/${resultado.ramo}`
+-  try {
+-    ferramentas.incorporar(raiz, referencia)
+-  } catch (erro) {
+-    if (!eErroDeGit(erro)) throw erro
+-    ferramentas.escreverErro(`A incorporação reprovou: ${erro.saidaDeErro || erro.message}\n`)
+-    return SAIDA_REPROVADO
+-  }
+-  const depois = ferramentas.revisao(raiz)
+-  ferramentas.escrever(`Incorporados ${resultado.atras} commit(s): ${encurtar(antes)} → ${encurtar(depois)}.\n`)
++  if (resultado.desfecho === 'atrasada') {
++    if (resultado.aFrente > 0) {
++      ferramentas.escreverErro(
++        `Aplicação recusada: este clone tem ${resultado.aFrente} commit(s) que a origem não tem.\n` +
++          'Incorporar por cima deles é decisão sua, não deste script: envie-os (git push) ou desfaça-os antes.\n',
++      )
++      return SAIDA_REPROVADO
++    }
+ 
+-  // A instalação só quando o arquivo de trava mudou (RF-06): reinstalar a cada
+-  // atualização custa minutos por nada, e não reinstalar quando ele mudou
+-  // quebra a construção com um erro que não nomeia a causa.
+-  const passos = [...PASSOS]
+-  if (ferramentas.mudados(raiz, antes, depois, ['package-lock.json']).length > 0) {
+-    passos.unshift({ nome: 'instalação das dependências', comando: 'npm', argumentos: ['ci'] })
++    const antes = resultado.commit
++    const referencia = `${REMOTO}/${resultado.ramo}`
++    try {
++      ferramentas.incorporar(raiz, referencia)
++    } catch (erro) {
++      if (!eErroDeGit(erro)) throw erro
++      ferramentas.escreverErro(`A incorporação reprovou: ${erro.saidaDeErro || erro.message}\n`)
++      return SAIDA_REPROVADO
++    }
++    const depois = ferramentas.revisao(raiz)
++    ferramentas.escrever(`Incorporados ${resultado.atras} commit(s): ${encurtar(antes)} → ${encurtar(depois)}.\n`)
++
++    // A instalação só quando o arquivo de trava mudou (RF-06): reinstalar a cada
++    // atualização custa minutos por nada, e não reinstalar quando ele mudou
++    // quebra a construção com um erro que não nomeia a causa. A pergunta só faz
++    // sentido no ramo que incorpora: sem antes e depois não há trava que mudar.
++    if (ferramentas.mudados(raiz, antes, depois, ['package-lock.json']).length > 0) {
++      passos.unshift({ nome: 'instalação das dependências', comando: 'npm', argumentos: ['ci'] })
++    }
++  } else {
++    ferramentas.escrever(
++      'Nada a trazer da origem, e ainda assim há o que fazer: quem pode estar atrás deste clone é a\n' +
++        'construção instalada, que é o que o painel compara. Refazendo a construção deste clone.\n',
++    )
+   }
+ 
+   for (const passo of passos) {

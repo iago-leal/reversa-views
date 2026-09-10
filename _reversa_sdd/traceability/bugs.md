@@ -1,4 +1,4 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-10T11:34:13.415Z a partir de 3 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-10T16:55:51.776Z a partir de 5 bugs -->
 # Bugs por artefato de spec
 
 Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec muda só por adendo.
@@ -7,6 +7,10 @@ Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec mud
 
 - BUG-20260910-74UL (resolved/fixed, P2): Painel conta uma dúvida na feature 007 por menção ao marcador no histórico de alterações
   - seção `#10-lacunas` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260910-74UL-duvida-falsa-no-historico`
+- BUG-20260910-SVZU (active, P1): Ritual de atualização não alcança a construção instalada quando o clone já está em dia
+  - seção `#a-o-comando-de-atualizacao-no-clone` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260910-SVZU-ritual-nao-alcanca-construcao-instalada`
+- BUG-20260910-WIBK (open, P1): Faixa de atualização do painel anuncia o comando que apenas confere
+  - seção `#7-criterios-de-aceitacao` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260910-WIBK-faixa-anuncia-comando-que-so-confere`
 
 ## `_reversa_sdd/addenda/006-cartoes-e-cronologia.md`
 
@@ -19,6 +23,10 @@ Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec mud
   - seção `#resumo-da-entrega` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260909-FJBD-anomalia-cenario-ambiguo`
 - BUG-20260909-VHII (resolved/fixed, P1): Extensão instalada anterior à feature 007 não declara procedência nem anuncia atualização
   - seção `#impacto-por-artefato-da-extracao` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260909-VHII-instalacao-anterior-a-007`
+- BUG-20260910-SVZU (active, P1): Ritual de atualização não alcança a construção instalada quando o clone já está em dia
+  - seção `#resumo-da-entrega` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260910-SVZU-ritual-nao-alcanca-construcao-instalada`
+- BUG-20260910-WIBK (open, P1): Faixa de atualização do painel anuncia o comando que apenas confere
+  - seção `#impacto-por-artefato-da-extracao` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260910-WIBK-faixa-anuncia-comando-que-so-confere`
 
 ## `_reversa_sdd/prd.md`
 
@@ -29,6 +37,8 @@ Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec mud
 
 - BUG-20260909-VHII (resolved/fixed, P1): Extensão instalada anterior à feature 007 não declara procedência nem anuncia atualização
   - seção `#6-requisitos-funcionais` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260909-VHII-instalacao-anterior-a-007`
+- BUG-20260910-SVZU (active, P1): Ritual de atualização não alcança a construção instalada quando o clone já está em dia
+  - seção `#6-requisitos-funcionais` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260910-SVZU-ritual-nao-alcanca-construcao-instalada`
 
 ## `_reversa_sdd/sdd/leitura-do-processo.md`
 
@@ -45,4 +55,6 @@ Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec mud
   - seção `#6-requisitos-funcionais` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260909-VHII-instalacao-anterior-a-007`
 - BUG-20260910-74UL (resolved/fixed, P2): Painel conta uma dúvida na feature 007 por menção ao marcador no histórico de alterações
   - seção `#6-requisitos-funcionais` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260910-74UL-duvida-falsa-no-historico`
+- BUG-20260910-WIBK (open, P1): Faixa de atualização do painel anuncia o comando que apenas confere
+  - seção `#6-requisitos-funcionais` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260910-WIBK-faixa-anuncia-comando-que-so-confere`
 

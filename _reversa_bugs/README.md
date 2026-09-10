@@ -6,15 +6,20 @@
 ## Configuração do projeto
 
 ```yaml
-closure_policy: local-software   # local-software | package | production-service
+closure_policy: package          # local-software | package | production-service
 control_mode: gated              # supervised | gated | autonomous
 ```
 
-`closure_policy: local-software` foi assumida na primeira execução do `/reversa-debugger`, em sessão
-sem interlocutor (o usuário fixou o objetivo "corrigir os bugs" e não respondeu ao menu). A escolha
-segue o PRD: extensão privada, distribuída por pacote local, sem Marketplace nem serviço em produção.
-Confirme ou troque na primeira execução completa do `/reversa-debugger`. Alternativa plausível:
-`package`, se a instalação do `.vsix` passar a contar como publicação.
+`closure_policy: package` foi decidida pelo usuário em 2026-09-10, na primeira execução completa do
+`/reversa-debugger`, substituindo o `local-software` assumido em 2026-09-09 numa sessão sem
+interlocutor. A troca reconhece o que os bugs 2, 4 e 5 mostraram: neste projeto a suíte verde não
+encerra nada, porque o defeito continua vivo na extensão instalada até o pacote novo ser gerado e
+instalado. Publicar, aqui, é empacotar o `.vsix` e instalá-lo pelo executável do editor; não há
+Marketplace, e não é preciso haver para que a instalação conte como entrega.
+
+Bugs registrados antes desta decisão guardam `closure.policy: local-software` no próprio front
+matter, e a trava `DONE.md` deles não se reabre por causa da troca. A política nova vale do
+`display_number: 4` em diante.
 
 - `closure_policy` define o que "resolvido" exige:
   - `local-software`: testes de regressão passando + veredito de spec

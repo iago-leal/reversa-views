@@ -1,0 +1,48 @@
+--- README.md	2026-09-10 11:38:23
++++ /private/tmp/claude-501/-Users-iagoleal-dev-reversa-views/2de7fc3a-2c17-4d87-87e2-c592b46ca131/scratchpad/novo-README.md	2026-09-10 13:28:39
+@@ -187,19 +187,34 @@
+ npm run atualizar -- --aplicar
+ ```
+ 
+-Confere de novo e, havendo o que trazer, percorre na ordem: incorporação dos
+-commits por avanço rápido, `npm ci` apenas se o arquivo de trava mudou,
+-construção, suíte e empacotamento. Para na primeira falha, e o pacote anterior
+-fica intacto porque o empacotamento é o último passo. Ao fim imprime a linha
+-`code --install-extension <pacote>` já com o nome gerado, e a executa quando o
+-executável do editor está no caminho; sem ele, imprime a linha e termina em
+-sucesso.
++Este ato tem uma frase só: **deixe a instalação em dia com este clone**. Havendo
++o que trazer, incorpora antes, por avanço rápido, e roda `npm ci` se o arquivo de
++trava mudou. Havendo ou não, percorre construção, suíte e empacotamento, para na
++primeira falha, e deixa o pacote anterior intacto porque o empacotamento é o
++último passo. Ao fim imprime a linha `code --install-extension <pacote>` já com o
++nome gerado, e a executa quando o executável do editor está no caminho; sem ele,
++imprime a linha e termina em sucesso.
+ 
+-Duas recusas vêm **antes de tocar em qualquer coisa**, e nomeiam o que
+-encontraram: árvore de trabalho com alteração não registrada (arquivo por
+-arquivo) e commit local que a origem não tem (a contagem). Incorporar por cima
+-de trabalho seu é decisão que script nenhum toma.
++Que o percurso rode mesmo sem commit a trazer é o que corrige o
++`BUG-20260910-SVZU`, e a razão está em quem mede o quê. **A conferência compara o
++clone com a origem; o painel compara a construção instalada com a origem.** Os
++dois eixos divergem sempre que você constrói ou incorpora sem instalar, e é por
++isso que o painel pode pedir atualização com o clone já em dia: quem ficou atrás
++é o pacote instalado. Enquanto a aplicação era consequência da incorporação, esse
++estado não tinha comando algum que o alcançasse, e o aviso voltava a cada recarga
++da janela.
+ 
++Duas recusas vêm **antes de tocar em qualquer coisa**, e guardam coisas
++diferentes, por isso valem em alcances diferentes:
++
++| Recusa | Quando vale | Por quê |
++|---|---|---|
++| Árvore de trabalho com alteração não registrada, arquivo por arquivo | Sempre, mesmo com o clone em dia | O carimbo da construção declara o commit da cabeça, e um pacote feito daí anunciaria no painel uma procedência que o conteúdo não tem |
++| Commit local que a origem não tem, com a contagem | Só quando há incorporação a fazer | Incorporar por cima de trabalho seu é decisão que script nenhum toma; construir o seu próprio trabalho não é |
++
++Não conseguir conferir interrompe tudo, e sai com o código dois: construir às
++cegas, sem saber o estado da origem, é o oposto do que o ritual existe para fazer.
++
+ ### A versão que cresce sozinha
+ 
+ A versão do pacote nunca é escrita à mão. Ela é derivada na construção:
