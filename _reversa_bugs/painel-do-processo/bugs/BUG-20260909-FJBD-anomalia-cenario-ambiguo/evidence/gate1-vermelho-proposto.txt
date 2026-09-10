@@ -1,0 +1,63 @@
+
+ RUN  v3.2.7 /private/tmp/claude-501/-Users-iagoleal-dev-reversa-views/b95100ae-0481-4064-bd6e-8693f6ee7020/scratchpad/fjbd-proposta
+
+ ❯ tests/leitura-impacto-nota-greenfield.spec.ts (2 tests | 2 failed) 6ms
+   × a nota de impacto greenfield com tipos distintos (BUG-20260909-FJBD) > é lida como greenfield, com os tipos contados, e sem cenario-ambiguo 5ms
+     → expected [ { file: 'legacy-impact.md', …(2) } ] to deeply equal []
+   × a nota de impacto greenfield com tipos distintos (BUG-20260909-FJBD) > continua acusando o que é ilegível de verdade: tipo fora do vocabulário 1ms
+     → expected [ Array(2) ] to deeply equal [ 'tipo-de-impacto-desconhecido' ]
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/leitura-impacto-nota-greenfield.spec.ts > a nota de impacto greenfield com tipos distintos (BUG-20260909-FJBD) > é lida como greenfield, com os tipos contados, e sem cenario-ambiguo
+AssertionError: expected [ { file: 'legacy-impact.md', …(2) } ] to deeply equal []
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[32m- [][39m
+[31m+ [[39m
+[31m+   {[39m
+[31m+     "code": "cenario-ambiguo",[39m
+[31m+     "detail": "nota de greenfield com impacto que não é componente-novo",[39m
+[31m+     "file": "legacy-impact.md",[39m
+[31m+   },[39m
+[31m+ ][39m
+
+ ❯ tests/leitura-impacto-nota-greenfield.spec.ts:34:31
+     32|       'delta-de-contrato-externo',
+     33|     ])
+     34|     expect(impacto.anomalies).toEqual([])
+       |                               ^
+     35|   })
+     36| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  tests/leitura-impacto-nota-greenfield.spec.ts > a nota de impacto greenfield com tipos distintos (BUG-20260909-FJBD) > continua acusando o que é ilegível de verdade: tipo fora do vocabulário
+AssertionError: expected [ Array(2) ] to deeply equal [ 'tipo-de-impacto-desconhecido' ]
+
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  [[22m
+[2m    "tipo-de-impacto-desconhecido",[22m
+[31m+   "cenario-ambiguo",[39m
+[2m  ][22m
+
+ ❯ tests/leitura-impacto-nota-greenfield.spec.ts:39:50
+     37|   it('continua acusando o que é ilegível de verdade: tipo fora do voca…
+     38|     const impacto = ImpactContract.read(NOTA.replace('regra-alterada',…
+     39|     expect(impacto.anomalies.map((a) => a.code)).toEqual(['tipo-de-imp…
+       |                                                  ^
+     40|   })
+     41| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed (2)
+   Start at  22:13:51
+   Duration  297ms (transform 55ms, setup 0ms, collect 67ms, tests 6ms, environment 0ms, prepare 56ms)
+

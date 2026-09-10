@@ -1,0 +1,28 @@
+--- a/src/heranca/manifesto.yml
++++ b/src/heranca/manifesto.yml
+@@ -86,9 +86,10 @@
+     origem: scrum-harness
+     caminhoNaOrigem: packages/reversa-domain/src/impact.ts
+     carimbado: true
+-    resumo: sha256:a7d4bfa84591f0eb605d412784a4616421099a4fc36403942866c1139f825e53
++    resumo: sha256:af23df77d294ef57b8d434a9990b67c55994cad8e9d23d09e7d8acfd3ad3c338
+     dataDaCopia: 2026-09-09
+-    adaptacoes: []
++    adaptacoes:
++      - A4
+   - caminho: src/heranca/reversa-domain/src/index.ts
+     origem: scrum-harness
+     caminhoNaOrigem: packages/reversa-domain/src/index.ts
+@@ -213,9 +214,10 @@
+     origem: scrum-harness
+     caminhoNaOrigem: packages/reversa-domain/tests/impact.spec.ts
+     carimbado: true
+-    resumo: sha256:b75fd38f0bbcf34a90bd7be6cd8fa83b65e6aae1f59a0fb0f6659c7324594d77
++    resumo: sha256:4b0530729a65269ce26867136a5f4661fe296558ad915c56d9781a874dba0b49
+     dataDaCopia: 2026-09-09
+-    adaptacoes: []
++    adaptacoes:
++      - A5
+   - caminho: src/heranca/reversa-domain/tests/migration.spec.ts
+     origem: scrum-harness
+     caminhoNaOrigem: packages/reversa-domain/tests/migration.spec.ts

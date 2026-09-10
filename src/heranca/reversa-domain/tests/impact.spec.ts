@@ -3,7 +3,7 @@
  * caminho:     packages/reversa-domain/tests/impact.spec.ts
  * revisão:     420305daa6cdd10858b720a34cb8db67d8e5c5e9 (2026-09-08)
  * copiado em:  2026-09-09
- * adaptações:  nenhuma
+ * adaptações:  A5
  */
 /**
  * R1, R3, R4, R7 — what the agents actually touched in the legacy code.
@@ -133,11 +133,11 @@ describe('ImpactContract — greenfield vs legado (R7)', () => {
     expect(impact.anomalies.some(a => a.code === 'cenario-ambiguo')).toBe(false)
   })
 
-  it('keeps the note authoritative but flags a contradictory shape', () => {
+  it('keeps the note authoritative and accepts a shape with other impact types (A5)', () => {
     const md = `# Impacto\n\n${GREENFIELD_NOTE}\n\n${HEADER}| src/a.js | Comp | regra-alterada | HIGH | mexeu em regra existente |\n`
     const impact = ImpactContract.read(md)
     expect(impact.cenario).toBe('greenfield')
-    expect(impact.anomalies.some(a => a.code === 'cenario-ambiguo')).toBe(true)
+    expect(impact.anomalies.some(a => a.code === 'cenario-ambiguo')).toBe(false)
   })
 
   it('recognizes the note regardless of surrounding punctuation', () => {

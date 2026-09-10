@@ -3,7 +3,7 @@
  * caminho:     packages/reversa-domain/src/impact.ts
  * revisão:     420305daa6cdd10858b720a34cb8db67d8e5c5e9 (2026-09-08)
  * copiado em:  2026-09-09
- * adaptações:  nenhuma
+ * adaptações:  A4
  */
 /**
  * What REVERSA actually touched in the legacy code (comp-73 R1, R3, R4, R7),
@@ -107,10 +107,10 @@ export const ImpactContract = {
       files.push({ arquivo, componente, tipo, severidade, justificativa })
     }
 
-    // The note is authoritative, but a shape that contradicts it is worth saying.
-    if (cenario === 'greenfield' && files.some(file => file.tipo !== 'componente-novo')) {
-      log.add(FILE, 'cenario-ambiguo', 'nota de greenfield com impacto que não é componente-novo')
-    }
+    // A4 (BUG-20260909-FJBD): the note is authoritative, and a shape with other
+    // impact types does not contradict it. In this project a greenfield feature
+    // after the first one modifies files the earlier ones created, and a note
+    // that tells created from modified is more truthful, not ambiguous.
 
     return {
       files,

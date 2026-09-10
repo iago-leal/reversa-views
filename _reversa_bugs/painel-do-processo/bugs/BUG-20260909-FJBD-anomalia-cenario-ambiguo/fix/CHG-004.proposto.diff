@@ -1,0 +1,44 @@
+--- a/src/heranca/adaptacoes.yml
++++ b/src/heranca/adaptacoes.yml
+@@ -40,3 +40,41 @@
+       export { answerReversa } from './route.ts'
+       export type { ReversaAnswer, ReversaAnswerBody, ReversaProcessWire } from './route.ts'
+     adaptado: ''
++
++  - id: A4
++    arquivo: src/heranca/reversa-domain/src/impact.ts
++    motivo: |
++      BUG-20260909-FJBD. A regra da origem chama de ambígua a nota greenfield que usa tipo de
++      impacto diferente de componente-novo. Neste projeto, toda feature greenfield posterior à
++      primeira modifica arquivos que as anteriores criaram, e a nota que distingue criado de
++      modificado é mais verdadeira, não contraditória. A anomalia deixa de ser registrada; o
++      vocabulário (anomaly.ts) permanece intacto.
++    original: |
++          // The note is authoritative, but a shape that contradicts it is worth saying.
++          if (cenario === 'greenfield' && files.some(file => file.tipo !== 'componente-novo')) {
++            log.add(FILE, 'cenario-ambiguo', 'nota de greenfield com impacto que não é componente-novo')
++          }
++    adaptado: |
++          // A4 (BUG-20260909-FJBD): the note is authoritative, and a shape with other
++          // impact types does not contradict it. In this project a greenfield feature
++          // after the first one modifies files the earlier ones created, and a note
++          // that tells created from modified is more truthful, not ambiguous.
++
++  - id: A5
++    arquivo: src/heranca/reversa-domain/tests/impact.spec.ts
++    motivo: |
++      Consequência de A4, na suíte herdada: o caso que fixava a anomalia passa a fixar a aceitação.
++    original: |
++        it('keeps the note authoritative but flags a contradictory shape', () => {
++          const md = `# Impacto\n\n${GREENFIELD_NOTE}\n\n${HEADER}| src/a.js | Comp | regra-alterada | HIGH | mexeu em regra existente |\n`
++          const impact = ImpactContract.read(md)
++          expect(impact.cenario).toBe('greenfield')
++          expect(impact.anomalies.some(a => a.code === 'cenario-ambiguo')).toBe(true)
++        })
++    adaptado: |
++        it('keeps the note authoritative and accepts a shape with other impact types (A5)', () => {
++          const md = `# Impacto\n\n${GREENFIELD_NOTE}\n\n${HEADER}| src/a.js | Comp | regra-alterada | HIGH | mexeu em regra existente |\n`
++          const impact = ImpactContract.read(md)
++          expect(impact.cenario).toBe('greenfield')
++          expect(impact.anomalies.some(a => a.code === 'cenario-ambiguo')).toBe(false)
++        })

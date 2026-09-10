@@ -1,0 +1,51 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Plano de correção · BUG-20260909-FJBD</title>
+<style>body{margin:0;background:#0d1117;color:#e6edf3;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;padding:24px;max-width:1100px}h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 8px;border-bottom:1px solid #30363d;padding-bottom:4px}.meta{color:#8b949e;font-size:12px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border:1px solid #30363d;padding:6px 8px;text-align:left;vertical-align:top}th{background:#161b22}a{color:#58a6ff}code{background:#161b22;padding:1px 4px;border-radius:4px}.box{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px 16px;margin:8px 0}.ok{color:#3fb950}.warn{color:#d29922}.bad{color:#f85149}.svgwrap{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:8px;overflow-x:auto}</style></head><body>
+<h1>Plano de correção · nº 1 · BUG-20260909-FJBD</h1>
+<p class="meta">Contexto painel-do-processo · 2026-09-09 · severidade low · prioridade P2 · closure policy local-software · control_mode gated · <span class="warn">aguarda decisão humana: estratégia e veredito de spec</span></p>
+
+<h2>1. O defeito</h2>
+<div class="box">Em toda leitura deste workspace o cabeçalho diz "Leitura degradada: 1 anomalias, 0 recusas, 0 truncamentos". A única anomalia é <code>cenario-ambiguo</code> sobre o <code>legacy-impact.md</code> da feature ativa: a nota declara greenfield e usa tipos de impacto além de <code>componente-novo</code>. A leitura, no mais, é completa.</div>
+
+<h2>2. Causa raiz</h2>
+<div class="box"><b>Estado: <span class="ok">confirmed</span>.</b> O leitor herdado <code>src/heranca/reversa-domain/src/impact.ts</code>, linha 111, registra a anomalia sempre que a nota greenfield tem tipo diferente de <code>componente-novo</code>, seguindo a regra do framework (<code>reversa-coding/SKILL.md</code>, linha 101). As notas das features 006 e 007 usam <code>regra-nova</code>, <code>regra-alterada</code>, <code>delta-de-dados</code> e <code>delta-de-contrato-externo</code> de propósito, para não chamar de novo um arquivo que já existia. O caminho causal fecha na reprodução isolada (<code>fix/reproducao.mjs</code>, função pura sobre a nota real: exit 1) e na prova do teste proposto, vermelho contra o código atual (<code>evidence/gate1-vermelho-proposto.txt</code>).
+<br><br>Não é regressão: a regra é a mesma desde a cópia (revisão <code>420305d</code>); o que mudou foi a forma da nota, a partir da feature 006.</div>
+
+<h2>3. Estratégias (decisão sua)</h2>
+<table><tr><th></th><th>Estratégia</th><th>O que muda</th><th>Veredito de spec provável</th><th>Custo e risco</th></tr>
+<tr><td><b>A</b><br><span class="ok">recomendada</span></td><td>Adaptar o leitor herdado (A4) e o caso da suíte herdada (A5)</td><td>O bloco condicional sai de <code>impact.ts</code>; o vocabulário fica. Adaptação declarada em <code>adaptacoes.yml</code> e <code>PROCEDENCIA.md</code>; resumo e adaptações atualizados em <code>manifesto.yml</code>; teste local novo. Sugerido levar a mesma mudança ao <code>scrum-harness</code> e aposentar A4/A5 na próxima ressincronização.</td><td><code>spec-correta</code>: os adendos 006 e 007 já tratam a distinção criado/modificado como forma legítima da nota; o leitor é que divergia</td><td>Baixa a média: seis arquivos, dois deles herdados, e o manifesto editado à mão (o que a herança desaconselha; o ritual <code>sync:heranca</code> o reescreveria igual). Validado em cópia: verificador local sem impedimento, 1123+2 testes verdes.</td></tr>
+<tr><td><b>B</b></td><td>Conformar as notas das features 006 e 007 à regra do framework</td><td>Coluna Tipo das duas notas vira <code>componente-novo</code> em toda linha. Nenhum código muda.</td><td><code>spec-desatualizada</code>: os adendos citam a distinção e precisariam de adendo de bug</td><td>Perde informação que os adendos usam ("18 criados, 45 modificados"); a próxima feature tende a reintroduzir a forma, e a anomalia volta.</td></tr>
+<tr><td><b>C</b></td><td>Declarar o cenário como legado próprio nas duas notas</td><td>Sai a frase literal "Feature greenfield, sem legado pré-existente"; o leitor lê legado e não acusa.</td><td><code>spec-gap</code>: o framework define cenário pela âncora, não pelo código anterior</td><td>Contradiz a regra de ancoragem do <code>/reversa-coding</code>, que voltará a escrever a frase na feature 008.</td></tr></table>
+<div class="box">Descartada: aliviar só o cabeçalho (tratar <code>cenario-ambiguo</code> como informativo em <code>integrity.ts</code>). O painel diria "íntegra" com uma anomalia listada logo abaixo, a contradição que <code>integrity.ts</code> existe para impedir.</div>
+
+<h2>4. Correction Change Set proposto (estratégia A; NÃO aplicado)</h2>
+<table><tr><th>CHG</th><th>Tipo</th><th>Artefato</th><th>Propósito</th><th>Diff</th></tr>
+<tr><td>CHG-001</td><td>test</td><td><code>tests/leitura-impacto-nota-greenfield.spec.ts</code> (novo)</td><td>Reprodução e regressão: nota greenfield com tipos distintos lida sem anomalia; tipo fora do vocabulário continua acusado</td><td><code>fix/CHG-001.proposto.diff</code></td></tr>
+<tr><td>CHG-002</td><td>code</td><td><code>src/heranca/reversa-domain/src/impact.ts</code></td><td>Adaptação A4: retira o bloco de <code>cenario-ambiguo</code>; carimbo declara A4</td><td><code>fix/CHG-002.proposto.diff</code></td></tr>
+<tr><td>CHG-003</td><td>test</td><td><code>src/heranca/reversa-domain/tests/impact.spec.ts</code></td><td>Adaptação A5: o caso passa a fixar a aceitação; carimbo declara A5</td><td><code>fix/CHG-003.proposto.diff</code></td></tr>
+<tr><td>CHG-004</td><td>configuration</td><td><code>src/heranca/adaptacoes.yml</code></td><td>Declara A4 e A5 com trecho original único e adaptado</td><td><code>fix/CHG-004.proposto.diff</code></td></tr>
+<tr><td>CHG-005</td><td>documentation</td><td><code>src/heranca/PROCEDENCIA.md</code></td><td>Prosa de A4 e A5 na seção 5; intro de "três" para "cinco"</td><td><code>fix/CHG-005.proposto.diff</code></td></tr>
+<tr><td>CHG-006</td><td>configuration</td><td><code>src/heranca/manifesto.yml</code></td><td>Resumo novo e adaptações das duas entradas (calculados por <code>resumoDe</code> do próprio ritual)</td><td><code>fix/CHG-006.proposto.diff</code></td></tr></table>
+<div class="box">Aplicação, depois da sua aprovação: <code>sh fix/aplicar-proposta.sh</code> na raiz do clone (usa <code>git apply</code>, roda o verificador local e os três testes). Os diffs já passaram em <code>git apply --check</code> contra a árvore atual.</div>
+
+<h2>5. Testes planejados</h2>
+<table><tr><th>Teste</th><th>Prova</th></tr>
+<tr><td>Reprodução: <code>fix/reproducao.mjs</code></td><td>Exit 1 sobre a nota real da 007 hoje (<code>evidence/reproducao-antes.txt</code>); exit 0 depois de A4</td></tr>
+<tr><td>Reprodução e regressão: <code>tests/leitura-impacto-nota-greenfield.spec.ts</code></td><td>Vermelho contra o código atual (<code>evidence/gate1-vermelho-proposto.txt</code>); verde na cópia com A4 (<code>evidence/gate2-verde-proposto-suite.txt</code>, suíte inteira)</td></tr>
+<tr><td>Regressão herdada: <code>impact.spec.ts</code> (A5)</td><td>Os outros 14 casos seguem verdes: JSON ruim, tipo desconhecido, severidade desconhecida e tabela ausente continuam anomalias</td></tr></table>
+
+<h2>6. Riscos</h2>
+<div class="box"><b>change_risk: <span class="warn">baixa a média</span>.</b> Blast radius restrito ao leitor de impacto; nenhum contrato externo, nenhum dado. O risco é de manutenção: duas adaptações semânticas em código herdado, a reaplicar a cada ressincronização até a origem absorver a mudança. Fora da correção: a frase "1 anomalias" sem flexão (observada, não registrada); a regra de ancoragem do <code>/reversa-coding</code> (framework, não editável aqui).</div>
+
+<h2>7. Mini-grafo do bug</h2>
+<div class="svgwrap"><svg viewBox="0 0 700 160" width="100%" role="img" aria-label="Mini-grafo"><defs><marker id="s" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8b949e"/></marker></defs>
+<line x1="430" y1="80" x2="270" y2="80" stroke="#8b949e" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#s)"/><text x="350" y="70" fill="#8b949e" font-size="11" text-anchor="middle">related-to (proposed)</text>
+<a href="../bug.md"><rect x="20" y="30" width="250" height="100" rx="8" fill="#161b22" stroke="#d29922" stroke-width="3"/><text x="32" y="55" fill="#e6edf3" font-size="13" font-weight="600">nº 1 · FJBD (este bug)</text><text x="32" y="75" fill="#c9d1d9" font-size="11">Anomalia cenario-ambiguo</text><text x="32" y="95" fill="#8b949e" font-size="11">low · leitura</text><text x="32" y="115" fill="#d29922" font-size="11" font-weight="600">active · awaiting-human</text></a>
+<a href="../../BUG-20260909-VHII-instalacao-anterior-a-007/bug.md"><rect x="430" y="30" width="250" height="100" rx="8" fill="#161b22" stroke="#d29922" stroke-width="2"/><text x="442" y="55" fill="#e6edf3" font-size="13" font-weight="600">nº 2 · VHII</text><text x="442" y="75" fill="#c9d1d9" font-size="11">Instalação anterior à 007</text><text x="442" y="95" fill="#8b949e" font-size="11">medium · empacotamento</text><text x="442" y="115" fill="#d29922" font-size="11" font-weight="600">active · awaiting-human</text></a></svg></div>
+
+<h2>8. Matriz de relações</h2>
+<table><tr><th>Origem</th><th>Tipo</th><th>Destino</th><th>Estado</th></tr>
+<tr><td><a href="../../BUG-20260909-VHII-instalacao-anterior-a-007/bug.md">BUG-20260909-VHII</a></td><td>related-to</td><td><a href="../bug.md">BUG-20260909-FJBD</a></td><td>proposed (mesmo relato e mesma tela; sem hipótese causal)</td></tr></table>
+
+<h2>9. Ordem sugerida</h2>
+<div class="box">O nº 2 já teve o change set aplicado e aguarda só o veredito. Este nº 1 aguarda a escolha da estratégia (A, B ou C) e o veredito; nada foi aplicado ao projeto.</div>
+</body></html>

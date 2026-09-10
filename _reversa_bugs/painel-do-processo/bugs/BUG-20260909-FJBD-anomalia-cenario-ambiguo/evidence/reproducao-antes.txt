@@ -1,0 +1,4 @@
+cenário lido: greenfield
+tipos na tabela: regra-alterada=4, regra-nova=23, componente-novo=11, delta-de-contrato-externo=1
+anomalias: [{"file":"legacy-impact.md","code":"cenario-ambiguo","detail":"nota de greenfield com impacto que não é componente-novo"}]
+DEFEITO PRESENTE: cenario-ambiguo

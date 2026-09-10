@@ -1,0 +1,31 @@
+== CHG-001
+== CHG-002
+== CHG-003
+== CHG-004
+== CHG-005
+== CHG-006
+Herança vendorizada
+  modo: local (só o que está versionado aqui)
+  as origens não foram consultadas: rode npm run check:heranca para confrontá-las
+
+  scrum-harness (código): não verificado
+    [informa] paridade-externa src/heranca/reversa-domain/tests/fixtures/check-legacy-policy.mjs
+              este arquivo é o espelho de .reversa/hooks/check-legacy-policy.mjs, e os dois andam juntos
+              → ao mexer num lado, confira o outro na mesma passada
+
+  vscode-kanban (padrão): não verificado
+    nada a relatar
+
+  veredito: divergente (0 impedem, 1 apenas informam)
+
+ RUN  v3.2.7 /Users/iagoleal/dev/reversa-views
+
+ ✓ tests/heranca-verificador-local.spec.ts (11 tests) 4ms
+ ✓ src/heranca/reversa-domain/tests/impact.spec.ts (15 tests) 5ms
+ ✓ tests/leitura-impacto-nota-greenfield.spec.ts (2 tests) 2ms
+
+ Test Files  3 passed (3)
+      Tests  28 passed (28)
+   Start at  08:30:15
+   Duration  404ms (transform 177ms, setup 0ms, collect 316ms, tests 11ms, environment 1ms, prepare 245ms)
+

@@ -74,7 +74,9 @@ O descarte tem consequência no índice da sonda, registrada como adaptação A3
 
 ## 5. Adaptações
 
-Três, todas de resolução de importação ou de exportação. Nenhuma regra de negócio foi tocada.
+Cinco. Três (A1 a A3) são de resolução de importação ou de exportação. Duas (A4 e A5) tocam uma
+regra de leitura, e são a exceção registrada: nasceram do `BUG-20260909-FJBD`, e o caminho para
+aposentá-las é levar a mesma mudança à origem e ressincronizar.
 
 ### A1, importações de `reversa-probe/src/snapshot.ts`
 
@@ -122,6 +124,38 @@ Removido:
 export { answerReversa } from './route.ts'
 export type { ReversaAnswer, ReversaAnswerBody, ReversaProcessWire } from './route.ts'
 ```
+
+### A4, a regra de cenário ambíguo em `reversa-domain/src/impact.ts`
+
+A origem registra a anomalia `cenario-ambiguo` quando a nota de impacto declara greenfield e usa
+tipo diferente de `componente-novo`. Neste projeto, toda feature greenfield posterior à primeira
+modifica arquivos que as anteriores criaram, e as notas das features 006 e 007 distinguem criado de
+modificado de propósito. A distinção é mais verdadeira que a regra, e a anomalia virava dúvida
+permanente no cabeçalho do painel (`BUG-20260909-FJBD`). O bloco condicional saiu; o vocabulário de
+anomalias ficou intacto, para que a ressincronização não dependa de `anomaly.ts`.
+
+Original:
+
+```ts
+    // The note is authoritative, but a shape that contradicts it is worth saying.
+    if (cenario === 'greenfield' && files.some(file => file.tipo !== 'componente-novo')) {
+      log.add(FILE, 'cenario-ambiguo', 'nota de greenfield com impacto que não é componente-novo')
+    }
+```
+
+Adaptado:
+
+```ts
+    // A4 (BUG-20260909-FJBD): the note is authoritative, and a shape with other
+    // impact types does not contradict it. In this project a greenfield feature
+    // after the first one modifies files the earlier ones created, and a note
+    // that tells created from modified is more truthful, not ambiguous.
+```
+
+### A5, o caso correspondente em `reversa-domain/tests/impact.spec.ts`
+
+Consequência de A4: o caso que fixava a anomalia passa a fixar a aceitação. Só a asserção final e o
+nome do caso mudam.
 
 ### O que deliberadamente não foi adaptado
 

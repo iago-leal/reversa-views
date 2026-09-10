@@ -1,0 +1,99 @@
+
+> reversa-views@0.0.1 pretest
+> npm run gerar:carimbo
+
+
+> reversa-views@0.0.1 gerar:carimbo
+> node scripts/gerar-carimbo-da-construcao.js
+
+src/host/build.ts gerado: versão 0.7.0, commit 543f0bd, origem iago-leal/reversa-views, ramo master
+
+> reversa-views@0.0.1 test
+> vitest run
+
+
+ RUN  v3.2.7 /Users/iagoleal/dev/reversa-views
+
+ ✓ tests/empacotamento-versao.spec.ts (10 tests) 4ms
+ ✓ tests/host-boundaries.spec.ts (20 tests) 57ms
+ ✓ tests/webview-boundaries.spec.ts (18 tests) 92ms
+ ✓ tests/versao.spec.ts (23 tests) 143ms
+ ✓ tests/probe-features.spec.ts (11 tests) 81ms
+ ✓ src/heranca/reversa-probe/tests/snapshot.spec.ts (16 tests) 121ms
+ ✓ tests/desempenho-referencia.spec.ts (1 test) 120ms
+ ✓ tests/limites.spec.ts (9 tests) 93ms
+ ✓ tests/webview-render.spec.tsx (67 tests) 120ms
+ ✓ tests/preview-servidor.spec.ts (17 tests) 109ms
+ ✓ tests/heranca-ressincronizador.spec.ts (15 tests) 70ms
+ ✓ tests/webview-messaging.spec.ts (18 tests) 87ms
+ ✓ tests/host-protocol.spec.ts (18 tests) 24ms
+ ✓ tests/webview-instants-render.spec.tsx (17 tests) 169ms
+ ✓ tests/webview-preferences.spec.ts (16 tests) 6ms
+ ✓ tests/webview-error-boundary.spec.tsx (11 tests) 64ms
+ ✓ tests/webview-header.spec.tsx (23 tests) 31ms
+ ✓ tests/host-provider.spec.ts (29 tests) 22ms
+ ✓ tests/webview-instants.spec.ts (15 tests) 47ms
+ ✓ tests/host-update.spec.ts (30 tests) 21ms
+ ✓ tests/host-router.spec.ts (23 tests) 8ms
+ ✓ tests/readonly-local.spec.ts (9 tests) 21ms
+ ✓ tests/webview-summary.spec.ts (12 tests) 24ms
+ ✓ tests/heranca-manifesto.spec.ts (13 tests) 29ms
+ ✓ tests/heranca-carimbo.spec.ts (12 tests) 3ms
+ ✓ tests/webview-theme-tokens.spec.ts (13 tests) 26ms
+ ✓ src/heranca/reversa-domain/tests/readonly.spec.ts (5 tests) 22ms
+ ✓ tests/webview-blocking.spec.ts (9 tests) 6ms
+ ✓ tests/host-reading.spec.ts (7 tests) 12ms
+ ✓ src/heranca/reversa-domain/tests/actions.spec.ts (11 tests) 4ms
+ ✓ src/heranca/reversa-probe/tests/files.spec.ts (18 tests) 16ms
+ ✓ tests/host-manifest.spec.ts (27 tests) 6ms
+ ✓ src/heranca/reversa-probe/tests/readonly.spec.ts (5 tests) 8ms
+ ✓ tests/webview-progress-cards.spec.tsx (11 tests) 18ms
+ ✓ tests/heranca-origens.spec.ts (10 tests) 12ms
+ ✓ tests/forward-marcador-de-duvida-citado.spec.ts (8 tests) 9ms
+ ✓ tests/heranca-revisao-gerada.spec.ts (4 tests) 5ms
+ ✓ src/heranca/reversa-domain/tests/hook-parity.spec.ts (4 tests) 7ms
+ ✓ tests/host-bridge.spec.ts (17 tests) 7ms
+ ✓ tests/domain-history.spec.ts (29 tests) 5ms
+ ✓ tests/webview-decomposition-view.spec.ts (35 tests) 10ms
+ ✓ tests/webview-entry.spec.ts (15 tests) 6ms
+ ✓ src/heranca/reversa-domain/tests/ideation.spec.ts (12 tests) 3ms
+ ✓ tests/host-session.spec.ts (10 tests) 4ms
+ ✓ tests/vsix-conteudo.spec.ts (4 tests) 4ms
+ ✓ src/heranca/reversa-domain/tests/watch.spec.ts (9 tests) 10ms
+ ✓ src/heranca/reversa-domain/tests/glob.spec.ts (12 tests) 3ms
+ ✓ tests/atualizador.spec.ts (28 tests) 6ms
+ ✓ tests/host-net.spec.ts (28 tests) 7ms
+ ✓ tests/webview-theme.spec.ts (26 tests) 7ms
+ ✓ src/heranca/reversa-domain/tests/state.spec.ts (19 tests) 5ms
+ ✓ tests/webview-sections.spec.ts (18 tests) 7ms
+ ✓ tests/vsix-leitor.spec.ts (5 tests) 4ms
+ ✓ tests/webview-build.spec.ts (15 tests) 3ms
+ ✓ tests/heranca-verificador-origem.spec.ts (10 tests) 8ms
+ ✓ tests/host-document.spec.ts (10 tests) 3ms
+ ✓ tests/domain-decomposition.spec.ts (19 tests) 5ms
+ ✓ tests/host-open-file.spec.ts (9 tests) 5ms
+ ✓ tests/webview-progress-bar.spec.tsx (22 tests) 5ms
+ ✓ src/heranca/reversa-domain/tests/impact.spec.ts (15 tests) 4ms
+ ✓ src/heranca/reversa-domain/tests/compose.spec.ts (7 tests) 9ms
+ ✓ src/heranca/reversa-domain/tests/policy.spec.ts (22 tests) 4ms
+ ✓ tests/preview-config.spec.ts (19 tests) 5ms
+ ✓ src/heranca/reversa-domain/tests/table.spec.ts (12 tests) 4ms
+ ✓ tests/webview-labels.spec.ts (13 tests) 4ms
+ ✓ tests/host-root.spec.ts (6 tests) 5ms
+ ✓ src/heranca/reversa-domain/tests/forward.spec.ts (16 tests) 7ms
+ ✓ src/heranca/reversa-domain/tests/progress.spec.ts (14 tests) 4ms
+ ✓ tests/heranca-ritual.spec.ts (11 tests) 3ms
+ ✓ tests/heranca-verificador-local.spec.ts (11 tests) 4ms
+ ✓ src/heranca/reversa-domain/tests/migration.spec.ts (16 tests) 4ms
+ ✓ tests/heranca-adaptacoes.spec.ts (7 tests) 2ms
+ ✓ tests/heranca-relatorio.spec.ts (7 tests) 2ms
+ ✓ tests/preview-leitura.spec.ts (7 tests) 3ms
+ ✓ tests/paridade-gancho-instalado.spec.ts (1 test) 2ms
+ ✓ tests/host-panel.spec.ts (10 tests) 3ms
+ ✓ tests/leitura-impacto-nota-greenfield.spec.ts (2 tests) 2ms
+
+ Test Files  77 passed (77)
+      Tests  1133 passed (1133)
+   Start at  08:30:54
+   Duration  3.95s (transform 1.20s, setup 0ms, collect 4.41s, tests 1.91s, environment 10ms, prepare 6.53s)
+

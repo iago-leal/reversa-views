@@ -1,0 +1,44 @@
+--- a/tests/leitura-impacto-nota-greenfield.spec.ts
++++ b/tests/leitura-impacto-nota-greenfield.spec.ts
+@@ -0,0 +1,41 @@
++/**
++ * Regressão do BUG-20260909-FJBD: a nota de impacto greenfield que distingue arquivo criado de
++ * arquivo modificado é lida sem anomalia. É o teste de reprodução (vermelho antes da adaptação A4
++ * do leitor herdado) e o de regressão (protege o cabeçalho de anunciar leitura degradada sobre
++ * nota íntegra). A forma da nota é a que `/reversa-coding` deixou nas features 006 e 007.
++ */
++import { describe, expect, it } from 'vitest'
++import { ImpactContract } from '../src/heranca/reversa-domain/src/index.ts'
++
++const NOTA = [
++  '# Impacto no legado: 007-atualizacao-e-progresso',
++  '',
++  '**Cenário:** greenfield.',
++  '',
++  'Feature greenfield, sem legado pré-existente. Âncora: `prd.md` + specs SDD.',
++  '',
++  '| Arquivo afetado | Componente | Tipo | Severidade | Justificativa |',
++  '|---|---|---|---|---|',
++  '| `scripts/git.js` | empacotamento-e-verificacao | componente-novo | MEDIUM | criado nesta feature |',
++  '| `scripts/heranca/leitura.js` | heranca-e-sincronia | regra-alterada | LOW | passou a usar scripts/git.js |',
++  '| `src/host/protocol.ts` | ponte-e-host | delta-de-contrato-externo | HIGH | quarto comando do host |',
++  '',
++].join('\n')
++
++describe('a nota de impacto greenfield com tipos distintos (BUG-20260909-FJBD)', () => {
++  it('é lida como greenfield, com os tipos contados, e sem cenario-ambiguo', () => {
++    const impacto = ImpactContract.read(NOTA)
++    expect(impacto.cenario).toBe('greenfield')
++    expect(impacto.files.map((f) => f.tipo)).toEqual([
++      'componente-novo',
++      'regra-alterada',
++      'delta-de-contrato-externo',
++    ])
++    expect(impacto.anomalies).toEqual([])
++  })
++
++  it('continua acusando o que é ilegível de verdade: tipo fora do vocabulário', () => {
++    const impacto = ImpactContract.read(NOTA.replace('regra-alterada', 'regra-inventada'))
++    expect(impacto.anomalies.map((a) => a.code)).toEqual(['tipo-de-impacto-desconhecido'])
++  })
++})
