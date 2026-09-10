@@ -1,0 +1,145 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Plano de correção · BUG-20260910-WIBK</title>
+<style>body{margin:0;background:#0d1117;color:#e6edf3;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;padding:24px;max-width:1100px}h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 8px;border-bottom:1px solid #30363d;padding-bottom:4px}h3{font-size:14px;margin:18px 0 6px;color:#8b949e}.meta{color:#8b949e;font-size:12px}.cards{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0}.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px 16px;min-width:130px}.card b{display:block;font-size:20px}.card span{color:#8b949e;font-size:12px}table{border-collapse:collapse;width:100%;font-size:13px;margin:8px 0}th,td{border:1px solid #30363d;padding:6px 8px;text-align:left;vertical-align:top}th{background:#161b22}a{color:#58a6ff}code{background:#161b22;border:1px solid #30363d;border-radius:4px;padding:1px 5px;font-size:12px}pre{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;overflow-x:auto;font-size:12px}.svgwrap{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:8px;overflow-x:auto}.ok{color:#3fb950}.warn{color:#d29922}.bad{color:#f85149}blockquote{margin:8px 0;padding:8px 14px;border-left:3px solid #30363d;background:#161b22;color:#8b949e}.del{color:#f85149}.add{color:#3fb950}</style></head><body>
+
+<h1>Plano de correção · nº 5 · BUG-20260910-WIBK</h1>
+<p class="meta">Contexto <b>painel-do-processo</b> · 2026-09-10 · severidade <span class="bad">high</span> · prioridade <span class="bad">P1</span> · closure policy <code>package</code> · control mode <code>gated</code> · <a href="../bug.md">bug.md</a></p>
+
+<div class="cards">
+<div class="card"><b class="bad">high</b><span>severidade</span></div>
+<div class="card"><b class="bad">P1</b><span>prioridade</span></div>
+<div class="card"><b class="ok">baixa</b><span>risco da mudança</span></div>
+<div class="card"><b>confirmed</b><span>estado da causa</span></div>
+<div class="card"><b>2</b><span>arquivos tocados</span></div>
+<div class="card"><b>spec-correta</b><span>veredito provável</span></div>
+</div>
+
+<h2>O defeito</h2>
+<p>Nos desfechos <code>atrasada</code> e <code>divergente</code>, a faixa do cabeçalho oferece
+<code>npm run atualizar</code> como o comando a copiar. Esse comando, por RF-04, apenas confere e nunca
+traz commit algum. Quem copia a linha e a roda recebe um diagnóstico, nenhuma atualização, e o aviso
+reaparece na recarga seguinte. O comando que aplica é <code>npm run atualizar -- --aplicar</code>, e ele
+não aparece na tela.</p>
+
+<h2>Causa raiz <span class="meta">(estado: confirmed)</span></h2>
+<p>A constante <code>UPDATE_COMMAND</code> em <code>src/webview/domain/labels.ts</code> nasceu na feature
+007 (commit <code>8457e7f</code>) com o comando do <b>primeiro ato</b>, e a suíte fixou esse valor como
+esperado. O caso <i>atrasada diz quantos commits, e nomeia o comando que os aplica</i> pede no nome o
+comando que aplica e exige na asserção o que confere. Nada cruza o rótulo com o que o script imprime
+como "Para aplicar", e os dois divergiram sem sinal.</p>
+
+<pre>// src/webview/domain/labels.ts:174
+const UPDATE_COMMAND = 'npm run atualizar'          // &lt;- o primeiro ato
+
+// tests/webview-header.spec.tsx:110
+expect(rótulo.command).toBe('npm run atualizar')    // &lt;- a suíte fixa o valor errado
+
+// scripts/atualizar.js:290
+linhas.push('Para aplicar: npm run atualizar -- --aplicar')   // &lt;- o script sabe o certo</pre>
+
+<h3>Caminho causal</h3>
+<ol>
+<li>RF-04 separou os dois atos e deu ao segundo o argumento explícito: <code>npm run atualizar</code> confere, <code>npm run atualizar -- --aplicar</code> aplica</li>
+<li>T019 escreveu a faixa com a constante do primeiro ato e a entregou igual em <code>atrasada</code> e em <code>divergente</code> (linhas 174, 223 e 232)</li>
+<li>A suíte fixou o valor errado na linha 110, e a asserção da linha 194 aceita qualquer linha que contenha a substring, o que a impede de acusar</li>
+<li>O script soletra o segundo ato por conta própria, sem verificação cruzada com o rótulo</li>
+<li>Quem copia a linha da faixa roda a conferência, e o aviso volta a cada recarga</li>
+</ol>
+<p>Constante e asserção nascem no mesmo commit: <b>não é regressão</b>, e não cabe <code>git bisect</code>.</p>
+
+<h3>Evidências</h3>
+<table><tr><th>Arquivo</th><th>O que mostra</th></tr>
+<tr><td><a href="../evidence/reproduction.md">evidence/reproduction.md</a></td><td>Cápsula sobre a função pura: <code>fix/reproducao.mjs</code> sai com 1 nos dois desfechos; datação no histórico; taxa 2/2, determinístico</td></tr>
+<tr><td><a href="../evidence/construcao-instalada.txt">evidence/construcao-instalada.txt</a></td><td>A saída de <code>npm run atualizar</code>, que confere e nada mais</td></tr>
+<tr><td><a href="../../../intake/relato-20260910-1240.md">intake/relato-20260910-1240.md</a></td><td>A captura da faixa real com o comando que confere ao lado do aviso de atraso</td></tr>
+</table>
+
+<h2>Estratégia escolhida</h2>
+<blockquote>Correção direta: a constante passa a soletrar o <b>segundo ato</b>, <code>npm run atualizar -- --aplicar</code>,
+nos dois desfechos que pedem ação. A spec manda o mesmo comando em <code>atrasada</code> e em
+<code>divergente</code>, e depois do bug nº 4 o comando é o mesmo de fato: <code>--aplicar</code> significa
+"deixe a instalação em dia com este clone", e a recusa de RF-05 em clone com commit próprio é nomeada pelo
+próprio script no momento em que se aplica, com a contagem e a saída a tomar. O rótulo não precisa
+antecipá-la; a frase de <code>divergente</code> já avisa que há trabalho local.</blockquote>
+<p>Alternativas descartadas: frase própria em <code>divergente</code> sem comando (contraria a spec, que pede
+comando nos dois, e deixa o leitor sem saber o que rodar); e um teste que só troca a asserção da linha 110
+(corrige a suíte sem impedir que rótulo e script voltem a divergir).</p>
+
+<h2>Correction Change Set proposto</h2>
+<table><tr><th>CHG</th><th>Tipo</th><th>Artefato</th><th>Propósito</th></tr>
+<tr><td>CHG-001</td><td><code>test</code></td><td>tests/webview-header.spec.tsx</td><td>A asserção da linha 110 passa a exigir o comando que aplica (reprodução: vermelha hoje). Bloco novo em nome do bug com as regressões: os dois desfechos anunciam o mesmo comando, o anunciado nunca é a conferência nua, e o anunciado é o que <code>scripts/atualizar.js</code> imprime como "Para aplicar".</td></tr>
+<tr><td>CHG-002</td><td><code>code</code></td><td>src/webview/domain/labels.ts</td><td>A constante soletra o segundo ato, com o comentário dizendo por quê; o comentário de <code>divergente</code> passa a dizer que a recusa é nomeada pelo script.</td></tr>
+<tr><td>CHG-003</td><td><code>infrastructure</code></td><td>reversa-views-0.8.x.vsix</td><td>Closure policy <code>package</code>: commit da correção e <code>npm run atualizar -- --aplicar</code>, que constrói, testa, empacota e instala. A versão é derivada na construção.</td></tr>
+</table>
+
+<h3>O que muda na faixa</h3>
+<pre>A origem está 2 commits à frente desta construção.  <span class="del">npm run atualizar</span>
+A origem está 2 commits à frente desta construção.  <span class="add">npm run atualizar -- --aplicar</span></pre>
+
+<h2>Testes planejados</h2>
+<table><tr><th>Tipo</th><th>Caso</th><th>O que prova</th></tr>
+<tr><td>reprodução</td><td><code>atrasada</code> nomeia o comando que aplica</td><td>Que o defeito existe: hoje o rótulo devolve a conferência. Vermelho antes, verde depois</td></tr>
+<tr><td>regressão</td><td><code>divergente</code> anuncia o mesmo comando de <code>atrasada</code></td><td>A spec manda o mesmo comando nos dois; o par não pode voltar a divergir</td></tr>
+<tr><td>regressão</td><td>o comando anunciado nunca é a conferência nua</td><td>Que nenhum desfecho volte a oferecer o primeiro ato como se aplicasse</td></tr>
+<tr><td>regressão</td><td>o comando anunciado é o que o script imprime como "Para aplicar"</td><td>Verificação cruzada entre rótulo e <code>scripts/atualizar.js</code>: os dois lugares que soletram o segundo ato não podem divergir sem que a suíte acuse</td></tr>
+<tr><td>regressão</td><td>o cabeçalho desenhado em <code>atrasada</code> contém o argumento de aplicação; em dia continua sem comando</td><td>Que a correção chega ao markup, e que a asserção por substring da linha 194 deixa de ser cega</td></tr>
+</table>
+
+<h2>Riscos e o que fica de fora</h2>
+<table><tr><th>Eixo</th><th>Leitura</th></tr>
+<tr><td>Classificação</td><td class="ok">baixa</td></tr>
+<tr><td>Blast radius</td><td>Uma constante numa função pura do domínio da tela; host, script e protocolo não mudam</td></tr>
+<tr><td>Contrato externo</td><td>O texto vai à tela e ninguém o consome por programa</td></tr>
+<tr><td>Dados</td><td>Nada persistido, nada migrado</td></tr>
+<tr><td>Reversibilidade</td><td>Código versionado, sem efeito além do pacote gerado</td></tr>
+<tr><td>Atenção</td><td>Em <code>divergente</code> o ritual pode recusar a incorporação (RF-05); a recusa é nomeada pelo próprio script, e o rótulo não precisa antecipá-la</td></tr>
+</table>
+
+<h3>Veredito de spec, a decidir na etapa 7</h3>
+<p>Recomendação: <b>spec-correta</b>. O critério de aceitação da feature 007 diz "nomeia o comando que aplica a
+atualização"; RF-04 fixa qual é; o adendo 007 repete "o comando a copiar aparece só em atrasada e em
+divergente". A spec já definia o certo e o código divergiu. Nenhum adendo é necessário.</p>
+
+<h3>Fora desta correção</h3>
+<ul>
+<li><code>README.md</code> está listado como código afetado, mas já documenta os dois atos corretamente e não descreve a faixa; fica intocado.</li>
+<li>Nenhuma frase própria para <code>divergente</code>: a spec manda o mesmo comando, e o script nomeia a recusa quando ela ocorre.</li>
+<li>Nenhuma refatoração além da constante e do que ela obriga.</li>
+</ul>
+
+<h2>O bug e suas relações</h2>
+<div class="svgwrap">
+<svg viewBox="0 0 760 200" width="100%" height="200" role="img" aria-label="Grafo do bug 5 e suas relações">
+<defs><marker id="s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8b949e"/></marker></defs>
+<line x1="220" y1="100" x2="340" y2="100" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#s)"/>
+<line x1="500" y1="100" x2="610" y2="100" stroke="#8b949e" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#s)"/>
+<text x="280" y="92" fill="#8b949e" font-size="11" text-anchor="middle">related-to</text>
+<text x="280" y="118" fill="#58a6ff" font-size="10" text-anchor="middle">supported</text>
+<text x="555" y="92" fill="#8b949e" font-size="11" text-anchor="middle">related-to</text>
+<text x="555" y="118" fill="#8b949e" font-size="10" text-anchor="middle">proposed</text>
+<a href="../bug.md"><rect x="40" y="66" width="180" height="68" rx="8" fill="#1f2a3a" stroke="#58a6ff" stroke-width="2"/>
+<text x="130" y="90" fill="#e6edf3" font-size="12" text-anchor="middle" font-weight="bold">nº 5 · WIBK</text>
+<text x="130" y="106" fill="#8b949e" font-size="10" text-anchor="middle">faixa anuncia o que confere</text>
+<text x="130" y="122" fill="#d29922" font-size="10" text-anchor="middle">active · planning</text></a>
+<a href="../../BUG-20260910-SVZU-ritual-nao-alcanca-construcao-instalada/bug.md"><rect x="340" y="66" width="160" height="68" rx="8" fill="#161b22" stroke="#30363d"/>
+<text x="420" y="90" fill="#e6edf3" font-size="12" text-anchor="middle" font-weight="bold">nº 4 · SVZU</text>
+<text x="420" y="106" fill="#8b949e" font-size="10" text-anchor="middle">ritual não alcança a instalada</text>
+<text x="420" y="122" fill="#3fb950" font-size="10" text-anchor="middle">resolved · fixed · DONE</text></a>
+<a href="../../BUG-20260909-VHII-instalacao-anterior-a-007/bug.md"><rect x="610" y="66" width="130" height="68" rx="8" fill="#161b22" stroke="#30363d"/>
+<text x="675" y="90" fill="#e6edf3" font-size="12" text-anchor="middle" font-weight="bold">nº 2 · VHII</text>
+<text x="675" y="106" fill="#8b949e" font-size="10" text-anchor="middle">instalação anterior à 007</text>
+<text x="675" y="122" fill="#3fb950" font-size="10" text-anchor="middle">resolved · DONE</text></a>
+</svg>
+</div>
+
+<h3>Matriz de relações</h3>
+<table><tr><th>Origem</th><th>Tipo</th><th>Destino</th><th>Estado</th><th>Evidência</th></tr>
+<tr><td><a href="../bug.md">BUG-20260910-WIBK</a></td><td>related-to</td><td><a href="../../BUG-20260910-SVZU-ritual-nao-alcanca-construcao-instalada/bug.md">BUG-20260910-SVZU</a></td><td class="ok">supported</td><td>O desenho aprovado no nº 4 dá ao painel um comando único a anunciar nos dois eixos; o plano dele diz que isso destrava o nº 5</td></tr>
+<tr><td><a href="../../BUG-20260910-SVZU-ritual-nao-alcanca-construcao-instalada/bug.md">BUG-20260910-SVZU</a></td><td>related-to</td><td><a href="../../BUG-20260909-VHII-instalacao-anterior-a-007/bug.md">BUG-20260909-VHII</a></td><td>proposed</td><td>Segundo grau, contexto apenas; bug travado, não se toca</td></tr>
+</table>
+
+<h2>Ordem de correção</h2>
+<p>Sessão de um bug só. A restrição de ordem das Agent Notes está satisfeita: o nº 4 mudou o desenho do
+ritual e está encerrado, e o comando que aplica é agora o mesmo nos dois eixos.</p>
+
+<p class="meta">Gerado pelo /reversa-debugger-fix em 2026-09-10, antes de qualquer escrita fora de <code>_reversa_bugs/</code>. Aguarda aprovação do plano.</p>
+</body></html>

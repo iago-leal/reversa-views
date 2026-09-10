@@ -1,0 +1,35 @@
+--- a/src/webview/domain/labels.ts
++++ b/src/webview/domain/labels.ts
+@@ -170,8 +170,17 @@
+   return revision.length <= REVISION_LENGTH ? revision : revision.slice(0, REVISION_LENGTH)
+ }
+ 
+-/** The command of the ritual, spelled once (RF-22). */
+-const UPDATE_COMMAND = 'npm run atualizar'
++/**
++ * The command of the ritual, spelled once (RF-22), and it is the SECOND act.
++ *
++ * `npm run atualizar` only checks and never brings a commit (RF-04); the
++ * argument is what applies. The header offered the bare check for the whole of
++ * feature 007 (BUG-20260910-WIBK): whoever copied it got a diagnosis, and the
++ * notice came back on the next reload. The suite now reads this value against
++ * the line the script itself prints as "Para aplicar", so the two places that
++ * spell the act cannot drift apart again without a red test.
++ */
++const UPDATE_COMMAND = 'npm run atualizar -- --aplicar'
+ 
+ /** Why a query could not be made, in the reader's words rather than the wire's. */
+ const CAUSE_LABELS: Record<string, string> = {
+@@ -226,8 +235,10 @@
+       return {
+         // Two facts in one sentence, because they are two: there is news to
+         // bring, and there is work here that the origin does not have. The
+-        // updater refuses to apply over the second (RF-05), and the reader has
+-        // to know that before running anything.
++        // command is the same as for ATRASADA, as the spec asks: the updater
++        // names the refusal of RF-05 itself, with the count and the way out,
++        // at the moment of applying, and the reader has to know before running
++        // anything that there is local work at stake.
+         text: `A origem está ${commits(status.commits)} à frente, e este clone tem commit próprio que ela não tem.`,
+         command: UPDATE_COMMAND,
+       }

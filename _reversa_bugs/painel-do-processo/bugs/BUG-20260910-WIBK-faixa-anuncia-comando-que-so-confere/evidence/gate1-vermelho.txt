@@ -1,0 +1,18 @@
+== Gate 1, 2026-09-10: CHG-001 aplicado, código ainda sem correção
+npx vitest run tests/webview-header.spec.tsx
+
+   × a tradução de cada desfecho, que é decisão e não desenho > atrasada diz quantos commits, e nomeia o comando que os aplica 3ms
+   × a linha do desfecho no cabeçalho (RF-10) > o comando a copiar aparece quando há o que aplicar, e não aparece quando não há 2ms
+   × o comando que a faixa anuncia (BUG-20260910-WIBK) > atrasada anuncia o comando que aplica, e não o que apenas confere 0ms
+   × o comando que a faixa anuncia (BUG-20260910-WIBK) > nenhum desfecho oferece a conferência nua como se ela aplicasse 0ms
+   × o comando que a faixa anuncia (BUG-20260910-WIBK) > o comando anunciado é o que o ritual imprime como "Para aplicar" 1ms
+   × o comando que a faixa anuncia (BUG-20260910-WIBK) > o cabeçalho desenha o argumento de aplicação em atrasada e em divergente 1ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected 'npm run atualizar' to be 'npm run atualizar -- --aplicar' // Object.is equality
+AssertionError: expected '<header class="header"><h1 class="hea…' to contain 'npm run atualizar -- --aplicar'
+AssertionError: expected 'npm run atualizar' to be 'npm run atualizar -- --aplicar' // Object.is equality
+AssertionError: atrasada: expected 'npm run atualizar' not to be 'npm run atualizar' // Object.is equality
+AssertionError: expected 'npm run atualizar' to be 'npm run atualizar -- --aplicar' // Object.is equality
+AssertionError: expected '<header class="header"><h1 class="hea…' to contain 'npm run atualizar -- --aplicar'
+ Test Files  1 failed (1)
+      Tests  6 failed | 22 passed (28)

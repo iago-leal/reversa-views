@@ -1,4 +1,4 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-10T16:57:44.714Z a partir de 5 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-10T17:04:46.033Z a partir de 5 bugs -->
 # Índice de bugs · painel-do-processo
 
 ## Resumo
@@ -6,12 +6,12 @@
 | Status | Bugs |
 |---|---|
 | resolved | 4 |
-| open | 1 |
+| active | 1 |
 
 | Phase | Bugs |
 |---|---|
 | delivering | 4 |
-| triaging | 1 |
+| planning | 1 |
 
 ## Abertos e ativos
 

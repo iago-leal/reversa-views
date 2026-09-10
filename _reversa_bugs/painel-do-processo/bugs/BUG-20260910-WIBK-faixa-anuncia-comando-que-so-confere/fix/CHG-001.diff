@@ -1,0 +1,85 @@
+--- a/tests/webview-header.spec.tsx
++++ b/tests/webview-header.spec.tsx
+@@ -16,9 +16,16 @@
+  * A procedência de RF-17 entra junto: versão e commit de construção aparecem ao
+  * lado dos itens que já existem, o commit em forma curta e com o valor integral
+  * num atributo, porque encurtar na origem destruiria o valor consultável.
++ *
++ * O comando que a faixa anuncia ganhou bloco próprio depois do BUG-20260910-WIBK:
++ * a faixa oferecia o comando que apenas confere, e a asserção que a fixava
++ * pedia no nome o comando que aplica. Desde então o rótulo é conferido contra o
++ * que o próprio ritual imprime, para que os dois lugares que soletram o segundo
++ * ato não voltem a divergir sem que a suíte acuse.
+  * @module tests/webview-header
+  */
+ 
++import { readFileSync } from 'node:fs'
+ import { renderToStaticMarkup } from 'react-dom/server'
+ import { describe, expect, it } from 'vitest'
+ import { UPDATE_CAUSES, UPDATE_STATES } from '../src/host/protocol.ts'
+@@ -107,7 +114,7 @@
+   it('atrasada diz quantos commits, e nomeia o comando que os aplica', () => {
+     const rótulo = updateLabel(DESFECHOS.atrasada)
+     expect(rótulo.text).toContain('4')
+-    expect(rótulo.command).toBe('npm run atualizar')
++    expect(rótulo.command).toBe('npm run atualizar -- --aplicar')
+   })
+ 
+   it('a contagem de um commit não sai no plural', () => {
+@@ -191,7 +198,7 @@
+   })
+ 
+   it('o comando a copiar aparece quando há o que aplicar, e não aparece quando não há', () => {
+-    expect(cabeçalho(DESFECHOS.atrasada)).toContain('npm run atualizar')
++    expect(cabeçalho(DESFECHOS.atrasada)).toContain('npm run atualizar -- --aplicar')
+     expect(cabeçalho(DESFECHOS['em-dia'])).not.toContain('npm run atualizar')
+   })
+ 
+@@ -258,3 +265,47 @@
+     }
+   })
+ })
++
++describe('o comando que a faixa anuncia (BUG-20260910-WIBK)', () => {
++  // Os dois atos do ritual, soletrados como o README os ensina (RF-04). O
++  // primeiro nunca traz commit algum, e foi ele que a faixa anunciou durante
++  // toda a feature 007: quem o copiava recebia um diagnóstico, e o aviso
++  // voltava na recarga seguinte.
++  const CONFERE = 'npm run atualizar'
++  const APLICA = 'npm run atualizar -- --aplicar'
++
++  it('atrasada anuncia o comando que aplica, e não o que apenas confere', () => {
++    // Reprodução do defeito: vermelho enquanto a faixa oferecer a conferência.
++    expect(updateLabel(DESFECHOS.atrasada).command).toBe(APLICA)
++  })
++
++  it('divergente anuncia o mesmo comando de atrasada', () => {
++    // A spec manda o mesmo comando nos dois desfechos que pedem ação. A recusa
++    // de RF-05 sobre commit próprio é nomeada pelo script no momento de
++    // aplicar, e não cabe ao rótulo antecipá-la.
++    expect(updateLabel(DESFECHOS.divergente).command).toBe(updateLabel(DESFECHOS.atrasada).command)
++  })
++
++  it('nenhum desfecho oferece a conferência nua como se ela aplicasse', () => {
++    for (const estado of UPDATE_STATES) {
++      expect(updateLabel(DESFECHOS[estado]).command, estado).not.toBe(CONFERE)
++    }
++  })
++
++  it('o comando anunciado é o que o ritual imprime como "Para aplicar"', () => {
++    // Verificação cruzada: o rótulo e o script soletram o segundo ato em dois
++    // lugares, e foi a ausência desta ponte que deixou os dois divergirem sem
++    // sinal. O script é lido como texto porque a tela não pode importá-lo.
++    const script = readFileSync(new URL('../scripts/atualizar.js', import.meta.url), 'utf8')
++    const impresso = /Para aplicar: ([^'\n]+)'/.exec(script)?.[1]
++    expect(impresso, 'o ritual deixou de imprimir a linha "Para aplicar"').toBeDefined()
++    expect(updateLabel(DESFECHOS.atrasada).command).toBe(impresso)
++  })
++
++  it('o cabeçalho desenha o argumento de aplicação em atrasada e em divergente', () => {
++    // A asserção por substring que já existia passava com qualquer dos dois
++    // comandos; esta exige o argumento no markup.
++    expect(cabeçalho(DESFECHOS.atrasada)).toContain(APLICA)
++    expect(cabeçalho(DESFECHOS.divergente)).toContain(APLICA)
++  })
++})
