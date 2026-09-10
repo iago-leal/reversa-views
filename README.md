@@ -97,10 +97,12 @@ vazio.
 
 ## Instalar, uma vez só
 
-O pacote pronto é o `.vsix` na raiz deste repositório. Instalar é um comando:
+O pacote pronto é o `.vsix` na raiz deste repositório, nomeado pela versão
+derivada na construção (a regra está no ritual da atualização, abaixo).
+Instalar é um comando:
 
 ```bash
-code --install-extension reversa-views-0.0.1.vsix
+code --install-extension reversa-views-0.6.1.vsix
 ```
 
 A extensão é privada e tem publicador local: ela não fala com o Marketplace,
@@ -119,7 +121,7 @@ Isto é trabalho de manutenção, e só é preciso depois de mexer no código.
 ```bash
 npm install            # traz as ferramentas, inclusive o empacotador
 npm run build          # confere a herança, compila o host e empacota a tela
-npm test               # 864 testes; nenhum deles abre navegador
+npm test               # 1123 testes; nenhum deles abre navegador
 npm run empacotar      # regenera o .vsix e lista o que entrou nele
 ```
 
@@ -136,6 +138,77 @@ saída, e a construção roda antes por conta da pré-tarefa configurada em
 `.vscode/`.
 
 
+## O ritual da atualização
+
+A extensão não se atualiza sozinha, e isso é decisão: ela nunca escreve, nem
+no workspace nem em si mesma. O que ela faz é **anunciar**, no cabeçalho do
+painel, se esta construção está atrás da origem do repositório. Trazer a
+novidade é ato seu, no terminal, em dois passos separados de propósito.
+
+### Conferir
+
+```bash
+npm run atualizar
+```
+
+O comando busca as referências da origem e não toca a árvore de trabalho:
+`git status` antes e depois produz a mesma saída. Ele imprime o commit do
+clone na forma curta, a mesma que o painel mostra em *Construída de*, para que
+a comparação entre o instalado e o clonado seja visual. Três desfechos, cada um
+com o próprio código de saída:
+
+| Desfecho | O que diz | Código |
+|---|---|---|
+| Em dia | Não há commit a trazer | 0 |
+| Atrás de N commits | Quantos são, e o comando para aplicar | 1 |
+| Impossível conferir | A causa: sem clone, sem remoto, git ausente ou sem rede | 2 |
+
+O painel diz o mesmo, sem terminal: a linha do desfecho no cabeçalho declara
+*em dia*, *N commits à frente*, *divergente* (a origem tem novidade e este clone
+tem commit próprio), *commit desconhecido* (a construção veio de um commit que a
+origem nunca viu) ou *não deu para conferir*, com a causa. A consulta é anônima
+e de leitura, ocorre uma vez por leitura do processo, e a chave
+`reversaViews.conferirAtualizacao` a desliga; desligada, o cabeçalho declara
+que está desligada, e não que está em dia.
+
+### Aplicar
+
+```bash
+npm run atualizar -- --aplicar
+```
+
+Confere de novo e, havendo o que trazer, percorre na ordem: incorporação dos
+commits por avanço rápido, `npm ci` apenas se o arquivo de trava mudou,
+construção, suíte e empacotamento. Para na primeira falha, e o pacote anterior
+fica intacto porque o empacotamento é o último passo. Ao fim imprime a linha
+`code --install-extension <pacote>` já com o nome gerado, e a executa quando o
+executável do editor está no caminho; sem ele, imprime a linha e termina em
+sucesso.
+
+Duas recusas vêm **antes de tocar em qualquer coisa**, e nomeiam o que
+encontraram: árvore de trabalho com alteração não registrada (arquivo por
+arquivo) e commit local que a origem não tem (a contagem). Incorporar por cima
+de trabalho seu é decisão que script nenhum toma.
+
+### A versão que cresce sozinha
+
+A versão do pacote nunca é escrita à mão. Ela é derivada na construção:
+
+- o primeiro número fica em zero até decisão explícita do mantenedor;
+- o segundo é o **maior** número de feature com adendo em `_reversa_sdd/addenda/`,
+  e não a quantidade de adendos, para que adendo apagado ou superado não faça
+  a versão recuar;
+- o terceiro conta os commits desde o commit que **acrescentou** aquele adendo.
+
+Hoje isso dá `0.6.1`, e o pacote se chama `reversa-views-0.6.1.vsix`. O
+`package.json` versionado guarda um valor de espera; o empacotamento escreve a
+versão derivada nele só em torno da chamada ao empacotador, e a restaura em
+bloco de saída garantida, para que a árvore volte limpa mesmo quando o
+empacotador falha. Fora de um clone, ou sem adendo algum, a derivação recua
+para `0.0.0` e o empacotamento imprime por quê. O carimbo com a versão e o
+commit da construção (`src/host/build.ts`) é gerado a cada construção e não é
+versionado, pela mesma razão: muda a cada commit.
+
 ## Ver a tela antes de empacotar
 
 Suíte verde não confere tela. Cor, contraste, quebra de linha e seção que não
@@ -145,7 +218,8 @@ serviria, com a **leitura real** de um workspace, e põe no lugar da extensão u
 host fingido que cumpre o mesmo contrato de canal. A faixa vermelha no topo
 declara o que ele não simula.
 
-O painel tem sete estados, e cada um se alcança por um comando:
+O painel tem sete estados de entrada, e o cabeçalho tem sete desfechos da
+consulta à origem. Cada um se alcança por um comando:
 
 | Estado | Comando |
 |---|---|
@@ -157,14 +231,31 @@ O painel tem sete estados, e cada um se alcança por um comando:
 | Instalado | `npm run preview` |
 | Instalado e degradado | `node scripts/preview.js --workspace="$(node scripts/estragar-workspace.js)"` |
 
+| Desfecho da consulta | Comando |
+|---|---|
+| Conferência desligada | `npm run preview -- --atualizacao=desligada` |
+| Consultando | `npm run preview -- --atualizacao=consultando` |
+| Em dia | `npm run preview -- --atualizacao=em-dia` |
+| Atrás da origem | `npm run preview -- --atualizacao=atrasada` |
+| Divergente | `npm run preview -- --atualizacao=divergente` |
+| Commit desconhecido | `npm run preview -- --atualizacao=commit-desconhecido` |
+| Impossível conferir | `npm run preview -- --atualizacao=impossivel` |
+
+Os cinco desfechos que respondem passam por *consultando* antes: o preview
+entrega o processo, depois o estado em curso, e só então o desfecho, com o
+atraso declarado ou um mínimo curto, porque entregue no mesmo ciclo o estado em
+curso nunca seria visto. O preview não consulta a origem de verdade: o desfecho
+é forçado, e sem `--atualizacao` a linha do cabeçalho não aparece.
+
 O último merece nota. Ele copia este workspace para uma pasta temporária do
 sistema, trunca lá um arquivo do Reversa e imprime o caminho da cópia. Nem o
 repositório nem o workspace de origem são tocados: quem escreve é o auxiliar, e
 o preview não escreve nada, em lugar nenhum.
 
 Os demais argumentos são `--tema=` (`claro`, `escuro`, `claro-alto-contraste`,
-`escuro-alto-contraste`), `--workspace=` e `--porta=`. Argumento desconhecido
-interrompe o comando em vez de ser ignorado.
+`escuro-alto-contraste`), `--workspace=` e `--porta=`; `--estado=` e
+`--atualizacao=` combinam entre si e com o atraso. Argumento desconhecido, ou
+valor fora da lista, interrompe o comando em vez de ser ignorado.
 
 Enquanto mexe na tela, `npm run observar:webview` reempacota a cada alteração,
 com mapa de fontes. Recarregar a página é ato seu: o preview não abre canal para
@@ -172,9 +263,15 @@ o navegador.
 
 ## O portão visual
 
-**Situação em 2026-09-09: cumprido no navegador.** Os sete estados foram vistos
-nos quatro temas, e a conferência achou três defeitos que a suíte verde não
-pegava. Todos foram corrigidos e travados por teste antes de o portão fechar:
+**Situação em 2026-09-09, feature 007: cumprido no navegador.** Os sete
+estados de entrada, os sete desfechos da consulta e as três barras foram vistos
+nos quatro conjuntos de cores, em largura de barra lateral (380 px). Nenhum
+defeito novo apareceu; o que a rodada confirmou foi a decisão de desenhar a
+barra em SVG: a largura do preenchimento resolve sob a política de estilo do
+painel, onde um atributo de estilo em linha seria descartado e toda barra
+nasceria vazia. A rodada anterior, da feature 005, achou três defeitos que a
+suíte verde não pegava, todos corrigidos e travados por teste antes de o portão
+fechar:
 
 | O que a tela mostrava | Onde estava | Como ficou |
 |---|---|---|
@@ -188,9 +285,9 @@ nunca tinha um quadro para pintar a releitura, e o atraso, cuja razão de ser
 era justamente deixá-la ver, não alcançava o estado que prometia.
 
 A regra é que nenhuma versão seja empacotada para uso antes de os sete estados
-terem sido conferidos na tela. Ela vale para cada versão, não uma vez só: quem
-mexer na tela roda os sete comandos de novo, olha cada um e atualiza a data
-acima. O que continua **devido** é a conferência dentro do editor, que o
+e os sete desfechos terem sido conferidos na tela. Ela vale para cada versão,
+não uma vez só: quem mexer na tela roda os comandos das duas tabelas de novo,
+olha cada um nos quatro temas e atualiza a data acima. O que continua **devido** é a conferência dentro do editor, que o
 preview declara não simular: o ícone na barra de atividades, o comando de
 paleta com a visão oculta e o canal de saída.
 

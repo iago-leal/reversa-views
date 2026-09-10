@@ -1,0 +1,19 @@
+{
+  "descricao": "A cabeça e a base são o mesmo commit: a instalação está em dia.",
+  "procedencia": "chamada real a master...master em 2026-09-09",
+  "codigo": 200,
+  "corpo": {
+    "url": "https://api.github.com/repos/iago-leal/reversa-views/compare/bad021b...master",
+    "html_url": "https://github.com/iago-leal/reversa-views/compare/bad021b...master",
+    "permalink_url": "https://github.com/iago-leal/reversa-views/compare/iago-leal:bad021b...iago-leal:a23711d",
+    "diff_url": "https://github.com/iago-leal/reversa-views/compare/bad021b...master.diff",
+    "patch_url": "https://github.com/iago-leal/reversa-views/compare/bad021b...master.patch",
+    "status": "identical",
+    "ahead_by": 0,
+    "behind_by": 0,
+    "total_commits": 0
+  },
+  "desfechoEsperado": {
+    "estado": "em-dia"
+  }
+}

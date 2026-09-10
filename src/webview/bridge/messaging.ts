@@ -7,17 +7,23 @@
  * functions `domain/preferences.ts` consumes. Everything above it receives
  * values and returns values.
  *
- * The treatment of what arrives is EXHAUSTIVE over the three commands of the
- * protocol: the default case takes a `never`, so a fourth command added to
+ * The treatment of what arrives is EXHAUSTIVE over the commands of the
+ * protocol: the default case takes a `never`, so a command added to
  * `host/protocol.ts` becomes a type error here instead of a silence (D-18).
- * The shapes come from the protocol by `import type`, and the protocol gains
- * no command, no field and no order in this feature.
+ * That guard did its job in feature 007: appending `setUpdate` to the protocol
+ * stopped this file compiling until the case below was written, which is
+ * exactly the failure mode it was built for.
  * @module webview/bridge/messaging
  */
 
 import { panelLine } from './log.ts'
 import type { HostMessage, WebviewMessage } from '../../host/protocol.ts'
-import type { SetEntryData, SetNoticeData, SetProcessData } from '../../host/protocol.ts'
+import type {
+  SetEntryData,
+  SetNoticeData,
+  SetProcessData,
+  UpdateStatus,
+} from '../../host/protocol.ts'
 
 /** The interface the editor hands the panel, as much of it as the panel uses. */
 export interface HostApi {
@@ -31,6 +37,15 @@ export interface PanelSink {
   setProcess(data: SetProcessData): void
   setEntry(data: SetEntryData): void
   setNotice(data: SetNoticeData): void
+  /**
+   * What the origin said about this build (feature 007).
+   *
+   * It arrives on its own envelope rather than inside the reading, because the
+   * query is asynchronous: a field in `SetProcessData` would either delay the
+   * panel or travel empty (D-02). The panel never asks for it — rereading is
+   * the gesture that repeats it.
+   */
+  setUpdate(status: UpdateStatus): void
 }
 
 /** What the panel can do with the channel. */
@@ -83,8 +98,8 @@ export function hostApi(): HostApi {
 /**
  * The command that arrived is not one this version declares (RF-19).
  *
- * The parameter is `never` on purpose: adding a fourth command to the
- * protocol without handling it here stops compiling.
+ * The parameter is `never` on purpose: adding a command to the protocol
+ * without handling it here stops compiling.
  * @param message - the unreachable case.
  * @returns the name of the command, for the log line.
  */
@@ -164,6 +179,9 @@ export function createBridge(options: BridgeOptions): Bridge {
           return
         case 'setNotice':
           sink.setNotice(message.data)
+          return
+        case 'setUpdate':
+          sink.setUpdate(message.data)
           return
         default:
           log(panelLine('messaging', 'comando ignorado', `${unreachable(message)} não é do protocolo`))

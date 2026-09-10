@@ -19,3 +19,8 @@ coverage/
 
 # Herança: caminho local das origens, feito a partir de heranca.origens.exemplo.yml
 heranca.origens.yml
+
+# Carimbo da construção: gerado por todo build, muda a cada commit (D-19).
+# Ao contrário de src/host/inheritance.ts, que é versionado porque muda
+# raramente, versionar este deixaria a árvore suja depois de toda construção.
+src/host/build.ts

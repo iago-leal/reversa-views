@@ -16,6 +16,7 @@
  */
 
 import type { ReactNode } from 'react'
+import type { UpdateStatus } from '../../host/protocol.ts'
 import type {
   DisplayPreferences,
   EffectiveEntry,
@@ -52,6 +53,14 @@ const NOTHING_READ: ReadingIntegrity = {
 /** What the panel needs to draw itself. */
 export interface AppProps {
   entry: EffectiveEntry
+  /**
+   * What the origin said about this build, or null while nothing was said.
+   *
+   * It travels beside the entry state rather than inside the payload because
+   * the query is asynchronous and answers about the build, not about the
+   * reading (feature 007, D-02).
+   */
+  update: UpdateStatus | null
   notice: Notice
   preferences: DisplayPreferences
   theme: EditorTheme
@@ -74,7 +83,7 @@ export interface AppProps {
  * @returns the root element, carrying the theme attributes.
  */
 export function App(props: AppProps): ReactNode {
-  const { entry, notice, preferences, theme, onReload, onOpenFile, onLog } = props
+  const { entry, update, notice, preferences, theme, onReload, onOpenFile, onLog } = props
   const payload = entry.loaded
   const integrity = payload === null ? NOTHING_READ : readingIntegrity(payload)
   const collapsed = new Set(effectiveCollapsed(preferences, integrity))
@@ -96,6 +105,7 @@ export function App(props: AppProps): ReactNode {
         <Header
           entry={entry}
           integrity={integrity}
+          update={update}
           onReload={onReload}
           collapsedCount={collapsed.size}
           collapsibleCount={cards.length}

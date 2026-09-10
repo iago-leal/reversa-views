@@ -1,0 +1,12 @@
+{
+  "descricao": "Qualquer outro código, aqui um 500, cai em resposta inesperada.",
+  "procedencia": "montada de propósito para a última linha da tabela de erros",
+  "codigo": 500,
+  "corpo": {
+    "message": "Server Error"
+  },
+  "desfechoEsperado": {
+    "estado": "impossivel",
+    "causa": "resposta-inesperada"
+  }
+}

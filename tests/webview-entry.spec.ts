@@ -99,3 +99,61 @@ describe('estado de entrada', () => {
     expect(depois).toEqual(cheio)
   })
 })
+
+describe('o desfecho da consulta dentro do estado de entrada (feature 007)', () => {
+  const EM_DIA = { estado: 'em-dia' } as const
+  const ATRASADA = { estado: 'atrasada', commits: 4 } as const
+
+  it('começa sem desfecho algum, que não é o mesmo que um desfecho de valor neutro', () => {
+    expect(INITIAL_ENTRY.update).toBeNull()
+  })
+
+  it('o comando do desfecho guarda o que chegou e não mexe em mais nada', () => {
+    const cheio = nextEntry(INITIAL_ENTRY, { command: 'setProcess', data: payloadFixture() })
+    const depois = nextEntry(cheio, { command: 'setUpdate', data: ATRASADA })
+
+    expect(depois.update).toEqual(ATRASADA)
+    expect(depois.kind).toBe(cheio.kind)
+    expect(depois.loaded).toBe(cheio.loaded)
+    expect(depois.rereading).toBe(cheio.rereading)
+    expect(depois.root).toBe(cheio.root)
+  })
+
+  it('a releitura preserva o desfecho anterior até a resposta nova chegar', () => {
+    const cheio = nextEntry(INITIAL_ENTRY, { command: 'setProcess', data: payloadFixture() })
+    const respondido = nextEntry(cheio, { command: 'setUpdate', data: EM_DIA })
+    const relendo = nextEntry(respondido, { command: 'setEntry', data: { kind: 'loading' } })
+    const relido = nextEntry(relendo, { command: 'setProcess', data: payloadFixture() })
+
+    expect(relendo.update).toEqual(EM_DIA)
+    expect(relido.update).toEqual(EM_DIA)
+  })
+
+  it('a resposta nova substitui a anterior quando enfim chega', () => {
+    const cheio = nextEntry(INITIAL_ENTRY, { command: 'setProcess', data: payloadFixture() })
+    const antes = nextEntry(cheio, { command: 'setUpdate', data: EM_DIA })
+    const consultando = nextEntry(antes, { command: 'setUpdate', data: { estado: 'consultando' } })
+    const depois = nextEntry(consultando, { command: 'setUpdate', data: ATRASADA })
+
+    expect(depois.update).toEqual(ATRASADA)
+  })
+
+  it('estado sem leitura por trás apaga o desfecho, em vez de declará-lo sobre construção que não nomeia', () => {
+    const cheio = nextEntry(INITIAL_ENTRY, { command: 'setProcess', data: payloadFixture() })
+    const respondido = nextEntry(cheio, { command: 'setUpdate', data: EM_DIA })
+    const semPasta = nextEntry(respondido, { command: 'setEntry', data: { kind: 'no-folder' } })
+
+    expect(semPasta.update).toBeNull()
+  })
+
+  it('o aviso do host continua sem tocar no desfecho', () => {
+    const cheio = nextEntry(INITIAL_ENTRY, { command: 'setProcess', data: payloadFixture() })
+    const respondido = nextEntry(cheio, { command: 'setUpdate', data: ATRASADA })
+    const depois = nextEntry(respondido, {
+      command: 'setNotice',
+      data: { level: 'warning', message: 'sumiu' },
+    })
+
+    expect(depois.update).toEqual(ATRASADA)
+  })
+})

@@ -11,19 +11,30 @@
  * absence is the point: with no reading behind it, `degraded` is false for
  * want of anything counted, and a header that drew it anyway would announce a
  * whole reading over the screen that says the reading failed.
+ *
+ * Feature 007 adds the provenance of this build and the outcome of the origin
+ * query. Both follow the rules already in force: the sentence of the outcome is
+ * decided in `domain/labels.ts` and only placed here, and the commit is
+ * shortened by the same function that already shortens the inherited revision,
+ * with the whole value kept in an attribute (RF-17, D-18). The outcome is a
+ * LINE, never a dialog and never a notification: RN-09 forbids the panel from
+ * interrupting whoever is reading.
  * @module webview/ui/Header
  */
 
 import { useState } from 'react'
 import type { ReactNode } from 'react'
+import type { UpdateStatus } from '../../host/protocol.ts'
 import { brasiliaInstant } from '../domain/instants.ts'
-import { revisionLabel } from '../domain/labels.ts'
+import { revisionLabel, updateLabel } from '../domain/labels.ts'
 import type { EffectiveEntry, ReadingIntegrity } from '../domain/types.ts'
 
 /** What the header draws. */
 export interface HeaderProps {
   entry: EffectiveEntry
   integrity: ReadingIntegrity
+  /** What the origin said about this build; null draws no line at all (RF-10). */
+  update: UpdateStatus | null
   onReload: () => void
   /** How many cards are collapsed right now, and how many there are (RF-04). */
   collapsedCount: number
@@ -71,6 +82,14 @@ function Item(props: {
   value: string | null
   /** The absolute instant behind the text, when the item shows one (RF-16). */
   instant?: string
+  /**
+   * The whole value behind a shortened one, when the item shortens (D-18).
+   *
+   * Shortening at the source would destroy what RF-17 asks to be consultable,
+   * so the abbreviation is what the reader sees and the attribute is what a
+   * comparison against a commit list actually needs.
+   */
+  full?: string
 }): ReactNode {
   return (
     <span className="header__item">
@@ -78,6 +97,7 @@ function Item(props: {
       <span
         data-item={props.name}
         data-instant={props.instant === undefined || props.instant === '' ? undefined : props.instant}
+        data-full={props.full === undefined || props.full === '' ? undefined : props.full}
       >
         {props.value === null || props.value === '' ? ABSENT : props.value}
       </span>
@@ -91,7 +111,7 @@ function Item(props: {
  * @returns the header element.
  */
 export function Header(props: HeaderProps): ReactNode {
-  const { entry, integrity, onReload } = props
+  const { entry, integrity, update, onReload } = props
   const payload = entry.loaded
   const discovery = payload?.process.discovery ?? null
 
@@ -106,6 +126,13 @@ export function Header(props: HeaderProps): ReactNode {
   // absoluto fica no atributo consultável, como RF-16 exige.
   const readAt = brasiliaInstant(payload?.readAt ?? null)
 
+  // RF-10: the sentence is decided in the domain, and this component places
+  // it. A header that chose its own words for an outcome would be a second
+  // authority over the same fact. Undefined is read as null on purpose: a
+  // caller assembled before this feature hands over no outcome, and RN-05 says
+  // that draws no line rather than breaking the render.
+  const outcome = update === null || update === undefined ? null : updateLabel(update)
+
   const nothingRead = payload === null
   const allExpanded = props.collapsedCount === 0
   const allCollapsed = props.collapsedCount >= props.collapsibleCount
@@ -119,6 +146,17 @@ export function Header(props: HeaderProps): ReactNode {
         name="revision"
         label="Modelo herdado"
         value={revisionLabel(payload?.inheritedRevision)}
+      />
+      <Item
+        name="extension-version"
+        label="Extensão"
+        value={payload?.extensionVersion ?? null}
+      />
+      <Item
+        name="built-from"
+        label="Construída de"
+        value={revisionLabel(payload?.builtFromCommit)}
+        full={payload?.builtFromCommit}
       />
       <Item name="root" label="Raiz observada" value={entry.root} />
       <Item
@@ -136,6 +174,17 @@ export function Header(props: HeaderProps): ReactNode {
           {integrity.degraded
             ? `Leitura degradada: ${integrity.anomalies} anomalias, ${integrity.refusals} recusas, ${integrity.truncated} truncamentos.`
             : 'Leitura íntegra.'}
+        </p>
+      )}
+      {outcome === null ? null : (
+        <p data-item="update" data-update={update?.estado} className="header__update">
+          {outcome.text}
+          {outcome.command === null ? null : (
+            <>
+              {' '}
+              <code className="header__command">{outcome.command}</code>
+            </>
+          )}
         </p>
       )}
       <p className="header__actions">

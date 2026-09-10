@@ -59,6 +59,7 @@ function entrada(partes: Partial<EffectiveEntry> = {}): EffectiveEntry {
     loaded: payloadFixture(),
     message: null,
     root: '/w/reversa-views',
+    update: null,
     ...partes,
   }
 }

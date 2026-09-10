@@ -7,6 +7,10 @@
  *
  * The readable stage comes ready from `domain/labels.ts`; this component does
  * not know the vocabulary of stages.
+ *
+ * The bar of feature 007 sits beside the two counts the card already prints,
+ * and agrees with them by construction: it is drawn from the same inherited
+ * pair, closed over total (RF-28, RN-08).
  * @module webview/ui/ForwardSection
  */
 
@@ -14,6 +18,7 @@ import type { ReactNode } from 'react'
 import type { ReversaProcess } from '../../heranca/reversa-domain/src/index.ts'
 import { stageLabel } from '../domain/labels.ts'
 import { CollapsibleSection } from './CollapsibleSection.tsx'
+import { ProgressBar } from './ProgressBar.tsx'
 
 /** What the section draws. */
 export interface ForwardSectionProps {
@@ -71,6 +76,11 @@ export function ForwardSection(props: ForwardSectionProps): ReactNode {
         <Pair name="paused" label="Features pausadas" value={paused.join(', ')} />
         <Pair name="addendum" label="Adendo" value={forward.addendum} />
       </dl>
+      <ProgressBar
+        feitos={forward.actions.fechadas}
+        total={forward.actions.total}
+        rotulo={`${forward.actions.fechadas} de ${forward.actions.total} ações fechadas`}
+      />
     </CollapsibleSection>
   )
 }

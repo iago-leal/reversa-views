@@ -182,3 +182,69 @@ describe('nomes dos conjuntos de cor (D-02)', () => {
     expect(comPacote).toEqual(['src/webview/theme/primer-themes.ts'])
   })
 })
+
+/**
+ * A tela continua sem falar com serviço algum (RN-01, feature 007).
+ *
+ * A extensão passa a consultar a origem do repositório, e a consulta vive no
+ * processo do HOST. Este bloco guarda o outro lado: o pacote da tela não ganha
+ * a capacidade, e o desfecho chega a ele como mensagem, pelo canal que já
+ * existe. A política de conteúdo do painel segue sem permissão de conexão de
+ * saída, de modo que uma requisição daqui seria recusada pelo navegador
+ * embarcado — mas contar com isso seria confiar a fronteira ao acaso da
+ * configuração, e não ao desenho.
+ */
+describe('a tela não fala com serviço algum (RN-01)', () => {
+  const VIAS: Array<[RegExp, string]> = [
+    [/\bfetch\s*\(/, 'o cliente global de requisição'],
+    [/\bXMLHttpRequest\b/, 'o cliente de requisição do navegador'],
+    [/\bWebSocket\b/, 'o canal permanente'],
+    [/\bEventSource\b/, 'o fluxo de eventos do servidor'],
+    [/\bnavigator\s*\.\s*sendBeacon\b/, 'o envio em segundo plano'],
+    [/['"]node:https?['"]/, 'o módulo nativo de requisição'],
+  ]
+
+  it('nenhum módulo da tela alcança rede, em via alguma', () => {
+    for (const fonte of fontes()) {
+      for (const [via, oQueAbre] of VIAS) {
+        expect(via.test(fonte.texto), `${fonte.caminho} alcança ${oQueAbre}`).toBe(false)
+      }
+    }
+  })
+
+  it('nenhum módulo da tela carrega endereço de rede', () => {
+    // O endereço consultado é constante da construção, no host. Um endereço
+    // aqui seria endereço no bundle da tela, alcançável por quem inspeciona o
+    // painel, e a razão de não haver nenhum é essa.
+    const infratores = fontes()
+      .filter((f) => /https?:\/\/(?!localhost|127\.0\.0\.1)[a-z]/.test(f.texto))
+      .map((f) => f.caminho)
+    expect(infratores).toEqual([])
+  })
+
+  it('a guarda reconhece cada via quando ela de fato aparece', () => {
+    const amostras: Array<[RegExp, string]> = [
+      [/\bfetch\s*\(/, 'const r = await fetch(url)'],
+      [/\bXMLHttpRequest\b/, 'const p = new XMLHttpRequest()'],
+      [/\bWebSocket\b/, 'const c = new WebSocket(url)'],
+      [/\bEventSource\b/, 'const e = new EventSource(url)'],
+      [/\bnavigator\s*\.\s*sendBeacon\b/, 'navigator.sendBeacon(url, dados)'],
+      [/['"]node:https?['"]/, "import { request } from 'node:https'"],
+    ]
+    for (const [via, amostra] of amostras) {
+      expect(via.test(amostra), `a guarda não reconhece: ${amostra}`).toBe(true)
+    }
+  })
+
+  it('o desfecho da consulta chega como TIPO do protocolo, e não como valor', () => {
+    // A mesma disciplina do resto da fronteira: a tela desenha o desfecho, e
+    // nada do host sobrevive no bundle dela.
+    const comDesfecho = fontes().filter((f) => /UpdateStatus/.test(f.texto))
+    expect(comDesfecho.length).toBeGreaterThan(0)
+    for (const fonte of comDesfecho) {
+      expect(importaValorDe(fonte.texto, /host\//), `${fonte.caminho} importa valor do host`).toBe(
+        false,
+      )
+    }
+  })
+})

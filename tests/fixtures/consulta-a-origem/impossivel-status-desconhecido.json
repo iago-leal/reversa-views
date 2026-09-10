@@ -1,0 +1,19 @@
+{
+  "descricao": "Resposta bem-sucedida com um valor de `status` fora dos quatro que a comparação usa. É o mesmo tratamento do corpo sem campos, e não um quinto ramo.",
+  "procedencia": "montada de propósito, a partir da armadilha vista no corpo do 404",
+  "codigo": 200,
+  "corpo": {
+    "url": "https://api.github.com/repos/iago-leal/reversa-views/compare/bad021b...master",
+    "html_url": "https://github.com/iago-leal/reversa-views/compare/bad021b...master",
+    "permalink_url": "https://github.com/iago-leal/reversa-views/compare/iago-leal:bad021b...iago-leal:a23711d",
+    "diff_url": "https://github.com/iago-leal/reversa-views/compare/bad021b...master.diff",
+    "patch_url": "https://github.com/iago-leal/reversa-views/compare/bad021b...master.patch",
+    "status": "unknown",
+    "ahead_by": 1,
+    "behind_by": 0
+  },
+  "desfechoEsperado": {
+    "estado": "impossivel",
+    "causa": "resposta-inesperada"
+  }
+}

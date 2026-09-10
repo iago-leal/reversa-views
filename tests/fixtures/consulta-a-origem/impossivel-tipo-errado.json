@@ -1,0 +1,19 @@
+{
+  "descricao": "Os campos existem mas a distância chega como cadeia. Tipo errado é resposta inesperada, e não um número a converter em silêncio.",
+  "procedencia": "montada de propósito para o caso de tipo trocado",
+  "codigo": 200,
+  "corpo": {
+    "url": "https://api.github.com/repos/iago-leal/reversa-views/compare/bad021b...master",
+    "html_url": "https://github.com/iago-leal/reversa-views/compare/bad021b...master",
+    "permalink_url": "https://github.com/iago-leal/reversa-views/compare/iago-leal:bad021b...iago-leal:a23711d",
+    "diff_url": "https://github.com/iago-leal/reversa-views/compare/bad021b...master.diff",
+    "patch_url": "https://github.com/iago-leal/reversa-views/compare/bad021b...master.patch",
+    "status": "ahead",
+    "ahead_by": "4",
+    "behind_by": 0
+  },
+  "desfechoEsperado": {
+    "estado": "impossivel",
+    "causa": "resposta-inesperada"
+  }
+}

@@ -41,21 +41,34 @@
         "title": "Reler o processo",
         "category": "Reversa"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Reversa",
+      "properties": {
+        "reversaViews.conferirAtualizacao": {
+          "type": "boolean",
+          "default": true,
+          "description": "Conferir, a cada leitura do processo, se esta instalação está atrás da origem do repositório. A consulta é anônima e de leitura: não carrega credencial, identificador de máquina, nome de workspace nem dado algum sobre o que foi lido. Desligada, o painel declara que está desligada em vez de silenciar."
+        }
+      }
+    }
   },
   "scripts": {
+    "pretest": "npm run gerar:carimbo",
     "test": "vitest run",
     "typecheck": "tsc -p ./ --noEmit",
     "compile": "tsc -p ./",
     "build:webview": "node scripts/build-webview.js",
-    "build": "npm run check:heranca:local && npm run gerar:revisao-heranca && npm run compile && npm run build:webview",
+    "build": "npm run check:heranca:local && npm run gerar:revisao-heranca && npm run gerar:carimbo && npm run compile && npm run build:webview",
     "check:webview": "tsc -p tsconfig.webview.json --noEmit",
     "check:heranca": "node scripts/verificar-heranca.js",
     "check:heranca:local": "node scripts/verificar-heranca.js --local",
     "sync:heranca": "node scripts/ressincronizar-heranca.js",
     "gerar:revisao-heranca": "node scripts/gerar-revisao-heranca.js",
+    "gerar:carimbo": "node scripts/gerar-carimbo-da-construcao.js",
     "preview": "node scripts/preview.js",
     "empacotar": "node scripts/empacotar.js",
+    "atualizar": "node scripts/atualizar.js",
     "observar:webview": "node scripts/build-webview.js --observar",
     "estragar:workspace": "node scripts/estragar-workspace.js"
   },

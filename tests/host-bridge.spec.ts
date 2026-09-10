@@ -153,3 +153,114 @@ describe('ouvinte único', () => {
     expect(handler).toHaveBeenCalledWith({ command: 'qualquer' })
   })
 })
+
+/**
+ * O comando que a feature 007 acrescenta (T017).
+ *
+ * A ponte não sabe o que `setUpdate` significa, e é isso que se verifica: ela
+ * o trata como trata os três que já existiam, com as mesmas três regras de
+ * ordem. O contrato cresce por acréscimo, e um canal que precisasse de ramo
+ * novo para cada mensagem nova não seria um canal.
+ */
+describe('o desfecho da consulta atravessa como qualquer outra carga', () => {
+  const DESLIGADA: HostMessage = { command: 'setUpdate', data: { estado: 'desligada' } }
+  const CONSULTANDO: HostMessage = { command: 'setUpdate', data: { estado: 'consultando' } }
+  const ATRASADA: HostMessage = { command: 'setUpdate', data: { estado: 'atrasada', commits: 4 } }
+
+  it('sai com o nome certo e o dado esperado', async () => {
+    const b = bancada()
+    b.bridge.ready()
+    await b.bridge.send(ATRASADA)
+
+    expect(b.postMessage).toHaveBeenCalledTimes(1)
+    expect(b.postMessage).toHaveBeenCalledWith({
+      command: 'setUpdate',
+      data: { estado: 'atrasada', commits: 4 },
+    })
+  })
+
+  it('atravessa sem transformação: a ponte não interpreta o desfecho', async () => {
+    const b = bancada()
+    b.bridge.ready()
+    for (const carga of [DESLIGADA, CONSULTANDO, ATRASADA]) await b.bridge.send(carga)
+
+    expect(b.postMessage.mock.calls.map(([carga]) => carga)).toEqual([
+      DESLIGADA,
+      CONSULTANDO,
+      ATRASADA,
+    ])
+  })
+
+  it('a sequência da leitura sai na ordem em que foi pedida', async () => {
+    // É a ordem que o contrato do canal fixa: o processo primeiro, o estado de
+    // espera logo depois, e o desfecho quando a origem responder.
+    const b = bancada()
+    b.bridge.ready()
+    await b.bridge.send({ command: 'setEntry', data: { kind: 'loading' } })
+    await b.bridge.send(CONSULTANDO)
+    await b.bridge.send(ATRASADA)
+
+    expect(b.postMessage.mock.calls.map(([carga]) => carga.command)).toEqual([
+      'setEntry',
+      'setUpdate',
+      'setUpdate',
+    ])
+  })
+
+  it('antes do pronto, é retido como qualquer outra carga (RN-03)', async () => {
+    const b = bancada()
+    await b.bridge.send(ATRASADA)
+
+    expect(b.postMessage).not.toHaveBeenCalled()
+    expect(b.lines[0]).toContain('setUpdate')
+    expect(b.lines[0]).toContain('retido')
+  })
+
+  it('com a visão oculta, não sai, e a pendência é a mesma de sempre (D-10)', async () => {
+    const b = bancada({ visible: false })
+    b.bridge.ready()
+    await b.bridge.send(ATRASADA)
+
+    expect(b.postMessage).not.toHaveBeenCalled()
+    expect(b.lines[0]).toContain('setUpdate')
+    b.mudarVisibilidade(true)
+    expect(b.requestReload).toHaveBeenCalledTimes(1)
+  })
+
+  it('entrega não confirmada gera uma linha, e nenhuma repetição', async () => {
+    const b = bancada({ confirma: false })
+    b.bridge.ready()
+    await b.bridge.send(ATRASADA)
+
+    expect(b.postMessage).toHaveBeenCalledTimes(1)
+    expect(b.lines).toHaveLength(1)
+    expect(b.lines[0]).toContain('setUpdate')
+  })
+})
+
+describe('envelope desconhecido continua sendo descartado (RF-19)', () => {
+  it('o tratador recebe o que chegou, e a ponte não derruba nada', () => {
+    // A ponte entrega ao roteador SEM interpretar, e é o roteador que descarta.
+    // O que se verifica aqui é que nada explode no caminho, inclusive com
+    // envelope que não é envelope.
+    const b = bancada()
+    const recebidos: unknown[] = []
+    b.bridge.listen((recebido) => void recebidos.push(recebido))
+
+    const tortos: unknown[] = [
+      { command: 'setUpdateXYZ', data: {} },
+      { command: 'setUpdate' },
+      { command: 42 },
+      {},
+      null,
+      undefined,
+      'setUpdate',
+      [{ command: 'setUpdate' }],
+    ]
+    const ouvinte = b.onDidReceiveMessage.mock.calls[0][0] as (recebido: unknown) => void
+    for (const torto of tortos) {
+      expect(() => ouvinte(torto), `derrubou com ${JSON.stringify(torto) ?? String(torto)}`).not.toThrow()
+    }
+    expect(recebidos).toEqual(tortos)
+  })
+})

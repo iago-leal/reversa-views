@@ -53,6 +53,11 @@
    * painel jamais pintaria a releitura em curso, que é justamente o estado que
    * o atraso existe para deixar ver. Repetir a abertura é inofensivo: sobre
    * conteúdo já na tela ela apenas levanta a marca de releitura.
+   *
+   * O bloco "depois" é o desfecho forçado da consulta (feature 007), e chega
+   * com o atraso que o servidor pediu: o host de verdade responde sobre a
+   * construção só quando a origem responde, e entregar o desfecho no mesmo
+   * ciclo do processo apagaria o estado "consultando" antes de ele ser visto.
    */
   function buscarProcesso() {
     entregar({ command: 'setEntry', data: { kind: 'loading' } })
@@ -62,6 +67,11 @@
       })
       .then(function (carga) {
         ;(carga.mensagens || []).forEach(entregar)
+        if (carga.depois && carga.depois.mensagens) {
+          window.setTimeout(function () {
+            carga.depois.mensagens.forEach(entregar)
+          }, carga.depois.atraso || 0)
+        }
       })
       .catch(function (erro) {
         entregar({
@@ -105,6 +115,7 @@
     if (faixa === null) return
 
     var estado = faixa.getAttribute('data-estado')
+    var atualizacao = faixa.getAttribute('data-atualizacao')
     var atraso = faixa.getAttribute('data-atraso')
     var partes = [
       'PREVIEW, não é o editor',
@@ -112,6 +123,7 @@
       'tema: ' + faixa.getAttribute('data-tema'),
     ]
     if (estado !== 'nenhum') partes.push('estado forçado: ' + estado)
+    if (atualizacao && atualizacao !== 'nenhum') partes.push('desfecho forçado: ' + atualizacao)
     if (atraso !== '0') partes.push('atraso: ' + atraso + ' ms')
 
     var titulo = document.createElement('div')

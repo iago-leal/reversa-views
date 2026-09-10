@@ -13,6 +13,13 @@
  * The addendum is the one clickable artifact of the line, and it asks the host
  * to open it by the same message the rest of the panel uses (RF-10). The
  * folder is not clickable: it is a directory, and the editor opens documents.
+ *
+ * The bar of feature 007 measures converged features over the DECLARED total,
+ * and not over the entries the ceiling left in view (RF-29, RN-08): a truncated
+ * reading counts what it read against how many folders exist, and the notice
+ * of truncation says why the two differ. The sentence that counts them is
+ * added beside the bar, because RN-10 forbids the bar from being the only
+ * carrier of the number.
  * @module webview/ui/HistorySection
  */
 
@@ -21,6 +28,7 @@ import type { HistoryEntry, ProjectHistory } from '../../domain/types.ts'
 import { brasiliaInstant } from '../domain/instants.ts'
 import { markLabel, situationLabel } from '../domain/labels.ts'
 import { CollapsibleSection } from './CollapsibleSection.tsx'
+import { ProgressBar } from './ProgressBar.tsx'
 
 /** What the section draws. */
 export interface HistorySectionProps {
@@ -89,12 +97,26 @@ function Entry(props: { entry: HistoryEntry; onOpenFile: (path: string) => void 
 }
 
 /**
+ * How many of the entries read have converged.
+ *
+ * It counts what was READ, which under the ceiling is fewer than what exists;
+ * the denominator is what exists. A bar that measured over the entries in view
+ * would draw a truncated reading as fuller than the project is.
+ * @param history - the history as the host sent it.
+ * @returns the number of converged features among the entries.
+ */
+function converged(history: ProjectHistory): number {
+  return history.entradas.filter((entry) => entry.situacao === 'convergida').length
+}
+
+/**
  * The history section.
  * @param props - the history, the collapse state, the toggle and the open port.
  * @returns the section element.
  */
 export function HistorySection(props: HistorySectionProps): ReactNode {
   const { history, onOpenFile } = props
+  const convergidas = history === undefined ? 0 : converged(history)
 
   return (
     <CollapsibleSection
@@ -114,6 +136,14 @@ export function HistorySection(props: HistorySectionProps): ReactNode {
         </p>
       ) : (
         <>
+          <p data-part="history-counts">
+            {convergidas} de {history.total} features convergidas.
+          </p>
+          <ProgressBar
+            feitos={convergidas}
+            total={history.total}
+            rotulo={`${convergidas} de ${history.total} features convergidas`}
+          />
           <ul className="rows">
             {history.entradas.map((entry) => (
               <Entry entry={entry} onOpenFile={onOpenFile} key={entry.pasta} />

@@ -78,7 +78,7 @@ describe('módulo de plataforma só onde a leitura acontece (D-06)', () => {
   })
 })
 
-describe('nenhuma via de escrita ou de execução', () => {
+describe('nenhuma via de escrita, de execução ou de rede', () => {
   it('não usa interface alguma que escreva, remova ou execute', () => {
     const proibidas = [
       'writeFileSync',
@@ -114,6 +114,51 @@ describe('nenhuma via de escrita ou de execução', () => {
   it('jamais nomeia a configuração do Reversa como alvo de escrita', () => {
     for (const fonte of locais()) {
       expect(fonte.texto, fonte.caminho).not.toMatch(/write[^\n]*reversa-config/i)
+    }
+  })
+
+  /**
+   * A guarda que a feature 007 acrescenta (RN-02).
+   *
+   * A extensão passa a falar com a rede, e é a primeira vez. A capacidade vive
+   * num módulo só do host, `src/host/net.ts`, e o que esta suíte guarda é o
+   * outro lado disso: a camada de leitura NÃO a ganha. Capacidade nova sem
+   * guarda nova é o caminho por onde um invariante se perde, e o invariante
+   * aqui é que quem lê o disco não fala com serviço algum.
+   */
+  it('nenhum módulo local alcança rede, em via alguma', () => {
+    const VIAS: Array<[RegExp, string]> = [
+      [/['"]node:https?['"]/, 'o módulo nativo de requisição'],
+      [/['"]node:net['"]/, 'o módulo de sockets'],
+      [/['"]node:tls['"]/, 'o módulo de transporte seguro'],
+      [/['"]node:dgram['"]/, 'o módulo de datagramas'],
+      [/\bfetch\s*\(/, 'o cliente global de requisição'],
+      [/\bXMLHttpRequest\b/, 'o cliente de requisição do navegador'],
+      [/\bWebSocket\b/, 'o canal permanente'],
+      [/https?:\/\/(?!localhost)[a-z]/, 'um endereço de rede literal'],
+    ]
+    for (const fonte of locais()) {
+      for (const [via, oQueAbre] of VIAS) {
+        expect(via.test(fonte.texto), `${fonte.caminho} alcança ${oQueAbre}`).toBe(false)
+      }
+    }
+  })
+
+  it('a guarda de rede reconhece cada via quando ela de fato aparece', () => {
+    // Sem este caso, uma expressão que não casa com nada passaria por guarda
+    // para sempre. O que se verifica aqui é a guarda, e não o código.
+    const amostras: Array<[RegExp, string]> = [
+      [/['"]node:https?['"]/, "import { request } from 'node:https'"],
+      [/['"]node:net['"]/, "import { Socket } from 'node:net'"],
+      [/['"]node:tls['"]/, "import { connect } from 'node:tls'"],
+      [/['"]node:dgram['"]/, "import { createSocket } from 'node:dgram'"],
+      [/\bfetch\s*\(/, 'const resposta = await fetch(endereco)'],
+      [/\bXMLHttpRequest\b/, 'const pedido = new XMLHttpRequest()'],
+      [/\bWebSocket\b/, 'const canal = new WebSocket(endereco)'],
+      [/https?:\/\/(?!localhost)[a-z]/, 'const base = "https://api.github.com"'],
+    ]
+    for (const [via, amostra] of amostras) {
+      expect(via.test(amostra), `a guarda não reconhece: ${amostra}`).toBe(true)
     }
   })
 })

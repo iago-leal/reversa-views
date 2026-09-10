@@ -32,6 +32,10 @@ const manifesto = JSON.parse(readFileSync('package.json', 'utf8')) as {
     viewsContainers?: { activitybar?: Array<{ id: string; title: string; icon: string }> }
     views?: Record<string, Array<{ id: string; name: string; type?: string }>>
     commands?: Array<{ command: string; title: string; category?: string }>
+    configuration?: {
+      title?: string
+      properties?: Record<string, { type?: string; default?: unknown; description?: string }>
+    }
   }
   scripts?: Record<string, string>
   devDependencies?: Record<string, string>
@@ -100,8 +104,9 @@ describe('comandos da paleta (RF-07, D-11)', () => {
 })
 
 describe('as duas unidades de compilação (RF-23, D-04)', () => {
-  it('declara os catorze scripts, e apenas eles', () => {
+  it('declara os dezessete scripts, e apenas eles', () => {
     expect(Object.keys(manifesto.scripts ?? {})).toEqual([
+      'pretest',
       'test',
       'typecheck',
       'compile',
@@ -112,8 +117,10 @@ describe('as duas unidades de compilação (RF-23, D-04)', () => {
       'check:heranca:local',
       'sync:heranca',
       'gerar:revisao-heranca',
+      'gerar:carimbo',
       'preview',
       'empacotar',
+      'atualizar',
       'observar:webview',
       'estragar:workspace',
     ])
@@ -124,6 +131,41 @@ describe('as duas unidades de compilação (RF-23, D-04)', () => {
     expect(build.indexOf('check:heranca:local')).toBeLessThan(build.indexOf('compile'))
     expect(build.indexOf('gerar:revisao-heranca')).toBeLessThan(build.indexOf('compile'))
     expect(build).not.toContain('check:heranca &&')
+  })
+
+  it('o build gera o carimbo da construção antes de compilar (D-07)', () => {
+    const build = manifesto.scripts?.build ?? ''
+    expect(build).toContain('gerar:carimbo')
+    expect(build.indexOf('gerar:carimbo')).toBeLessThan(build.indexOf('compile'))
+  })
+
+  it('o carimbo da construção tem comando avulso, como a revisão do modelo tem', () => {
+    expect(manifesto.scripts?.['gerar:carimbo']).toBe('node scripts/gerar-carimbo-da-construcao.js')
+  })
+
+  it('a suíte também gera o carimbo antes de rodar, porque ele não é versionado', () => {
+    // Consequência de D-19: o arquivo não está no clone recém-feito, e a
+    // ativação o importa. Sem esta linha, `npm test` num clone limpo falharia
+    // por arquivo ausente, e a causa não pareceria a que é.
+    expect(manifesto.scripts?.pretest).toBe('npm run gerar:carimbo')
+  })
+
+  it('o carimbo NÃO é versionado, e a revisão do modelo continua sendo (D-19)', () => {
+    // A assimetria é a decisão: a revisão muda quando a herança é
+    // ressincronizada, o commit muda a cada commit, e versionar o segundo
+    // deixaria a árvore suja depois de todo build.
+    //
+    // A leitura descarta comentário e linha vazia de propósito: o arquivo
+    // EXPLICA a assimetria em prosa, e nomear os dois arquivos ali é o que
+    // torna a decisão legível para quem voltar em doze meses. O que vale como
+    // padrão é a linha efetiva.
+    const padrões = readFileSync('.gitignore', 'utf8')
+      .split('\n')
+      .map((linha) => linha.trim())
+      .filter((linha) => linha !== '' && !linha.startsWith('#'))
+
+    expect(padrões).toContain('src/host/build.ts')
+    expect(padrões).not.toContain('src/host/inheritance.ts')
   })
 
   it('o interpretador de YAML entra com igualdade exata, e só como ferramenta', () => {
@@ -171,6 +213,7 @@ describe('o empacotamento, que a feature 005 trouxe', () => {
       expect(manifesto[campo as keyof typeof manifesto]).toBeUndefined()
     }
     expect(manifesto.scripts?.empacotar ?? '').not.toContain('publish')
+    expect(manifesto.scripts?.atualizar ?? '').not.toContain('publish')
   })
 
   it('nenhum outro empacotador entrou junto', () => {
@@ -189,5 +232,36 @@ describe('a coerência entre o alvo e a versão mínima (RF-16)', () => {
       ALVO_DO_NAVEGADOR,
       `o alvo ${ALVO_DO_NAVEGADOR} e a versão mínima ${VERSAO_MINIMA_DO_EDITOR} vêm do mesmo módulo, e é lá que a divergência é conferida`,
     ).toMatch(/^chrome\d+$/)
+  })
+})
+
+describe('a chave de configuração da conferência (D-11, RF-14)', () => {
+  const propriedades = manifesto.contributes?.configuration?.properties ?? {}
+  const chave = propriedades['reversaViews.conferirAtualizacao']
+
+  it('existe, e é a única que a extensão contribui', () => {
+    expect(Object.keys(propriedades)).toEqual(['reversaViews.conferirAtualizacao'])
+  })
+
+  it('é booleana e verdadeira por padrão: a consulta foi pedida como comportamento', () => {
+    expect(chave?.type).toBe('boolean')
+    expect(chave?.default).toBe(true)
+  })
+
+  it('usa o mesmo prefixo dos comandos já declarados', () => {
+    const prefixos = (manifesto.contributes?.commands ?? []).map((comando) =>
+      comando.command.split('.')[0],
+    )
+    for (const prefixo of prefixos) expect(prefixo).toBe('reversaViews')
+    expect(Object.keys(propriedades)[0].startsWith('reversaViews.')).toBe(true)
+  })
+
+  it('tem título de seção e descrição em português, e a descrição declara o que não viaja', () => {
+    expect(manifesto.contributes?.configuration?.title).toBe('Reversa')
+    const descricao = chave?.description ?? ''
+    expect(descricao.length).toBeGreaterThan(40)
+    for (const termo of ['anônima', 'credencial', 'workspace']) {
+      expect(descricao, `a descrição não menciona ${termo}`).toContain(termo)
+    }
   })
 })

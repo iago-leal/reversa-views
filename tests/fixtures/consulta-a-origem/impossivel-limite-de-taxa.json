@@ -1,0 +1,13 @@
+{
+  "descricao": "A cota de requisições anônimas por endereço esgotou. Causa própria, distinta de sem rede.",
+  "procedencia": "montada no molde documentado; exige esgotar a cota para reproduzir",
+  "codigo": 403,
+  "corpo": {
+    "message": "API rate limit exceeded for 203.0.113.7. (But here's the good news: Authenticated requests get a higher rate limit.)",
+    "documentation_url": "https://docs.github.com/rest/overview/rate-limits-for-the-rest-api"
+  },
+  "desfechoEsperado": {
+    "estado": "impossivel",
+    "causa": "limite-de-taxa"
+  }
+}

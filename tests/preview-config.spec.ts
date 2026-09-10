@@ -10,7 +10,8 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { PORTA_PADRAO, lerConfiguracao } from '../scripts/preview/config.js'
+import { UPDATE_STATES } from '../src/host/protocol.ts'
+import { ATUALIZACOES, PORTA_PADRAO, lerConfiguracao } from '../scripts/preview/config.js'
 
 /** Um mundo em que tudo existe, para que só os argumentos sejam a variável. */
 const MUNDO = {
@@ -50,6 +51,24 @@ describe('o que cada argumento faz', () => {
     for (const estado of ['sem-diretorio', 'sem-reversa', 'erro']) {
       expect(lerConfiguracao([`--estado=${estado}`], MUNDO).estado).toBe(estado)
     }
+  })
+
+  it('aceita os sete desfechos da consulta, além do padrão (D-17)', () => {
+    for (const desfecho of UPDATE_STATES) {
+      expect(lerConfiguracao([`--atualizacao=${desfecho}`], MUNDO).atualizacao).toBe(desfecho)
+    }
+    expect(lerConfiguracao([], MUNDO).atualizacao).toBe('nenhum')
+  })
+
+  it('a lista do preview é a do protocolo, na mesma ordem, mais o padrão', () => {
+    // Escrita duas vezes de propósito, porque o módulo do preview é puro e
+    // roda antes da construção; esta é a conferência de que não divergiram.
+    expect(ATUALIZACOES).toEqual(['nenhum', ...UPDATE_STATES])
+  })
+
+  it('recusa desfecho que não existe, listando os que existem', () => {
+    expect(() => lerConfiguracao(['--atualizacao=quase'], MUNDO)).toThrow(/atualizacao inválido/)
+    expect(() => lerConfiguracao(['--atualizacao=quase'], MUNDO)).toThrow(/commit-desconhecido/)
   })
 
   it('lê porta e atraso como número', () => {

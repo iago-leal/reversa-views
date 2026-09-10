@@ -1,0 +1,19 @@
+{
+  "descricao": "A cabeça está ATRÁS da base: a construção foi feita de commits locais nunca enviados, de modo que não há novidade na origem a aplicar. Conta como em dia.",
+  "procedencia": "montada no molde da chamada real; exige commit local não enviado para reproduzir",
+  "codigo": 200,
+  "corpo": {
+    "url": "https://api.github.com/repos/iago-leal/reversa-views/compare/bad021b...master",
+    "html_url": "https://github.com/iago-leal/reversa-views/compare/bad021b...master",
+    "permalink_url": "https://github.com/iago-leal/reversa-views/compare/iago-leal:bad021b...iago-leal:a23711d",
+    "diff_url": "https://github.com/iago-leal/reversa-views/compare/bad021b...master.diff",
+    "patch_url": "https://github.com/iago-leal/reversa-views/compare/bad021b...master.patch",
+    "status": "behind",
+    "ahead_by": 0,
+    "behind_by": 3,
+    "total_commits": 3
+  },
+  "desfechoEsperado": {
+    "estado": "em-dia"
+  }
+}

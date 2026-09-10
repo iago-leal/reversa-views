@@ -70,6 +70,17 @@ function Panel(): ReactNode {
         setNotice(data) {
           setNotice(data)
         },
+        // Feature 007: the outcome of the origin query goes into the SAME state
+        // as everything else on screen, and nowhere else. It is not written to
+        // the panel state the editor keeps between sessions, and not stored as
+        // a preference: it describes this build against the origin AT THIS
+        // INSTANT, and a value kept across sessions would be the panel
+        // asserting on a later day what it learned on an earlier one. It does
+        // not clear the warning either, because a file that vanished has
+        // nothing to do with what the origin answered.
+        setUpdate(data) {
+          setEntryState((previous) => nextEntry(previous, { command: 'setUpdate', data }))
+        },
       },
     }),
   )
@@ -150,6 +161,7 @@ function Panel(): ReactNode {
   return (
     <App
       entry={entry}
+      update={entry.update}
       notice={notice}
       preferences={preferences}
       theme={theme}

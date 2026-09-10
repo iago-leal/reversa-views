@@ -168,6 +168,88 @@ describe('a via de escrita do editor e a assíncrona (D-13, RNF de segurança)',
   })
 })
 
+/**
+ * A capacidade de rede, confinada a um módulo (D-01, RN-01, feature 007).
+ *
+ * A extensão passa a falar com a rede pela primeira vez. A fronteira é a mesma
+ * espécie da de `node:fs` acima: um módulo só a importa, e é por isso que ela
+ * se verifica por busca de texto. Espalhá-la pelo provedor tornaria a
+ * privacidade da consulta uma afirmação em prosa, e não um fato conferível.
+ */
+describe('rede (D-01, RN-01)', () => {
+  /** Onde a capacidade vive, e o único lugar onde pode viver. */
+  const MODULO_DE_REDE = 'net.ts'
+
+  const VIAS_DE_REDE = [
+    /['"]node:https?['"]/,
+    /['"]node:net['"]/,
+    /['"]node:tls['"]/,
+    /\bfetch\s*\(/,
+    /\bXMLHttpRequest\b/,
+    /\bWebSocket\b/,
+  ]
+
+  it('só um módulo do host importa cliente de requisição, e é o declarado', () => {
+    const comRede = fontesDoHost()
+      .filter((fonte) => VIAS_DE_REDE.some((via) => via.test(fonte.texto)))
+      .map((fonte) => fonte.nome)
+    expect(comRede).toEqual([MODULO_DE_REDE])
+  })
+
+  it('nem a ativação alcança rede: ela monta a porta, não a usa', () => {
+    const texto = readFileSync('src/extension.ts', 'utf8')
+    for (const via of VIAS_DE_REDE) expect(via.test(texto)).toBe(false)
+  })
+
+  it('o endereço do serviço é literal em um módulo só, e não vem de fora', () => {
+    // RNF de segurança: nem argumento, nem variável de ambiente, nem arquivo
+    // do workspace. Um workspace hostil não redireciona a consulta.
+    //
+    // A busca é pelo NOME DO SERVIÇO, e não por um endereço com esquema: o
+    // módulo monta a requisição por partes, e o esquema é campo à parte.
+    const comServiço = fontesDoHost()
+      .filter((fonte) => /['"][a-z0-9.-]*\bgithub\.com['"]/.test(fonte.texto))
+      .map((fonte) => fonte.nome)
+    expect(comServiço).toEqual([MODULO_DE_REDE])
+
+    const rede = readFileSync(join(HOST_DIR, MODULO_DE_REDE), 'utf8')
+    expect(rede).not.toMatch(/process\s*\.\s*env/)
+    expect(rede).not.toMatch(/process\s*\.\s*argv/)
+  })
+
+  it('o módulo de rede não escreve arquivo nem executa processo', () => {
+    // O que se proíbe é a IMPORTAÇÃO, e não a menção: o módulo explica em
+    // prosa por que a fronteira de `node:fs` na camada de leitura é o
+    // precedente desta, e nomear o precedente é o que torna a decisão legível.
+    const rede = readFileSync(join(HOST_DIR, MODULO_DE_REDE), 'utf8')
+    const importados = [...rede.matchAll(/^\s*import\s[^;\n]*from\s+'([^']+)'/gm)].map(
+      (casou) => casou[1],
+    )
+    expect(importados).not.toContain('node:fs')
+    expect(importados).not.toContain('node:child_process')
+    for (const chamada of ['writeFileSync(', 'execFileSync(', 'spawn(']) {
+      expect(rede.includes(chamada), `net.ts chama ${chamada}`).toBe(false)
+    }
+  })
+
+  it('o intérprete do desfecho é puro: não alcança rede nem editor', () => {
+    const interprete = readFileSync(join(HOST_DIR, 'update.ts'), 'utf8')
+    for (const via of VIAS_DE_REDE) expect(via.test(interprete)).toBe(false)
+    expect(interprete).not.toMatch(/from\s+'vscode'/)
+  })
+
+  it('a consulta entra por porta declarada, e a porta expõe só leitura', () => {
+    const portas = readFileSync(join(HOST_DIR, 'ports.ts'), 'utf8')
+    expect(portas).toContain('OriginPort')
+    expect(portas).toContain('ConfigPort')
+
+    const origem = portas.slice(portas.indexOf('interface OriginPort'))
+    const corpo = origem.slice(0, origem.indexOf('}'))
+    expect(corpo).toContain('compare(')
+    expect(corpo).not.toMatch(/write|post|put|delete|patch/i)
+  })
+})
+
 describe('nada de layout do Reversa no host (RF-14)', () => {
   /** Sem exceção: o corpo provisório que a carregava saiu com a feature 003. */
   const decisores = () => fontesDoHost()

@@ -14,7 +14,7 @@
  * @module host/ports
  */
 
-import type { HostMessage } from './protocol.ts'
+import type { HostMessage, UpdateCause } from './protocol.ts'
 
 /** How a listener is torn down, in the editor's own shape. */
 export interface Subscription {
@@ -120,6 +120,58 @@ export interface WorkspacePort {
 export interface LogPort {
   /** Write one line, already formatted by {@link logLine}. */
   write(line: string): void
+}
+
+/**
+ * The settings of the editor, narrowed to the one key this extension declares
+ * (D-11, RF-14).
+ *
+ * One method, and it is a QUESTION asked at the moment of asking: the editor
+ * lets the user change the key with the panel open, and a value read once at
+ * activation would answer for a setting that no longer holds. Nothing here
+ * writes a setting, and nothing here reads any other key.
+ */
+export interface ConfigPort {
+  /** Whether the update check is on; the default is on (RF-14). */
+  checkForUpdates(): boolean
+}
+
+/**
+ * What the origin answered, before anyone interpreted it.
+ *
+ * Two shapes, because two things can happen: an answer arrived, with a code
+ * and a body, or none did, and the transport says why. Keeping them apart is
+ * what lets the interpreter of `update.ts` be pure — it receives this and
+ * decides, and never learns that a socket exists.
+ */
+export type OriginReply =
+  | { kind: 'response'; status: number; body: unknown }
+  | { kind: 'failure'; cause: UpdateCause }
+
+/**
+ * The origin of the repository, as a place to ask ONE read-only question
+ * (D-01, RN-01, RN-09).
+ *
+ * This port is not a slice of the editor, and that is worth saying out loud
+ * because every other port in this file is. Network is a capability of the
+ * host PROCESS: the editor does not offer it, does not mediate it and cannot
+ * be asked for it. Hence the adapter lives in `net.ts`, alone, instead of
+ * beside the others in `adapters.ts` — which is exactly what makes the
+ * frontier verifiable by plain text search, the same way `node:fs` is kept to
+ * one file in the reading layer.
+ *
+ * One method, and it compares two commits. There is no write, in any route:
+ * the port exposes reading and nothing else, and a second method would be the
+ * beginning of an HTTP client living inside a panel that reads files.
+ */
+export interface OriginPort {
+  /**
+   * Ask how far apart two points of the history are.
+   * @param base - the commit this build was made from.
+   * @param head - the branch of the origin to compare against.
+   * @returns what the origin answered, uninterpreted.
+   */
+  compare(base: string, head: string): Promise<OriginReply>
 }
 
 /**

@@ -1,18 +1,33 @@
 /**
  * The cut of the decomposition for the screen (RF-07, RF-08, RF-11, RN-10,
- * D-13, D-17).
+ * D-13, D-17), reordered by feature 007 (D-14, RN-07, RF-23 to RF-26).
  *
  * A feature of sixty-one actions does not fit a sidebar, and a list that has
  * to be scrolled to find where the work stopped answers no question. So the
  * default cut is every OPEN action plus the five most recently closed, with
  * the total always in sight and a control that reveals the rest.
  *
- * Recency comes from the trail: the last event of that action. An action with
- * no event is placed by its position in the file, behind the ones that have
- * one, and its line declares that the moment was not recorded rather than
- * showing a blank (RN-10). Which is a declared choice and not a claim about
- * the framework: REVERSA appends to the trail and never rewrites it, but it
- * does not promise an event for every action.
+ * WHAT FEATURE 007 CHANGED, and why it was a defect rather than a preference:
+ * this function used to SELECT by recency and RETURN in the order of the file.
+ * The two orders were computed in the same place and disagreed anyway, so the
+ * card showed the right actions in the wrong order — whoever opened the panel
+ * to see where the work stopped read first what had been done first. D-14
+ * ends that by making one function decide both, and the cut is now a PREFIX of
+ * the ordered list rather than a second selection over it.
+ *
+ * The order has three steps. Open actions lead, in the order of the plan,
+ * because the first of them is the one to do next and it must be the first
+ * line. Closed ones follow, from the most recent event to the oldest. A closed
+ * action with no event goes to the END of that block, keeping among its peers
+ * the order of the file, and its line goes on declaring that the moment was not
+ * recorded rather than showing a blank (RN-10).
+ *
+ * Ties matter more than they look. Actions of one feature are closed in a batch
+ * and stamped in the same minute — dozens of them in the trail of feature 006
+ * carry the identical instant. The sort of the language has been required to be
+ * stable since 2019, so equal elements keep the order they came in, which here
+ * is the order of the file; without that the list would reshuffle between two
+ * identical readings, and an intermittent defect is the worst kind.
  *
  * Revealing the rest is state of the component, and not a stored preference:
  * the same decision feature 003 took for the list of anomalies (D-17).
@@ -36,7 +51,7 @@ export interface DecompositionRow {
   proxima: boolean
 }
 
-/** The decomposition as the card draws it. */
+/** The decomposition as the card draws it, already in the order it is drawn. */
 export interface DecompositionView {
   linhas: DecompositionRow[]
   /** How many actions the list has, whatever the cut shows. */
@@ -54,11 +69,11 @@ interface Trace {
 }
 
 /**
- * Cut the decomposition down to what the card shows.
+ * Cut the decomposition down to what the card shows, in the order it shows it.
  * @param decomposition - the actions, in the order of the file.
  * @param trail - the execution trail of the active feature.
  * @param revealAll - true once the reader asked for the rest.
- * @returns the lines to draw, and the counts that go beside them.
+ * @returns the lines to draw, in order, and the counts that go beside them.
  */
 export function decompositionView(
   decomposition: ActiveDecomposition,
@@ -79,9 +94,13 @@ export function decompositionView(
     }
   })
 
-  const keep = revealAll ? null : recent(rows)
-  const kept =
-    keep === null ? rows : rows.filter((row, index) => !row.acao.fechada || keep.has(index))
+  // The two blocks, each in its own order. `filter` preserves the order of the
+  // file, which is what the second block falls back on and what the first one
+  // is entirely made of.
+  const abertas = rows.filter((row) => !row.acao.fechada)
+  const fechadas = byRecency(rows.filter((row) => row.acao.fechada))
+
+  const kept = revealAll ? [...abertas, ...fechadas] : [...abertas, ...fechadas.slice(0, CLOSED_CUT)]
 
   return {
     linhas: kept,
@@ -92,29 +111,28 @@ export function decompositionView(
 }
 
 /**
- * The indexes of the five most recently closed actions.
+ * The closed actions, most recent first, the undated ones last.
  *
- * Recency is the instant of the last event; where there is none, the position
- * in the file, which is why the ones without an event sort behind the ones
- * with. The set is what the default cut keeps beside every open action.
- * @param rows - every line, in the order of the file.
- * @returns the indexes to keep.
+ * The split into two lists is what puts the undated at the end without
+ * inventing an instant for them, and the sort runs only over the ones that have
+ * something to compare. Its comparator returns zero on equal instants ON
+ * PURPOSE: the stability of the sort is what then preserves the order of the
+ * file, and any artificial tiebreak here would be a second, silent order.
+ * @param closed - the closed lines, in the order of the file.
+ * @returns the same lines, ordered.
  */
-function recent(rows: readonly DecompositionRow[]): ReadonlySet<number> {
-  const closed = rows
-    .map((row, index) => ({ row, index }))
-    .filter((entry) => entry.row.acao.fechada)
+function byRecency(closed: readonly DecompositionRow[]): DecompositionRow[] {
+  const dated = closed.filter((row) => row.ultimoEvento !== null)
+  const undated = closed.filter((row) => row.ultimoEvento === null)
 
-  closed.sort((a, b) => {
-    const left = a.row.ultimoEvento
-    const right = b.row.ultimoEvento
-    if (left !== null && right !== null) return left < right ? 1 : left > right ? -1 : b.index - a.index
-    if (left !== null) return -1
-    if (right !== null) return 1
-    return b.index - a.index
+  const ordered = [...dated].sort((a, b) => {
+    const left = a.ultimoEvento as string
+    const right = b.ultimoEvento as string
+    if (left === right) return 0
+    return left < right ? 1 : -1
   })
 
-  return new Set(closed.slice(0, CLOSED_CUT).map((entry) => entry.index))
+  return [...ordered, ...undated]
 }
 
 /**

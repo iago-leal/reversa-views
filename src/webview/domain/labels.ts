@@ -14,8 +14,9 @@
  */
 
 import type { Checkpoint, Phase } from '../../heranca/reversa-domain/src/index.ts'
+import type { UpdateStatus } from '../../host/protocol.ts'
 import type { FeatureMark, FeatureSituation } from '../../domain/types.ts'
-import type { Label, StatusMark } from './types.ts'
+import type { Label, StatusMark, UpdateLabel } from './types.ts'
 
 /** The seven stages of the forward cycle, as the reader names them. */
 const STAGE_LABELS: Record<string, string> = {
@@ -167,4 +168,81 @@ const REVISION_LENGTH = 7
 export function revisionLabel(revision: string | null | undefined): string {
   if (typeof revision !== 'string' || revision === '') return ''
   return revision.length <= REVISION_LENGTH ? revision : revision.slice(0, REVISION_LENGTH)
+}
+
+/** The command of the ritual, spelled once (RF-22). */
+const UPDATE_COMMAND = 'npm run atualizar'
+
+/** Why a query could not be made, in the reader's words rather than the wire's. */
+const CAUSE_LABELS: Record<string, string> = {
+  'sem-rede': 'não houve resposta da rede',
+  'limite-de-taxa': 'a origem recusou por limite de requisições',
+  'resposta-inesperada': 'a origem respondeu algo que não se entende',
+  'tempo-esgotado': 'a origem demorou mais do que o prazo',
+}
+
+/**
+ * A count with its noun in the right number.
+ * @param count - how many commits.
+ * @returns `1 commit` or `4 commits`.
+ */
+function commits(count: number): string {
+  return count === 1 ? '1 commit' : `${count} commits`
+}
+
+/**
+ * The outcome of the origin query, as a sentence and a command (RF-10, RF-14).
+ *
+ * Seven outcomes, seven sentences, and the two that matter most are the two a
+ * careless translation would merge. DESLIGADA is not EM DIA: whoever turned the
+ * key off received no assurance about the installed build, and a header saying
+ * "em dia" there would be affirming what nobody checked. COMMIT DESCONHECIDO is
+ * not ATRASADA either: a build made from a commit the origin never saw is not
+ * behind anything, it is off the shared history.
+ *
+ * The function is TOTAL, as every other one in this module: an outcome or a
+ * cause outside the vocabulary comes back as a sentence saying so, because RN-05
+ * forbids the panel from throwing and forbids it from drawing an empty line.
+ * @param status - the outcome as it arrived from the host.
+ * @returns the sentence to draw and the command to copy, if any.
+ */
+export function updateLabel(status: UpdateStatus): UpdateLabel {
+  switch (status.estado) {
+    case 'desligada':
+      return {
+        text: 'A conferência com a origem está desligada na configuração do editor.',
+        command: null,
+      }
+    case 'consultando':
+      return { text: 'Consultando a origem sobre esta construção.', command: null }
+    case 'em-dia':
+      return { text: 'Esta construção está em dia com a origem.', command: null }
+    case 'atrasada':
+      return {
+        text: `A origem está ${commits(status.commits)} à frente desta construção.`,
+        command: UPDATE_COMMAND,
+      }
+    case 'divergente':
+      return {
+        // Two facts in one sentence, because they are two: there is news to
+        // bring, and there is work here that the origin does not have. The
+        // updater refuses to apply over the second (RF-05), and the reader has
+        // to know that before running anything.
+        text: `A origem está ${commits(status.commits)} à frente, e este clone tem commit próprio que ela não tem.`,
+        command: UPDATE_COMMAND,
+      }
+    case 'commit-desconhecido':
+      return {
+        text: 'A origem não conhece o commit desta construção: ela foi feita fora do que está publicado.',
+        command: null,
+      }
+    case 'impossivel': {
+      const causa = CAUSE_LABELS[status.causa] ?? 'a causa não foi nomeada'
+      return { text: `Não deu para conferir com a origem: ${causa}.`, command: null }
+    }
+    default:
+      // RN-05: an outcome this version does not know is a line saying exactly
+      // that, and never a blank space beside a label.
+      return { text: 'Desfecho da conferência não reconhecido por esta versão.', command: null }
+  }
 }

@@ -39,6 +39,7 @@ function destinoDublê() {
       setProcess: (data: unknown) => chamadas.push({ alvo: 'setProcess', data }),
       setEntry: (data: unknown) => chamadas.push({ alvo: 'setEntry', data }),
       setNotice: (data: unknown) => chamadas.push({ alvo: 'setNotice', data }),
+      setUpdate: (data: unknown) => chamadas.push({ alvo: 'setUpdate', data }),
     },
     chamadas: () => chamadas,
   }
@@ -73,16 +74,26 @@ describe('tomada da interface do host', () => {
 })
 
 describe('mensagens que chegam', () => {
-  it('leva cada um dos três comandos do protocolo ao tratador correspondente', async () => {
+  it('leva cada comando do protocolo ao tratador correspondente', async () => {
     const { destino, bridge } = await ponte()
     const carga = payloadFixture()
 
     bridge.receive({ command: 'setProcess', data: carga })
     bridge.receive({ command: 'setEntry', data: { kind: 'loading' } })
     bridge.receive({ command: 'setNotice', data: { level: 'warning', message: 'sumiu' } })
+    bridge.receive({ command: 'setUpdate', data: { estado: 'atrasada', commits: 4 } })
 
     expect(destino.chamadas().map((c) => c.alvo)).toEqual([...HOST_COMMANDS])
     expect(destino.chamadas()[0].data).toBe(carga)
+  })
+
+  it('o desfecho da consulta atravessa sem transformação (feature 007)', async () => {
+    const { destino, bridge } = await ponte()
+    const desfecho = { estado: 'impossivel', causa: 'limite-de-taxa' }
+
+    bridge.receive({ command: 'setUpdate', data: desfecho })
+
+    expect(destino.chamadas()).toEqual([{ alvo: 'setUpdate', data: desfecho }])
   })
 
   it('não deixa comando declarado cair no caso restante', async () => {

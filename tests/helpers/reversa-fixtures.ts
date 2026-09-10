@@ -191,6 +191,8 @@ export function payloadFixture(overrides: Partial<SetProcessData> = {}): SetProc
     inheritedRevision: '420305daa6cdd10858b720a34cb8db67d8e5c5e9',
     decomposition: decompositionFixture(),
     history: historyFixture(),
+    extensionVersion: '0.6.1',
+    builtFromCommit: 'a23711d481021a978720c0bc478b6dabed94fec3',
     ...overrides,
   }
 }

@@ -1,0 +1,13 @@
+{
+  "descricao": "A origem não conhece o commit desta construção. ARMADILHA: o corpo do 404 traz um campo chamado `status` cujo valor é a cadeia \"404\", e não um dos quatro valores da comparação. É por isso que o intérprete decide primeiro pelo código e só depois olha o corpo.",
+  "procedencia": "chamada real a 0000000…...master em 2026-09-09",
+  "codigo": 404,
+  "corpo": {
+    "message": "Not Found",
+    "documentation_url": "https://docs.github.com/rest/commits/commits#compare-two-commits",
+    "status": "404"
+  },
+  "desfechoEsperado": {
+    "estado": "commit-desconhecido"
+  }
+}

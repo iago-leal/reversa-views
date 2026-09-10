@@ -1,9 +1,9 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/006-cartoes-e-cronologia",
-  "feature-id": "006",
-  "short-name": "cartoes-e-cronologia",
-  "started-at": "2026-09-09T20:43:22Z",
+  "feature-dir": "_reversa_forward/007-atualizacao-e-progresso",
+  "feature-id": "007",
+  "short-name": "atualizacao-e-progresso",
+  "started-at": "2026-09-09T22:48:40Z",
   "current-stage": "to-do",
   "stages-completed": [
     "requirements",

@@ -3,7 +3,7 @@
  *
  * O arquivo de protocolo não tem lógica, e por isso o que se verifica aqui é
  * a forma do contrato: os cinco estados de entrada de RF-15, os cinco comandos
- * da webview com o reservado de RF-12, os três comandos do host e os seis
+ * da webview com o reservado de RF-12, os quatro comandos do host e os seis
  * campos da carga de dados de RF-13, RF-03 e RF-04.
  */
 
@@ -14,6 +14,8 @@ import {
   ENTRY_KINDS,
   HOST_COMMANDS,
   RESERVED_COMMAND,
+  UPDATE_CAUSES,
+  UPDATE_STATES,
   WEBVIEW_COMMANDS,
 } from '../src/host/protocol.ts'
 import type {
@@ -27,6 +29,8 @@ import type {
   SetEntryData,
   SetNoticeData,
   SetProcessData,
+  UpdateState,
+  UpdateStatus,
   WebviewMessage,
 } from '../src/host/protocol.ts'
 import { EMPTY_DECOMPOSITION, EMPTY_HISTORY } from '../src/domain/types.ts'
@@ -116,7 +120,7 @@ describe('comandos da webview', () => {
 })
 
 describe('comandos do host', () => {
-  it('são três, e cada um tem carga tipada', () => {
+  it('são quatro, e cada um tem carga tipada', () => {
     const notice: SetNoticeData = { level: 'warning', message: 'sumiu' }
     const messages: HostMessage[] = [
       {
@@ -134,9 +138,62 @@ describe('comandos do host', () => {
       },
       { command: 'setEntry', data: { kind: 'loading' } },
       { command: 'setNotice', data: notice },
+      { command: 'setUpdate', data: { estado: 'consultando' } },
     ]
-    expect(HOST_COMMANDS).toEqual(['setProcess', 'setEntry', 'setNotice'])
+    expect(HOST_COMMANDS).toEqual(['setProcess', 'setEntry', 'setNotice', 'setUpdate'])
     expect(messages.map((message) => message.command)).toEqual([...HOST_COMMANDS])
+  })
+
+  it('o acréscimo da feature 007 é o ÚLTIMO, e nada acima dele mudou de lugar', () => {
+    // A disciplina de crescimento do contrato de 002 é o que esta linha
+    // guarda: acrescentar é permitido, renomear e reordenar não são.
+    expect(HOST_COMMANDS.slice(0, 3)).toEqual(['setProcess', 'setEntry', 'setNotice'])
+    expect(HOST_COMMANDS[HOST_COMMANDS.length - 1]).toBe('setUpdate')
+  })
+})
+
+describe('o desfecho da consulta à origem (feature 007)', () => {
+  it('tem as sete variantes que o contrato nomeia, nessa ordem', () => {
+    expect(UPDATE_STATES).toEqual([
+      'desligada',
+      'consultando',
+      'em-dia',
+      'atrasada',
+      'divergente',
+      'commit-desconhecido',
+      'impossivel',
+    ])
+  })
+
+  it('tem as quatro causas de consulta impossível', () => {
+    expect(UPDATE_CAUSES).toEqual([
+      'sem-rede',
+      'limite-de-taxa',
+      'resposta-inesperada',
+      'tempo-esgotado',
+    ])
+  })
+
+  it('é união discriminada: a distância só existe onde há distância', () => {
+    const todos: UpdateStatus[] = [
+      { estado: 'desligada' },
+      { estado: 'consultando' },
+      { estado: 'em-dia' },
+      { estado: 'atrasada', commits: 4 },
+      { estado: 'divergente', commits: 2 },
+      { estado: 'commit-desconhecido' },
+      { estado: 'impossivel', causa: 'tempo-esgotado' },
+    ]
+    expect(todos.map((desfecho) => desfecho.estado)).toEqual([...UPDATE_STATES])
+
+    // O compilador é quem guarda a regra; a asserção só a torna visível.
+    const atrasada = todos[3]
+    expect(atrasada.estado === 'atrasada' ? atrasada.commits : null).toBe(4)
+  })
+
+  it('cada estado da união é um dos sete declarados', () => {
+    const estado: UpdateState = 'em-dia'
+    expect(UPDATE_STATES).toContain(estado)
   })
 })
 

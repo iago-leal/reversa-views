@@ -91,7 +91,9 @@ async function principal(argumentos) {
     servidor.listen(config.porta, '127.0.0.1', () => {
       registrar(`Preview servindo em ${origem}`)
       registrar(`  workspace: ${config.workspace}`)
-      registrar(`  tema: ${config.tema}   estado: ${config.estado}   atraso: ${config.atraso} ms`)
+      registrar(
+        `  tema: ${config.tema}   estado: ${config.estado}   desfecho: ${config.atualizacao}   atraso: ${config.atraso} ms`,
+      )
       registrar('  Ctrl+C encerra. Nada é escrito em disco.')
     })
   })

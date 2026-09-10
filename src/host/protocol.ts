@@ -68,6 +68,27 @@ export interface SetProcessData {
   decomposition: ActiveDecomposition
   /** Every feature folder of the project, newest first (feature 006). */
   history: ProjectHistory
+  /**
+   * The version of this build, derived and never written by hand (RF-17).
+   *
+   * It travels here for the same reason `inheritedRevision` does, and by the
+   * same precedent RF-17 names: the panel must declare provenance without
+   * opening a file, and the frontier forbids the webview from importing any
+   * VALUE of `src/host/`. A build stamp read straight from `host/build.ts` by
+   * a component would be the host surviving into the bundle.
+   *
+   * This is an ADDITION, like every field before it: a webview built before it
+   * ignores what it does not know.
+   */
+  extensionVersion: string
+  /**
+   * The commit this build was made from, WHOLE (RF-17, D-18).
+   *
+   * Whole, and shortened on screen by the same rule that already shortens the
+   * inherited revision: shortening here would destroy the value RF-17 asks to
+   * be readable from an attribute.
+   */
+  builtFromCommit: string
 }
 
 /** The payload for every situation with no process to show. */
@@ -119,11 +140,65 @@ export interface CopyTextData {
   text: string
 }
 
+/**
+ * The seven outcomes of asking the origin whether this build is current
+ * (feature 007, `interfaces/consulta-a-origem.md`).
+ *
+ * The order is the one the contract writes: from not having asked, through the
+ * three answers that inform, to the two that cannot.
+ */
+export const UPDATE_STATES = [
+  'desligada',
+  'consultando',
+  'em-dia',
+  'atrasada',
+  'divergente',
+  'commit-desconhecido',
+  'impossivel',
+] as const
+
+/** One of the seven outcomes. */
+export type UpdateState = (typeof UPDATE_STATES)[number]
+
+/** Why a query could not be made or could not be understood. */
+export const UPDATE_CAUSES = [
+  'sem-rede',
+  'limite-de-taxa',
+  'resposta-inesperada',
+  'tempo-esgotado',
+] as const
+
+/** One of the four causes. */
+export type UpdateCause = (typeof UPDATE_CAUSES)[number]
+
+/**
+ * What the origin said, as a DISCRIMINATED union rather than one shape with
+ * optional fields.
+ *
+ * The outcomes share no field: one carries a distance, one carries a cause,
+ * and five carry nothing. An optional `commits` in a single shape would invite
+ * the panel to draw "0 commits behind" for a query that never happened, which
+ * is the one thing the header must not say.
+ */
+export type UpdateStatus =
+  | { estado: 'desligada' }
+  | { estado: 'consultando' }
+  | { estado: 'em-dia' }
+  | { estado: 'atrasada'; commits: number }
+  | { estado: 'divergente'; commits: number }
+  | { estado: 'commit-desconhecido' }
+  | { estado: 'impossivel'; causa: UpdateCause }
+
 /** What the host sends to the webview. */
 export type HostMessage =
   | { command: 'setProcess'; data: SetProcessData }
   | { command: 'setEntry'; data: SetEntryData }
   | { command: 'setNotice'; data: SetNoticeData }
+  // Feature 007 APPENDS, as the contract of 002 requires: nothing above is
+  // renamed, removed or reordered. It travels after the process, never inside
+  // it, because the query is asynchronous and a field in `SetProcessData`
+  // would either delay the panel or travel empty (D-02).
+  | { command: 'setUpdate'; data: UpdateStatus }
 
 /** What the webview sends to the host. */
 export type WebviewMessage =
@@ -135,8 +210,8 @@ export type WebviewMessage =
   | { command: 'openDraft'; data: OpenDraftData }
   | { command: 'copyText'; data: CopyTextData }
 
-/** The three commands the host may send. */
-export const HOST_COMMANDS = ['setProcess', 'setEntry', 'setNotice'] as const
+/** The four commands the host may send, the fourth appended by feature 007. */
+export const HOST_COMMANDS = ['setProcess', 'setEntry', 'setNotice', 'setUpdate'] as const
 
 /** One of the host commands. */
 export type HostCommand = (typeof HOST_COMMANDS)[number]

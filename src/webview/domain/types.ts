@@ -11,7 +11,12 @@
  * @module webview/domain/types
  */
 
-import type { EntryKind, SetNoticeData, SetProcessData } from '../../host/protocol.ts'
+import type {
+  EntryKind,
+  SetNoticeData,
+  SetProcessData,
+  UpdateStatus,
+} from '../../host/protocol.ts'
 
 /**
  * The eight sections, in the order RF-18 fixes. The order of this array IS the
@@ -78,6 +83,17 @@ export interface EffectiveEntry {
   message: string | null
   /** Present once a root has been chosen. */
   root: string | null
+  /**
+   * What the origin said about this build, or null while nothing was said
+   * (feature 007).
+   *
+   * Null is not an eighth outcome: it is the absence of any, and the panel
+   * declares nothing rather than inventing a state. The host only asks when
+   * there is a reading to accompany, so a workspace with no folder open never
+   * receives an answer, and a header claiming "consultando" there would be
+   * describing a query that is not happening.
+   */
+  update: UpdateStatus | null
 }
 
 /**
@@ -110,6 +126,21 @@ export interface Label {
   known: boolean
   /** The value as it arrived, always, so the screen can show it verbatim. */
   raw: string
+}
+
+/**
+ * The outcome of the origin query, as a sentence plus what to run about it.
+ *
+ * The command is TEXT TO COPY, never a button that acts, and it is null for
+ * every outcome with nothing to apply. Offering a command beside "em dia" would
+ * invite a gesture that does nothing, and the panel of this project never
+ * writes anything anyway: the two acts of the ritual belong to the terminal.
+ */
+export interface UpdateLabel {
+  /** The sentence the header draws; never empty, for any of the seven. */
+  text: string
+  /** The command to copy, or null when there is nothing to apply. */
+  command: string | null
 }
 
 /** A phase, a checkpoint or anything else whose status has to read without colour. */

@@ -17,6 +17,7 @@
 import * as vscode from 'vscode'
 import type {
   ClipboardPort,
+  ConfigPort,
   DraftPort,
   EditorPort,
   LogPort,
@@ -90,5 +91,33 @@ export function workspacePort(): WorkspacePort {
 export function logPort(channel: vscode.OutputChannel): LogPort {
   return {
     write: (line) => channel.appendLine(`${new Date().toISOString()} ${line}`),
+  }
+}
+
+/** The section and the key the manifest contributes, spelled once (D-11). */
+const CONFIG_SECTION = 'reversaViews'
+const CHECK_FOR_UPDATES = 'conferirAtualizacao'
+
+/**
+ * The one setting this extension contributes (D-11, RF-14).
+ *
+ * The value is read AT THE MOMENT OF ASKING, and not captured at activation.
+ * The editor lets the user change the key with the panel open, and a value read
+ * once would go on answering for a setting that no longer holds — which for
+ * this particular key would mean querying the origin after the user asked it
+ * not to. Nothing is memoised here, and nothing is written back.
+ *
+ * The default lives in the manifest, and the fallback below repeats it for the
+ * one case the editor cannot answer: a value of a foreign type, which the
+ * editor would hand over as it stands rather than as a boolean.
+ */
+export function configPort(): ConfigPort {
+  return {
+    checkForUpdates: () => {
+      const value = vscode.workspace
+        .getConfiguration(CONFIG_SECTION)
+        .get<unknown>(CHECK_FOR_UPDATES)
+      return typeof value === 'boolean' ? value : true
+    },
   }
 }

@@ -8,6 +8,7 @@
  */
 
 import { describe, expect, it, vi } from 'vitest'
+import type { OriginReply } from '../src/host/ports.ts'
 import { EMPTY_SNAPSHOT, readReversa } from '../src/heranca/reversa-domain/src/index.ts'
 import { INHERITED_MODEL_REVISION } from '../src/host/inheritance.ts'
 import { ProcessViewProvider } from '../src/host/provider.ts'
@@ -26,7 +27,20 @@ function leitura(root: string): ReadingResult {
   }
 }
 
-function bancada(options: { roots?: string[]; readRoot?: (root: string) => ReadingResult } = {}) {
+function bancada(
+  options: {
+    roots?: string[]
+    readRoot?: (root: string) => ReadingResult
+    /** A procedência desta construção; ausente, o painel a declara ausente. */
+    build?: { version: string; commit: string }
+    /** A consulta da feature 007; ausente, nenhuma consulta acontece. */
+    update?: {
+      ligada?: boolean
+      repositorio?: string | null
+      responder?: () => Promise<OriginReply>
+    }
+  } = {},
+) {
   const lines: string[] = []
   const postMessage = vi.fn(async () => true)
   const setState = vi.fn()
@@ -57,6 +71,12 @@ function bancada(options: { roots?: string[]; readRoot?: (root: string) => Readi
     style: { fsPath: '/ext/out/res/webview/main.css' },
   }
 
+  const compare = vi.fn(
+    options.update?.responder ??
+      (async () =>
+        ({ kind: 'response', status: 200, body: { status: 'identical' } }) as OriginReply),
+  )
+
   const provider = new ProcessViewProvider({
     workspace: { roots: () => raizes },
     editor: { open: vi.fn(async () => {}) },
@@ -73,6 +93,19 @@ function bancada(options: { roots?: string[]; readRoot?: (root: string) => Readi
         return () => void ouvintes.splice(ouvintes.indexOf(ouvinte), 1)
       },
     }),
+    build: options.build,
+    update:
+      options.update === undefined
+        ? undefined
+        : {
+            config: { checkForUpdates: () => options.update?.ligada ?? true },
+            origin: { compare },
+            repository:
+              options.update.repositorio === undefined
+                ? 'iago-leal/reversa-views'
+                : options.update.repositorio,
+            branch: 'master',
+          },
   })
 
   const resolver = (): void => provider.resolveWebviewView(view as never)
@@ -99,7 +132,15 @@ function bancada(options: { roots?: string[]; readRoot?: (root: string) => Readi
     asWebviewUri,
     localResourceRoots,
     lines,
+    compare,
   }
+}
+
+/** A carga de cada `setUpdate` enviado, na ordem em que saiu. */
+function desfechos(enviadas: unknown[]): unknown[] {
+  return enviadas
+    .filter((carga) => (carga as { command?: string }).command === 'setUpdate')
+    .map((carga) => (carga as { data: unknown }).data)
 }
 
 describe('resolver a visão', () => {
@@ -258,5 +299,253 @@ describe('estado da webview (RN-06)', () => {
     await esperar()
 
     expect(b.setState).not.toHaveBeenCalled()
+  })
+})
+
+/**
+ * A consulta à origem que a feature 007 acrescenta (T027, T041).
+ *
+ * Três propriedades resumem o desenho, e é sobre elas que estes casos incidem:
+ * a consulta SEGUE a leitura em vez de atrasá-la, acontece no máximo uma vez
+ * por leitura, e não se repete sozinha.
+ */
+describe('a consulta à origem', () => {
+  const CARIMBO = { version: '0.6.1', commit: 'a23711d481021a978720c0bc478b6dabed94fec3' }
+
+  it('anuncia a espera depois do processo, e o desfecho quando a origem responde', async () => {
+    const b = bancada({ build: CARIMBO, update: {} })
+    b.resolver()
+    b.enviarDaWebview({ command: 'onLoaded' })
+    await esperar()
+
+    const nomes = b.enviadas().map((carga) => (carga as { command: string }).command)
+    expect(nomes).toEqual(['setEntry', 'setProcess', 'setUpdate', 'setUpdate'])
+    expect(desfechos(b.enviadas())).toEqual([{ estado: 'consultando' }, { estado: 'em-dia' }])
+  })
+
+  it('não atrasa a leitura: o processo já viajou quando a origem é perguntada', async () => {
+    // O que se verifica é a ORDEM, e não o instante: o envio é assíncrono, de
+    // modo que o processo sai numa volta do laço de eventos e não antes dela.
+    // O que RF-12 proíbe é a leitura ESPERAR pela consulta, e a prova disso é
+    // que o processo já está na tela quando a pergunta parte.
+    let jaEnviadoAoPerguntar: string[] = []
+    const b = bancada({
+      build: CARIMBO,
+      update: {
+        responder: async () => {
+          jaEnviadoAoPerguntar = b
+            .enviadas()
+            .map((carga) => (carga as { command: string }).command)
+          return { kind: 'response', status: 200, body: { status: 'identical' } }
+        },
+      },
+    })
+    b.resolver()
+    b.enviarDaWebview({ command: 'onLoaded' })
+    await esperar()
+
+    expect(jaEnviadoAoPerguntar).toContain('setProcess')
+    expect(jaEnviadoAoPerguntar).toContain('setUpdate')
+  })
+
+  it('traduz o atraso da origem no desfecho que o painel desenha', async () => {
+    const b = bancada({
+      build: CARIMBO,
+      update: {
+        responder: async () => ({
+          kind: 'response',
+          status: 200,
+          body: { status: 'ahead', ahead_by: 4 },
+        }),
+      },
+    })
+    b.resolver()
+    b.enviarDaWebview({ command: 'onLoaded' })
+    await esperar()
+
+    expect(desfechos(b.enviadas()).at(-1)).toEqual({ estado: 'atrasada', commits: 4 })
+  })
+
+  it('a base da comparação é o commit desta construção, e a cabeça é o ramo', async () => {
+    const b = bancada({ build: CARIMBO, update: {} })
+    b.resolver()
+    b.enviarDaWebview({ command: 'onLoaded' })
+    await esperar()
+
+    expect(b.compare).toHaveBeenCalledWith(CARIMBO.commit, 'master')
+  })
+
+  it('acontece no máximo uma vez por leitura (RF-11)', async () => {
+    const b = bancada({ build: CARIMBO, update: {} })
+    b.resolver()
+    b.enviarDaWebview({ command: 'onLoaded' })
+    await esperar()
+    expect(b.compare).toHaveBeenCalledTimes(1)
+
+    await b.provider.reload()
+    await esperar()
+    expect(b.compare).toHaveBeenCalledTimes(2)
+  })
+
+  it('não se repete sozinha diante de falha (RN-09)', async () => {
+    const b = bancada({
+      build: CARIMBO,
+      update: { responder: async () => ({ kind: 'failure', cause: 'sem-rede' }) },
+    })
+    b.resolver()
+    b.enviarDaWebview({ command: 'onLoaded' })
+    await esperar()
+
+    expect(b.compare).toHaveBeenCalledTimes(1)
+    expect(desfechos(b.enviadas()).at(-1)).toEqual({ estado: 'impossivel', causa: 'sem-rede' })
+  })
+
+  it('a procedência viaja na carga da leitura, ao lado da revisão herdada (RF-17)', async () => {
+    const b = bancada({ build: CARIMBO, update: {} })
+    b.resolver()
+    b.enviarDaWebview({ command: 'onLoaded' })
+    await esperar()
+
+    const processo = b.enviadas().find(
+      (carga) => (carga as { command: string }).command === 'setProcess',
+    ) as { data: Record<string, unknown> }
+    expect(processo.data.extensionVersion).toBe('0.6.1')
+    expect(processo.data.builtFromCommit).toBe(CARIMBO.commit)
+    expect(processo.data.inheritedRevision).toBe(INHERITED_MODEL_REVISION)
+  })
+})
+
+describe('quando a consulta NÃO acontece (RF-12, RF-14, RN-09)', () => {
+  const CARIMBO = { version: '0.6.1', commit: 'a23711d481021a978720c0bc478b6dabed94fec3' }
+
+  it('sem pasta aberta, não há leitura a acompanhar e nada é perguntado', async () => {
+    const b = bancada({ roots: [], build: CARIMBO, update: {} })
+    b.resolver()
+    b.enviarDaWebview({ command: 'onLoaded' })
+    await esperar()
+
+    expect(b.compare).not.toHaveBeenCalled()
+    expect(desfechos(b.enviadas())).toEqual([])
+  })
+
+  it('com a leitura falhando, tampouco: o painel está dizendo que não leu', async () => {
+    const b = bancada({
+      build: CARIMBO,
+      update: {},
+      readRoot: () => ({ kind: 'error', message: 'não deu' }) as ReadingResult,
+    })
+    b.resolver()
+    b.enviarDaWebview({ command: 'onLoaded' })
+    await esperar()
+
+    expect(b.compare).not.toHaveBeenCalled()
+    expect(desfechos(b.enviadas())).toEqual([])
+  })
+
+  it('com a chave desligada, o painel declara que está desligada, e nada é perguntado', async () => {
+    const b = bancada({ build: CARIMBO, update: { ligada: false } })
+    b.resolver()
+    b.enviarDaWebview({ command: 'onLoaded' })
+    await esperar()
+
+    expect(b.compare).not.toHaveBeenCalled()
+    expect(desfechos(b.enviadas())).toEqual([{ estado: 'desligada' }])
+  })
+
+  it('sem origem conhecida, o mesmo: um remoto de outro serviço não é consultável', async () => {
+    const b = bancada({ build: CARIMBO, update: { repositorio: null } })
+    b.resolver()
+    b.enviarDaWebview({ command: 'onLoaded' })
+    await esperar()
+
+    expect(b.compare).not.toHaveBeenCalled()
+    expect(desfechos(b.enviadas())).toEqual([{ estado: 'desligada' }])
+  })
+
+  it('um provedor montado sem a capacidade não anuncia desfecho algum', async () => {
+    // É o que um host anterior à feature 007 produz, e é o que o preview monta
+    // quando não está exercitando a consulta.
+    const b = bancada({ build: CARIMBO })
+    b.resolver()
+    b.enviarDaWebview({ command: 'onLoaded' })
+    await esperar()
+
+    expect(desfechos(b.enviadas())).toEqual([])
+  })
+})
+
+describe('releitura durante consulta em voo', () => {
+  const CARIMBO = { version: '0.6.1', commit: 'a23711d481021a978720c0bc478b6dabed94fec3' }
+
+  it('a resposta da leitura anterior não sobrescreve a da leitura corrente', async () => {
+    // Sem a guarda de geração, a resposta velha chegaria depois e o cabeçalho
+    // passaria a declarar o estado de uma leitura que ninguém está vendo.
+    const pendentes: Array<(reply: OriginReply) => void> = []
+    const b = bancada({
+      build: CARIMBO,
+      update: {
+        responder: () => new Promise<OriginReply>((resolve) => pendentes.push(resolve)),
+      },
+    })
+    b.resolver()
+    b.enviarDaWebview({ command: 'onLoaded' })
+    await esperar()
+
+    // Segunda leitura, com a primeira consulta ainda pendurada.
+    void b.provider.reload()
+    await esperar()
+    expect(pendentes).toHaveLength(2)
+
+    // A resposta ANTIGA volta primeiro, e é descartada.
+    pendentes[0]({ kind: 'response', status: 200, body: { status: 'ahead', ahead_by: 99 } })
+    await esperar()
+    expect(desfechos(b.enviadas())).not.toContainEqual({ estado: 'atrasada', commits: 99 })
+
+    // A resposta da leitura corrente é a que chega ao painel.
+    pendentes[1]({ kind: 'response', status: 200, body: { status: 'identical' } })
+    await esperar()
+    expect(desfechos(b.enviadas()).at(-1)).toEqual({ estado: 'em-dia' })
+  })
+})
+
+describe('a falha da consulta no canal de saída (T041)', () => {
+  const CARIMBO = { version: '0.6.1', commit: 'a23711d481021a978720c0bc478b6dabed94fec3' }
+
+  it('escreve uma linha, com origem, ato e razão', async () => {
+    const b = bancada({
+      build: CARIMBO,
+      update: { responder: async () => ({ kind: 'failure', cause: 'tempo-esgotado' }) },
+    })
+    b.resolver()
+    b.enviarDaWebview({ command: 'onLoaded' })
+    await esperar()
+
+    const daConsulta = b.lines.filter((linha) => linha.includes('consulta'))
+    expect(daConsulta).toHaveLength(1)
+    expect(daConsulta[0]).toContain('provider')
+    expect(daConsulta[0]).toContain('tempo-esgotado')
+    expect(daConsulta[0]).toContain('iago-leal/reversa-views')
+  })
+
+  it('cada causa é nomeada por seu próprio nome', async () => {
+    for (const causa of ['sem-rede', 'limite-de-taxa', 'resposta-inesperada'] as const) {
+      const b = bancada({
+        build: CARIMBO,
+        update: { responder: async () => ({ kind: 'failure', cause: causa }) },
+      })
+      b.resolver()
+      b.enviarDaWebview({ command: 'onLoaded' })
+      await esperar()
+      expect(b.lines.filter((linha) => linha.includes(causa))).toHaveLength(1)
+    }
+  })
+
+  it('consulta bem-sucedida não escreve linha alguma', async () => {
+    const b = bancada({ build: CARIMBO, update: {} })
+    b.resolver()
+    b.enviarDaWebview({ command: 'onLoaded' })
+    await esperar()
+
+    expect(b.lines.filter((linha) => linha.includes('consulta'))).toEqual([])
   })
 })

@@ -22,6 +22,27 @@ const TEMAS = ['claro', 'escuro', 'claro-alto-contraste', 'escuro-alto-contraste
 /** Os estados de entrada que se pode forçar, mais o de não forçar nenhum. */
 const ESTADOS = ['nenhum', 'sem-diretorio', 'sem-reversa', 'erro']
 
+/**
+ * Os desfechos da consulta à origem que se pode forçar, mais o de não forçar
+ * nenhum (D-17, feature 007).
+ *
+ * Os sete nomes são os de `UPDATE_STATES` em `src/host/protocol.ts`, na mesma
+ * ordem, e estão escritos aqui em vez de importados porque este módulo é puro e
+ * roda antes de qualquer construção existir: importar da saída compilada faria
+ * o argumento torto ser recusado só depois do `build`. A suíte do preview
+ * confere que as duas listas coincidem.
+ */
+const ATUALIZACOES = [
+  'nenhum',
+  'desligada',
+  'consultando',
+  'em-dia',
+  'atrasada',
+  'divergente',
+  'commit-desconhecido',
+  'impossivel',
+]
+
 /** Erro de configuração: para o comando com causa e remédio, sem rastro. */
 class ErroDeConfiguracao extends Error {
   /** @param {string} mensagem - o que houve e o que fazer a respeito. */
@@ -36,8 +57,8 @@ class ErroDeConfiguracao extends Error {
  * @param {readonly string[]} argumentos - o que veio depois do nome do script.
  * @param {{raiz: string, eDiretorio: (caminho: string) => boolean,
  *   temPacoteDaTela: () => boolean}} mundo - o que se sabe do disco.
- * @returns {{workspace: string, tema: string, estado: string, porta: number,
- *   atraso: number, semBuild: boolean}} a configuração já conferida.
+ * @returns {{workspace: string, tema: string, estado: string, atualizacao: string,
+ *   porta: number, atraso: number, semBuild: boolean}} a configuração já conferida.
  * @throws {ErroDeConfiguracao} diante de argumento torto ou mundo incompatível.
  */
 function lerConfiguracao(argumentos, mundo) {
@@ -45,6 +66,7 @@ function lerConfiguracao(argumentos, mundo) {
     workspace: mundo.raiz,
     tema: 'escuro',
     estado: 'nenhum',
+    atualizacao: 'nenhum',
     porta: PORTA_PADRAO,
     atraso: 0,
     semBuild: false,
@@ -70,6 +92,9 @@ function lerConfiguracao(argumentos, mundo) {
       case '--estado':
         config.estado = escolher(valor, ESTADOS, 'estado')
         break
+      case '--atualizacao':
+        config.atualizacao = escolher(valor, ATUALIZACOES, 'atualizacao')
+        break
       case '--porta':
         config.porta = inteiro(valor, 'porta', 1024, 65535)
         break
@@ -79,7 +104,7 @@ function lerConfiguracao(argumentos, mundo) {
       default:
         throw new ErroDeConfiguracao(
           `argumento desconhecido: ${nome}\n` +
-            'Os aceitos são --workspace, --tema, --estado, --porta, --atraso e --sem-build.',
+            'Os aceitos são --workspace, --tema, --estado, --atualizacao, --porta, --atraso e --sem-build.',
         )
     }
   }
@@ -118,4 +143,4 @@ function inteiro(valor, nome, minimo, maximo) {
   return numero
 }
 
-module.exports = { ESTADOS, ErroDeConfiguracao, PORTA_PADRAO, TEMAS, lerConfiguracao }
+module.exports = { ATUALIZACOES, ESTADOS, ErroDeConfiguracao, PORTA_PADRAO, TEMAS, lerConfiguracao }

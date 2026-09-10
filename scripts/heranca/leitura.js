@@ -7,10 +7,10 @@
  * @module scripts/heranca/leitura
  */
 
-const { execFileSync } = require('node:child_process')
 const { existsSync, readFileSync, readdirSync, statSync } = require('node:fs')
 const { dirname, join, posix, relative, sep } = require('node:path')
 
+const { revisaoCorrente } = require('../git')
 const { lerAdaptacoes, lerManifesto, validarConjunto } = require('./manifesto')
 const { lerConfiguracao, resolver } = require('./origens')
 
@@ -70,19 +70,18 @@ function lerArvoreLocal(raiz, manifesto) {
   return { arquivos, extras: noDisco.filter((caminho) => !manifestados.has(caminho)) }
 }
 
-/** As ferramentas de disco que a resolução de origem usa. */
+/**
+ * As ferramentas de disco que a resolução de origem usa.
+ *
+ * A revisão sai do auxiliar único de `scripts/git.js` desde a feature 007
+ * (D-13): o comando e o tratamento de erro são os mesmos que o derivador de
+ * versão e o atualizador usam, e o silêncio diante da falha continua sendo a
+ * resposta certa AQUI, porque uma origem que não é clone é situação prevista e
+ * não acidente.
+ */
 const FERRAMENTAS = {
   existePasta: (caminho) => existsSync(caminho) && statSync(caminho).isDirectory(),
-  revisaoDoGit: (caminho) => {
-    try {
-      return execFileSync('git', ['-C', caminho, 'rev-parse', 'HEAD'], {
-        encoding: 'utf8',
-        stdio: ['ignore', 'pipe', 'ignore'],
-      }).trim()
-    } catch {
-      return null
-    }
-  },
+  revisaoDoGit: (caminho) => revisaoCorrente(caminho),
   versaoDoPacote: (caminho) => {
     try {
       return JSON.parse(readFileSync(join(caminho, 'package.json'), 'utf8')).version ?? null

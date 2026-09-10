@@ -14,6 +14,11 @@
  * The count beside the title is the INHERITED one, which stays the authority
  * over how many actions exist. Where it and the list disagree, the panel says
  * so instead of choosing (D-08).
+ *
+ * The bar of feature 007 follows the same authority (RF-27, RN-08): it is drawn
+ * from the inherited pair and never from the length of the list, so the default
+ * cut does not shrink it, and a divergence between count and list keeps the
+ * notice that already exists while the bar draws the count.
  * @module webview/ui/DecompositionSection
  */
 
@@ -25,6 +30,7 @@ import { decompositionView } from '../domain/decomposition-view.ts'
 import type { DecompositionRow } from '../domain/decomposition-view.ts'
 import { brasiliaInstant } from '../domain/instants.ts'
 import { CollapsibleSection } from './CollapsibleSection.tsx'
+import { ProgressBar } from './ProgressBar.tsx'
 
 /** What the section draws. */
 export interface DecompositionSectionProps {
@@ -132,6 +138,11 @@ export function DecompositionSection(props: DecompositionSectionProps): ReactNod
         {forward.actions.fechadas} de {forward.actions.total} ações fechadas
         {forward.actions.emendas > 0 ? `, ${forward.actions.emendas} em emendas` : ''}.
       </p>
+      <ProgressBar
+        feitos={forward.actions.fechadas}
+        total={forward.actions.total}
+        rotulo={`${forward.actions.fechadas} de ${forward.actions.total} ações fechadas`}
+      />
 
       {decomposition.origem === 'varredura' ? (
         <p data-part="decomposition-source" className="notice">

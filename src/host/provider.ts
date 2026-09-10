@@ -21,9 +21,11 @@ import { openFile } from './open-file.ts'
 import { logLine } from './ports.ts'
 import type {
   ClipboardPort,
+  ConfigPort,
   DraftPort,
   EditorPort,
   LogPort,
+  OriginPort,
   VisibilityPort,
   WorkspacePort,
 } from './ports.ts'
@@ -31,8 +33,29 @@ import { panelBody } from './panel.ts'
 import type { ReadingResult } from './reading.ts'
 import { routeMessage } from './router.ts'
 import { sessionMessages } from './session.ts'
+import type { BuildStamp } from './session.ts'
+import { interpretReply, queryPlan } from './update.ts'
 
 const ORIGIN = 'provider'
+
+/**
+ * What the query to the origin needs, as one optional block (feature 007).
+ *
+ * It is optional as a whole, and that is the shape of the truth: a provider
+ * assembled without it simply never asks anything and never announces an
+ * outcome, which is exactly what an older host does and what the preview
+ * wants when no query is being exercised.
+ */
+export interface UpdateDeps {
+  /** The setting, asked at the moment of asking (RF-14). */
+  config: ConfigPort
+  /** The one port that opens a connection. */
+  origin: OriginPort
+  /** `dono/repositorio`, or null when there is no origin to consult. */
+  repository: string | null
+  /** The branch of the origin to compare against. */
+  branch: string
+}
 
 /** Everything the provider needs; every editor object arrives from outside. */
 export interface ProviderDeps {
@@ -62,6 +85,13 @@ export interface ProviderDeps {
   /** Visibility lives on the view, so it is built when the view exists. */
   visibilityOf: (view: vscode.WebviewView) => VisibilityPort
   createNonce?: () => string
+  /**
+   * The provenance of this build (RF-17). Absent, the panel declares it
+   * absent, which is what an older host produces.
+   */
+  build?: BuildStamp
+  /** The query to the origin. Absent, no query happens and none is announced. */
+  update?: UpdateDeps
 }
 
 /** The panel of the process, for the view `reversaViews.process`. */
@@ -69,6 +99,15 @@ export class ProcessViewProvider implements vscode.WebviewViewProvider {
   private readonly deps: ProviderDeps
   private bridge: Bridge | null = null
   private observedRoot: string | null = null
+  /**
+   * Which reading is current, counted up on every reread.
+   *
+   * A query that started under one reading must not answer over a later one:
+   * rereading is the gesture that repeats the query, and an answer from the
+   * previous round arriving late would overwrite a fresher outcome with a
+   * staler one. The counter is how a late answer knows to keep quiet.
+   */
+  private generation = 0
 
   constructor(deps: ProviderDeps) {
     this.deps = deps
@@ -131,12 +170,74 @@ export class ProcessViewProvider implements vscode.WebviewViewProvider {
       return
     }
 
+    const generation = (this.generation += 1)
     const { messages, observedRoot } = sessionMessages(
       this.deps.workspace.roots(),
       this.deps.readRoot,
+      this.deps.build,
     )
     this.observedRoot = observedRoot
     for (const message of messages) await bridge.send(message)
+
+    // The query FOLLOWS the reading, and only a reading it can accompany. The
+    // sequences that end without a process -- no folder, or a failure -- have
+    // nothing to be current about, and asking anyway would announce an outcome
+    // over a panel that is saying it could not read.
+    const read = messages.some((message) => message.command === 'setProcess')
+    if (read) await this.askOrigin(bridge, generation)
+  }
+
+  /**
+   * Ask the origin whether this build is current, and say so (RF-09 to RF-16).
+   *
+   * It does NOT block the reading: the process has already been sent and drawn
+   * when this runs, and the outcome arrives later as its own envelope. It does
+   * not retry either — a failure is named once and the control goes back to the
+   * maintainer, because a silent retry hides a network fault and this project
+   * prefers loud errors.
+   * @param bridge - the channel of the current webview.
+   * @param generation - the reading this query belongs to.
+   */
+  private async askOrigin(bridge: Bridge, generation: number): Promise<void> {
+    const update = this.deps.update
+    if (update === undefined) return
+
+    const plan = queryPlan({
+      enabled: update.config.checkForUpdates(),
+      origin: update.repository,
+      commit: this.deps.build?.commit ?? '',
+      branch: update.branch,
+    })
+
+    if (plan.kind === 'skip') {
+      await bridge.send({ command: 'setUpdate', data: plan.status })
+      return
+    }
+
+    await bridge.send({ command: 'setUpdate', data: { estado: 'consultando' } })
+
+    // A rejection of the port is not expected -- it answers with a named
+    // failure instead of throwing -- but a port that broke its own contract
+    // must not take down a reading that succeeded.
+    const reply = await update.origin
+      .compare(plan.base, plan.head)
+      .catch(() => ({ kind: 'failure', cause: 'resposta-inesperada' }) as const)
+
+    const status = interpretReply(reply)
+
+    // T041: one line per failed query, in the single shape the host uses for
+    // every other failure. The panel says it in its own words; the channel says
+    // it in the maintainer's.
+    if (status.estado === 'impossivel') {
+      this.deps.log.write(
+        logLine(ORIGIN, 'consulta à origem impossível', `${update.repository ?? 'origem'}: ${status.causa}`),
+      )
+    }
+
+    // A reread happened while this was in flight: its own query is the current
+    // one, and this answer is about a build state nobody is looking at.
+    if (generation !== this.generation) return
+    await bridge.send({ command: 'setUpdate', data: status })
   }
 
   /** Drop the bridge; the editor disposes the view on its own. */

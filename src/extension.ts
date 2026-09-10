@@ -16,12 +16,20 @@
 import * as vscode from 'vscode'
 import {
   clipboardPort,
+  configPort,
   draftPort,
   editorPort,
   logPort,
   visibilityPort,
   workspacePort,
 } from './host/adapters.ts'
+import {
+  BUILT_FROM_COMMIT,
+  DEFAULT_BRANCH,
+  EXTENSION_VERSION,
+  ORIGIN_REPOSITORY,
+} from './host/build.ts'
+import { originPort } from './host/net.ts'
 import { ProcessViewProvider } from './host/provider.ts'
 import { readWorkspace } from './host/reading.ts'
 
@@ -69,6 +77,19 @@ export function activate(context: vscode.ExtensionContext): void {
       style: vscode.Uri.joinPath(webviewRoot, 'main.css'),
     },
     visibilityOf: visibilityPort,
+    // The provenance of this build, from the stamp generated before the
+    // compilation (D-07). It travels in the payload of the reading, like the
+    // inherited revision, because the panel may not import a value of the host.
+    build: { version: EXTENSION_VERSION, commit: BUILT_FROM_COMMIT },
+    // The query of feature 007, assembled HERE and nowhere else. The reading
+    // layer goes on not seeing it: it receives none of these three, and the
+    // boundary suite holds that by plain text search.
+    update: {
+      config: configPort(),
+      origin: originPort(ORIGIN_REPOSITORY ?? '', { version: EXTENSION_VERSION }),
+      repository: ORIGIN_REPOSITORY,
+      branch: DEFAULT_BRANCH,
+    },
   })
 
   context.subscriptions.push(

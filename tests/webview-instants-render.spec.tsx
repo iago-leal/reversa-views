@@ -89,6 +89,7 @@ function painel(loaded: SetProcessData | null): string {
         loaded,
         message: null,
         root: '/w/reversa-views',
+        update: null,
       }}
       notice={null}
       // Expanded on purpose: a collapsed card still draws its body, and this

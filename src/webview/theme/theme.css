@@ -345,3 +345,68 @@ pre {
     flex-wrap: wrap;
   }
 }
+
+/* ------------------------------------------------------------- a barra */
+
+/* The progress bar of the three cards (D-15, D-16, RF-32).
+ *
+ * Two rectangles of an SVG, and no imported component: the components of the
+ * design system live in another package, which would bring a large dependency
+ * tree to draw two rectangles, into a project that has no production
+ * dependency at all. What is reused are the TOKENS, which is the level this
+ * project depends on.
+ *
+ * Naming them here is also what keeps them: `scripts/theme-tokens.js` seeds the
+ * trim of the colour sets from the tokens this sheet names, and a token no rule
+ * mentions does not survive the closure. So these two lines are the reason the
+ * bar has colour in the package at all.
+ *
+ * The pair is emphasis over muted neutral, which is the combination the design
+ * system uses for the same shape, and it carries the non-text contrast the
+ * accessibility requirement asks for in the four colour sets. */
+.progress {
+  display: block;
+  width: 100%;
+  margin-block: 0.25rem;
+}
+
+.progress__track {
+  fill: var(--bgColor-neutral-muted);
+}
+
+.progress__fill {
+  fill: var(--bgColor-accent-emphasis);
+}
+
+/* The outcome of the origin query, as one line of the header (RF-10, RN-09).
+   The two outcomes that ask for a gesture borrow the attention pair the
+   degraded reading already uses; being current borrows the success colour of
+   the whole reading; everything else, off and impossible included, reads as a
+   muted statement. The state is ALSO in the attribute and in the words, so the
+   colour is never the only carrier (RNF of accessibility). */
+.header__update {
+  margin: 0;
+  color: var(--fgColor-muted);
+}
+
+.header__update[data-update='em-dia'] {
+  color: var(--fgColor-success);
+}
+
+.header__update[data-update='atrasada'],
+.header__update[data-update='divergente'] {
+  color: var(--fgColor-attention);
+  background-color: var(--bgColor-attention-muted);
+  border-radius: var(--panel-radius);
+  padding: 0.125rem 0.25rem;
+}
+
+/* The command is text to copy, drawn as code so it reads as something to
+   type rather than as part of the sentence. No font is named: the element is
+   `code`, as in the four other places the panel draws one, and the trimmer of
+   tokens reaches only the colour themes of the design system. */
+.header__command {
+  background-color: var(--bgColor-muted);
+  border-radius: var(--panel-radius);
+  padding: 0 0.25rem;
+}

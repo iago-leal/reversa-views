@@ -54,6 +54,7 @@ function montarPagina(opcoes) {
     ` data-workspace="${escapar(config.workspace)}"` +
     ` data-tema="${escapar(config.tema)}"` +
     ` data-estado="${escapar(config.estado)}"` +
+    ` data-atualizacao="${escapar(config.atualizacao ?? 'nenhum')}"` +
     ` data-atraso="${config.atraso}"` +
     ` data-limites="${escapar(LIMITES_DECLARADOS.join(' · '))}"></div>`
 
