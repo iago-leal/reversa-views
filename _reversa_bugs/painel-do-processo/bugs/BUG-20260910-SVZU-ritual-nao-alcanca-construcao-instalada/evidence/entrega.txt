@@ -1,0 +1,18 @@
+== estado apos a entrega, 2026-09-10
+
+-- conferencia
+
+Clone em 98ea70a, ramo master.
+Em dia com a origem: não há commit a trazer.
+
+-- extensao instalada
+iagoleal-local.reversa-views@0.8.1
+
+-- carimbo da instalada
+17:exports.DEFAULT_BRANCH = exports.ORIGIN_REPOSITORY = exports.BUILT_FROM_COMMIT = exports.EXTENSION_VERSION = void 0;
+19:exports.EXTENSION_VERSION = '0.8.1';
+21:exports.BUILT_FROM_COMMIT = '98ea70a801af57a4b4114a0c3750b2b996964449';
+
+-- clone e origem
+HEAD:   98ea70a801af57a4b4114a0c3750b2b996964449
+origin: 98ea70a801af57a4b4114a0c3750b2b996964449

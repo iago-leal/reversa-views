@@ -3,7 +3,7 @@ schema_version: 1
 id: BUG-20260910-SVZU
 display_number: 4
 title: Ritual de atualização não alcança a construção instalada quando o clone já está em dia
-status: active
+status: resolved
 phase: delivering
 severity: high
 priority: P1
@@ -100,10 +100,25 @@ change_set:
     purpose: "Adendo do veredito spec-desatualizada, com as emendas de leitura e as regras W040 e W041"
     diff: null
 
+delivery:
+  branch: master
+  commit: 98ea70a801af57a4b4114a0c3750b2b996964449
+  pull_request: null
+  ci: "npm test local, 1313 casos em 83 arquivos"
+  merged: 2026-09-10
+  published: 2026-09-10
+
+versions:
+  fixed_in: "0.8.1"
+  affected: "0.7.0 a 0.8.0"
+  installed: "0.8.1, carimbada em 98ea70a"
+
+backports: []
+
 closure:
   policy: package
-  satisfied: false
-resolution_kind: null
+  satisfied: true
+resolution_kind: fixed
 ---
 
 # Ritual de atualização não alcança a construção instalada quando o clone já está em dia
@@ -280,6 +295,21 @@ E a suíte inteira do projeto:
  Test Files  83 passed (83)
       Tests  1313 passed (1313)
 ```
+
+### Entrega (closure policy: package)
+
+A política exige a versão corrigida empacotada e publicada, e aqui publicar é empacotar o `.vsix` e
+instalá-lo. O percurso foi feito pelo próprio comando corrigido, o que serve de prova de ponta a ponta:
+com o clone em dia, `npm run atualizar -- --aplicar` construiu, rodou a suíte, empacotou e instalou,
+que é exatamente o que ele não fazia antes.
+
+| Eixo | Antes | Depois |
+|---|---|---|
+| Clone (HEAD) | `3cec373` | `98ea70a` |
+| Origem | `3cec373` | `98ea70a` |
+| Extensão instalada | `0.7.5`, carimbada em `9bd7648` | `0.8.1`, carimbada em `98ea70a` |
+
+Os três eixos coincidem, e a conferência declara em dia. Evidência em `evidence/entrega.txt`.
 
 ## Agent Notes
 
