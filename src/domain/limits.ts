@@ -64,3 +64,54 @@ export const BUG_CAP = 50
  * with the inherited one becomes visible at that moment rather than never.
  */
 export const BUGS_FOLDER = '_reversa_bugs'
+
+/* ------------------------------------------------ the greenfield artifacts */
+
+/**
+ * The names of the artifacts the greenfield pipeline leaves behind, and of the
+ * two the legacy extraction leaves (feature 009, D-18, RN-01, RN-03).
+ *
+ * Every one of them is a DUPLICATION in relation to what the skills of REVERSA
+ * write -- `/reversa-new` names the brief, the ideation and the personas,
+ * `/reversa-drafter` the PRD, `/reversa-spec-sdd` the folder of specs, and
+ * `/reversa-coding` checks the two legacy anchors -- and the duplication is
+ * accepted for the same reason `BUGS_FOLDER` above is: no inherited package
+ * exports these names, and writing them in exactly one place on the local side
+ * is what turns a future renaming into a one-line edit here rather than a hunt
+ * through the probe, the domain and the tests.
+ *
+ * They are the ORDER of the pipeline as well as its vocabulary: the physical
+ * stage is the longest contiguous run of them present on disk, in the order
+ * they are declared here.
+ */
+export const NEWPROJECT_BRIEF_FILE = 'newproject-brief.md'
+export const IDEATION_FILE = 'ideation.md'
+export const PERSONAS_FILE = 'personas.md'
+export const PRD_FILE = 'prd.md'
+
+/** The folder of the specs, one `.md` per planned component, inside the output folder. */
+export const SDD_FOLDER = 'sdd'
+
+/** The two files whose presence together is the legacy anchor of `/reversa-coding`. */
+export const ARCHITECTURE_FILE = 'architecture.md'
+export const DOMAIN_FILE = 'domain.md'
+
+/**
+ * The most specs read in one pass, in name order (RN-10).
+ *
+ * The same fifty as the feature folders, the bugs and the inherited addenda,
+ * and for the same reason: a folder that grew past what anyone reads must not
+ * turn one panel reading into an unbounded walk. Above it the reading DECLARES
+ * itself partial, saying how many exist beside how many were read. Five specs
+ * exist in this project today.
+ */
+export const SPEC_CAP = 50
+
+/**
+ * The most items read from the scope section of the PRD (RN-14).
+ *
+ * A scope is prose, and prose has no natural ceiling; this one exists so that
+ * a PRD written by a runaway agent cannot fill the panel. Eleven items exist in
+ * the PRD of this project today.
+ */
+export const SCOPE_ITEM_CAP = 50

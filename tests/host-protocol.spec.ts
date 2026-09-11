@@ -33,7 +33,7 @@ import type {
   UpdateStatus,
   WebviewMessage,
 } from '../src/host/protocol.ts'
-import { EMPTY_DECOMPOSITION, EMPTY_HISTORY } from '../src/domain/types.ts'
+import { EMPTY_DECOMPOSITION, EMPTY_GREENFIELD, EMPTY_HISTORY } from '../src/domain/types.ts'
 
 const probe: ProbeReport = {
   workspace: '/w',
@@ -43,8 +43,14 @@ const probe: ProbeReport = {
   truncated: [],
 }
 
-/** Os dois ramos que a feature 006 acrescentou, na forma vazia. */
-const ramos = { decomposition: EMPTY_DECOMPOSITION, history: EMPTY_HISTORY }
+/**
+ * Os dois ramos que a feature 006 acrescentou e o eixo da 009, na forma vazia.
+ *
+ * O registro de bugs da 008 e a procedência da 007 ficam de fora de propósito:
+ * os casos abaixo constroem a carga SEM eles, o que o tipo aceita como sempre
+ * aceitou, e é isso que a regra de acréscimo promete.
+ */
+const ramos = { decomposition: EMPTY_DECOMPOSITION, history: EMPTY_HISTORY, greenfield: EMPTY_GREENFIELD }
 
 describe('estados de entrada', () => {
   it('nomeia os cinco de RF-15, na ordem do delta de dados', () => {
@@ -198,7 +204,7 @@ describe('o desfecho da consulta à origem (feature 007)', () => {
 })
 
 describe('carga de dados', () => {
-  it('traz os nove campos de RF-13, RF-03, RF-04, RF-14 e da feature 006, e nenhum a mais', () => {
+  it('traz os dez campos de RF-13, RF-03, RF-04, RF-14, da feature 006 e da 009, e nenhum a mais', () => {
     const data: SetProcessData = {
       process: readReversa(EMPTY_SNAPSHOT),
       probe,
@@ -212,6 +218,7 @@ describe('carga de dados', () => {
     expect(Object.keys(data).sort()).toEqual([
       'decomposition',
       'entry',
+      'greenfield',
       'history',
       'ignoredRoots',
       'inheritedRevision',
@@ -220,6 +227,32 @@ describe('carga de dados', () => {
       'readAt',
       'root',
     ])
+  })
+
+  /**
+   * O décimo campo é ACRÉSCIMO (feature 009, D-13). Ausente, ele é leitura não
+   * realizada, e a tela o distingue por `=== undefined`, nunca por cenário: um
+   * host anterior não o envia, e um painel que lesse a ausência como "projeto
+   * legado" afirmaria o que ninguém leu.
+   */
+  it('o eixo greenfield é o décimo, entra por acréscimo, e ausente é leitura não realizada', () => {
+    const data: SetProcessData = {
+      process: readReversa(EMPTY_SNAPSHOT),
+      probe,
+      readAt: '2026-09-09T12:00:00.000Z',
+      entry: 'installed',
+      root: '/w',
+      ignoredRoots: [],
+      inheritedRevision: 'abc1234',
+      ...ramos,
+    }
+    expect(data.greenfield.cenario).toBe('sem-ancora')
+    expect(data.greenfield.estagio).toBe('ausente')
+
+    const anterior = { ...data } as Partial<SetProcessData>
+    delete anterior.greenfield
+    expect(anterior.greenfield).toBeUndefined()
+    expect(Object.keys(anterior)).toHaveLength(9)
   })
 
   it('os dois ramos novos são acréscimo, e os sete de antes seguem intactos', () => {

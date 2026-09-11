@@ -1,0 +1,61 @@
+# PRD: fixture acima do teto
+
+## 4. Escopo (in)
+
+**Um grupo só:**
+
+- 🟡 Item 01: enunciado sintético número 1.
+- 🟡 Item 02: enunciado sintético número 2.
+- 🟡 Item 03: enunciado sintético número 3.
+- 🟡 Item 04: enunciado sintético número 4.
+- 🟡 Item 05: enunciado sintético número 5.
+- 🟡 Item 06: enunciado sintético número 6.
+- 🟡 Item 07: enunciado sintético número 7.
+- 🟡 Item 08: enunciado sintético número 8.
+- 🟡 Item 09: enunciado sintético número 9.
+- 🟡 Item 10: enunciado sintético número 10.
+- 🟡 Item 11: enunciado sintético número 11.
+- 🟡 Item 12: enunciado sintético número 12.
+- 🟡 Item 13: enunciado sintético número 13.
+- 🟡 Item 14: enunciado sintético número 14.
+- 🟡 Item 15: enunciado sintético número 15.
+- 🟡 Item 16: enunciado sintético número 16.
+- 🟡 Item 17: enunciado sintético número 17.
+- 🟡 Item 18: enunciado sintético número 18.
+- 🟡 Item 19: enunciado sintético número 19.
+- 🟡 Item 20: enunciado sintético número 20.
+- 🟡 Item 21: enunciado sintético número 21.
+- 🟡 Item 22: enunciado sintético número 22.
+- 🟡 Item 23: enunciado sintético número 23.
+- 🟡 Item 24: enunciado sintético número 24.
+- 🟡 Item 25: enunciado sintético número 25.
+- 🟡 Item 26: enunciado sintético número 26.
+- 🟡 Item 27: enunciado sintético número 27.
+- 🟡 Item 28: enunciado sintético número 28.
+- 🟡 Item 29: enunciado sintético número 29.
+- 🟡 Item 30: enunciado sintético número 30.
+- 🟡 Item 31: enunciado sintético número 31.
+- 🟡 Item 32: enunciado sintético número 32.
+- 🟡 Item 33: enunciado sintético número 33.
+- 🟡 Item 34: enunciado sintético número 34.
+- 🟡 Item 35: enunciado sintético número 35.
+- 🟡 Item 36: enunciado sintético número 36.
+- 🟡 Item 37: enunciado sintético número 37.
+- 🟡 Item 38: enunciado sintético número 38.
+- 🟡 Item 39: enunciado sintético número 39.
+- 🟡 Item 40: enunciado sintético número 40.
+- 🟡 Item 41: enunciado sintético número 41.
+- 🟡 Item 42: enunciado sintético número 42.
+- 🟡 Item 43: enunciado sintético número 43.
+- 🟡 Item 44: enunciado sintético número 44.
+- 🟡 Item 45: enunciado sintético número 45.
+- 🟡 Item 46: enunciado sintético número 46.
+- 🟡 Item 47: enunciado sintético número 47.
+- 🟡 Item 48: enunciado sintético número 48.
+- 🟡 Item 49: enunciado sintético número 49.
+- 🟡 Item 50: enunciado sintético número 50.
+- 🟡 Item 51: enunciado sintético número 51.
+- 🟡 Item 52: enunciado sintético número 52.
+- 🟡 Item 53: enunciado sintético número 53.
+- 🟡 Item 54: enunciado sintético número 54.
+- 🟡 Item 55: enunciado sintético número 55.

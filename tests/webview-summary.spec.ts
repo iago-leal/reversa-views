@@ -18,8 +18,12 @@ import { summaryText } from '../src/webview/domain/summary.ts'
 import type { HistoryEntry } from '../src/domain/types.ts'
 import {
   actionsMd,
+  componentFixture,
   emptyProcessFixture,
+  greenfieldFixture,
   historyFixture,
+  legacyGreenfieldFixture,
+  panoramaFixture,
   payloadFixture,
   processFixture,
 } from './helpers/reversa-fixtures.ts'
@@ -135,5 +139,75 @@ describe('determinismo (RF-17)', () => {
   it('cabe folgadamente no teto que o roteador aplica', () => {
     const bytes = new TextEncoder().encode(summaryText(COM_HISTORICO)).length
     expect(bytes).toBeLessThan(65536)
+  })
+})
+
+/**
+ * O bloco do panorama do produto (feature 009, RF-19).
+ *
+ * Ele entra DEPOIS das entregas anteriores, por acréscimo: nada acima dele muda
+ * de texto nem de ordem, e um host anterior, que não envia o eixo, produz um
+ * resumo com o bloco presente e a frase de que o eixo não foi lido. O que ele
+ * diz é o que o cartão desenha: origem, contagem, componentes na ordem da
+ * função pura, fora do plano e o escopo declarado no PRD.
+ */
+describe('o panorama do produto no resumo (feature 009)', () => {
+  it('entra como bloco próprio, depois das entregas anteriores', () => {
+    const texto = summaryText(payloadFixture({ greenfield: greenfieldFixture() }))
+    expect(texto).toContain('## Panorama do produto')
+    expect(texto.indexOf('## Panorama do produto')).toBeGreaterThan(texto.indexOf('## Entregas anteriores'))
+  })
+
+  it('diz a origem e o estágio da pipeline pelo rótulo legível', () => {
+    const texto = summaryText(payloadFixture({ greenfield: greenfieldFixture() }))
+    expect(texto).toContain('/reversa-new')
+    expect(texto.toLowerCase()).toContain('specs escritas')
+    expect(texto).not.toContain('especificado')
+  })
+
+  it('diz quantos componentes planejados convergiram, sobre o total', () => {
+    const texto = summaryText(payloadFixture({ greenfield: greenfieldFixture() }))
+    expect(texto).toContain('5 de 5 componentes planejados convergidos')
+  })
+
+  it('lista cada componente com nome e situação, na ordem da função pura', () => {
+    const eixo = greenfieldFixture({
+      panorama: panoramaFixture([
+        componentFixture({ nome: 'zeta', situacao: 'convergida' }),
+        componentFixture({ nome: 'alfa', situacao: 'planejada', pastas: [], adendo: null, acoes: null }),
+      ]),
+    })
+    const texto = summaryText(payloadFixture({ greenfield: eixo }))
+    expect(texto.indexOf('alfa')).toBeLessThan(texto.indexOf('zeta'))
+    expect(texto).toContain('planejada')
+    expect(texto).toContain('convergida')
+  })
+
+  it('lista as pastas fora do plano e os itens do escopo do PRD', () => {
+    const texto = summaryText(payloadFixture({ greenfield: greenfieldFixture() }))
+    expect(texto).toContain('Fora do plano')
+    expect(texto).toContain('009-greenfield-e-features-do-prd')
+    expect(texto).toContain('Escopo declarado no PRD')
+    expect(texto).toContain('Identidade da instalação')
+  })
+
+  it('declara que o eixo não foi lido quando o campo falta, e não lança', () => {
+    const semEixo = payloadFixture()
+    delete (semEixo as { greenfield?: unknown }).greenfield
+    expect(() => summaryText(semEixo)).not.toThrow()
+    const texto = summaryText(semEixo)
+    expect(texto).toContain('## Panorama do produto')
+    expect(texto.toLowerCase()).toContain('não foi lido')
+  })
+
+  it('declara o projeto que não nasceu por /reversa-new, e não deixa rótulo pendurado', () => {
+    const texto = summaryText(payloadFixture({ greenfield: legacyGreenfieldFixture() }))
+    expect(texto).toContain('/reversa-new')
+    expect(texto.split('\n').filter((linha) => linha.trim().endsWith(':'))).toEqual([])
+  })
+
+  it('segue determinístico com o bloco novo', () => {
+    const carga = payloadFixture({ greenfield: greenfieldFixture() })
+    expect(summaryText(carga)).toBe(summaryText(carga))
   })
 })

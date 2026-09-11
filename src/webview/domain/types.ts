@@ -19,7 +19,7 @@ import type {
 } from '../../host/protocol.ts'
 
 /**
- * The nine sections, in the order RF-18 fixes. The order of this array IS the
+ * The eleven sections, in the order RF-18 fixes. The order of this array IS the
  * order of the panel: `sectionOrder()` returns it, and the markup suite reads
  * the rendered document against it.
  *
@@ -31,24 +31,32 @@ import type {
  * no name above it moves, is renamed or is removed. The place is the one RF-01
  * fixes, and it is the one the reader's eye reaches next -- what was delivered,
  * and then what came back broken from what was delivered.
+ *
+ * Feature 009 inserts two names, and each in the place its own RF-13 fixes:
+ * `panorama` right after the decomposition, because what the product is made
+ * of is what the reader wants beside what the active feature is made of; and
+ * `origem` right after the discovery, beside the other account of how the
+ * project came to be. Every name that was here keeps its relative order.
  */
 export const SECTION_NAMES = [
   'blocking',
   'forward',
   'decomposition',
+  'panorama',
   'history',
   'bugs',
   'discovery',
+  'origem',
   'policy',
   'anomalies',
   'probe',
 ] as const
 
-/** One of the nine sections. */
+/** One of the eleven sections. */
 export type SectionName = (typeof SECTION_NAMES)[number]
 
 /**
- * The eight collapsible cards, which are every section but the blocking band.
+ * The ten collapsible cards, which are every section but the blocking band.
  *
  * The band occupies a section name for the sake of failure isolation, and is
  * NOT a card: RN-03 forbids any global action from hiding what waits on a
@@ -75,12 +83,19 @@ export const DIAGNOSTIC_SECTIONS: readonly SectionName[] = ['policy', 'anomalies
  * the time, and what it has to say when it is not is said in the blocking band,
  * which nothing may collapse.
  *
+ * The origin of the project joins the collapsed ones (feature 009, RF-14): it
+ * says how the project was born, which does not change between readings, and
+ * the stage is written in its title so that nothing is lost by keeping it
+ * closed. The panorama stays OPEN, because it is what one looks at to see what
+ * is being built, and that is the whole point of the card.
+ *
  * The default only ever applies to a preference that was never declared --
  * `effectiveCollapsed()` is where that is decided.
  */
 export const DEFAULT_COLLAPSED: readonly SectionName[] = [
   'history',
   'bugs',
+  'origem',
   ...DIAGNOSTIC_SECTIONS,
 ]
 

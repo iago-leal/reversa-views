@@ -37,8 +37,31 @@ function degradado(signal: 'anomalies' | 'refusals' | 'truncated') {
 }
 
 describe('ordem das seções', () => {
-  it('devolve os nove nomes na ordem de RF-18', () => {
+  it('devolve os onze nomes na ordem de RF-18', () => {
     expect(sectionOrder()).toEqual([
+      'blocking',
+      'forward',
+      'decomposition',
+      'panorama',
+      'history',
+      'bugs',
+      'discovery',
+      'origem',
+      'policy',
+      'anomalies',
+      'probe',
+    ])
+  })
+
+  /**
+   * Os dois nomes da feature 009 entram cada um no seu lugar, e o que este caso
+   * prende é a ORDEM RELATIVA dos que já existiam: a lista inteira mudaria por
+   * qualquer reordenação, mas a sequência dos nove anteriores, filtrada, tem de
+   * ser a mesma de antes.
+   */
+  it('os dois nomes novos não movem a ordem relativa dos nove anteriores', () => {
+    const anteriores = sectionOrder().filter((nome) => nome !== 'panorama' && nome !== 'origem')
+    expect(anteriores).toEqual([
       'blocking',
       'forward',
       'decomposition',
@@ -51,6 +74,18 @@ describe('ordem das seções', () => {
     ])
   })
 
+  it('o panorama entra entre a decomposição e o histórico (RF-13)', () => {
+    const ordem = sectionOrder()
+    expect(ordem[ordem.indexOf('decomposition') + 1]).toBe('panorama')
+    expect(ordem[ordem.indexOf('panorama') + 1]).toBe('history')
+  })
+
+  it('a origem entra entre a descoberta e a política (RF-13)', () => {
+    const ordem = sectionOrder()
+    expect(ordem[ordem.indexOf('discovery') + 1]).toBe('origem')
+    expect(ordem[ordem.indexOf('origem') + 1]).toBe('policy')
+  })
+
   /**
    * O acréscimo da feature 008 é ACRÉSCIMO, e este caso é o que o prende: o
    * nome novo entra depois do histórico e nada acima dele se move. Um teste que
@@ -59,10 +94,7 @@ describe('ordem das seções', () => {
    */
   it('o nome novo entra depois do histórico, sem mover nome algum acima dele', () => {
     const ordem = sectionOrder()
-    const antes = ['blocking', 'forward', 'decomposition', 'history']
-
-    expect(ordem.slice(0, antes.length)).toEqual(antes)
-    expect(ordem[antes.length]).toBe('bugs')
+    expect(ordem[ordem.indexOf('history') + 1]).toBe('bugs')
   })
 
   it('não depende do processo recebido', () => {
@@ -70,22 +102,24 @@ describe('ordem das seções', () => {
   })
 })
 
-describe('os oito cartões recolhíveis (RN-03)', () => {
+describe('os dez cartões recolhíveis (RN-03)', () => {
   it('são todas as seções menos a faixa de bloqueio', () => {
     expect(collapsibleSections()).toEqual([
       'forward',
       'decomposition',
+      'panorama',
       'history',
       'bugs',
       'discovery',
+      'origem',
       'policy',
       'anomalies',
       'probe',
     ])
   })
 
-  it('são oito, e a faixa de bloqueio não é um deles', () => {
-    expect(collapsibleSections()).toHaveLength(8)
+  it('são dez, e a faixa de bloqueio não é um deles', () => {
+    expect(collapsibleSections()).toHaveLength(10)
     expect(collapsibleSections()).not.toContain('blocking')
     expect(collapsibleSections()).toEqual([...COLLAPSIBLE_SECTIONS])
   })
@@ -96,6 +130,14 @@ describe('os oito cartões recolhíveis (RN-03)', () => {
     expect(collapsibleSections()).toContain('bugs')
     expect(withAll(true).collapsedSections).toContain('bugs')
     expect(withAll(false).collapsedSections).not.toContain('bugs')
+  })
+
+  it('os dois cartões da feature 009 entraram nos recolhíveis sem trabalho próprio', () => {
+    for (const nome of ['panorama', 'origem'] as const) {
+      expect(collapsibleSections()).toContain(nome)
+      expect(withAll(true).collapsedSections).toContain(nome)
+      expect(withAll(false).collapsedSections).not.toContain(nome)
+    }
   })
 
   it('mantêm a ordem em que a tela os desenha', () => {
@@ -124,11 +166,17 @@ describe('leitura íntegra ou degradada', () => {
 })
 
 describe('conjunto efetivo de recolhidas, sem escolha declarada (RN-02, RN-11)', () => {
-  it('recolhe o histórico, os bugs e as três de diagnóstico, em leitura íntegra', () => {
+  it('recolhe o histórico, os bugs, a origem e as três de diagnóstico, em leitura íntegra', () => {
     const recolhidas = effectiveCollapsed(SEM_ESCOLHA, INTEGRA)
     expect(new Set(recolhidas)).toEqual(
-      new Set(['history', 'bugs', 'policy', 'anomalies', 'probe']),
+      new Set(['history', 'bugs', 'origem', 'policy', 'anomalies', 'probe']),
     )
+  })
+
+  it('a origem nasce recolhida e o panorama nasce aberto (RF-14)', () => {
+    const recolhidas = effectiveCollapsed(SEM_ESCOLHA, INTEGRA)
+    expect(recolhidas).toContain('origem')
+    expect(recolhidas).not.toContain('panorama')
   })
 
   it('o bloco de bugs nasce recolhido, como o histórico (RF-01)', () => {
@@ -142,7 +190,7 @@ describe('conjunto efetivo de recolhidas, sem escolha declarada (RN-02, RN-11)',
   it('deixa as anomalias expandidas em leitura degradada', () => {
     for (const sinal of ['anomalies', 'refusals', 'truncated'] as const) {
       const recolhidas = effectiveCollapsed(SEM_ESCOLHA, readingIntegrity(degradado(sinal)))
-      expect(new Set(recolhidas)).toEqual(new Set(['history', 'bugs', 'policy', 'probe']))
+      expect(new Set(recolhidas)).toEqual(new Set(['history', 'bugs', 'origem', 'policy', 'probe']))
     }
   })
 })

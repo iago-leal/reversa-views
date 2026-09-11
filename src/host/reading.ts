@@ -20,12 +20,20 @@ import { readReversaSnapshot } from '../heranca/reversa-probe/src/index.ts'
 import type { ProbeReport, ProbeResult } from '../heranca/reversa-probe/src/snapshot.ts'
 import { readBugs } from '../domain/bugs.ts'
 import { readDecomposition } from '../domain/decomposition.ts'
+import { readGreenfield } from '../domain/greenfield.ts'
 import { readHistory } from '../domain/history.ts'
-import type { ActiveDecomposition, BugRegistry, ProjectHistory } from '../domain/types.ts'
+import type {
+  ActiveDecomposition,
+  BugRegistry,
+  GreenfieldAxis,
+  ProjectHistory,
+} from '../domain/types.ts'
 import { readBugFolders } from '../probe/bugs.ts'
 import type { BugsRead } from '../probe/bugs.ts'
 import { readFeatureFolders } from '../probe/features.ts'
 import type { FeatureFoldersRead } from '../probe/features.ts'
+import { readGreenfieldArtifacts } from '../probe/greenfield.ts'
+import type { GreenfieldRead } from '../probe/greenfield.ts'
 import { logLine } from './ports.ts'
 import type { LogPort } from './ports.ts'
 import type { LoadedEntryKind } from './protocol.ts'
@@ -43,6 +51,8 @@ export interface ReadingDeps {
   readFolders?: (root: string, forwardFolder: string) => FeatureFoldersRead
   /** The local probe of feature 008, which walks the bug registry. */
   readBugsFolders?: (root: string) => BugsRead
+  /** The local probe of feature 009, which looks at the artifacts of the output folder. */
+  readGreenfieldFolder?: (root: string, outputFolder: string) => GreenfieldRead
   /** Where the moment of the reading comes from. */
   clock?: () => Date
 }
@@ -61,6 +71,8 @@ export type ReadingResult =
       history: ProjectHistory
       /** The bug registry of the project (feature 008). */
       bugs: BugRegistry
+      /** The greenfield axis of the project (feature 009). */
+      greenfield: GreenfieldAxis
     }
   | { kind: 'error'; message: string }
 
@@ -78,6 +90,9 @@ export function readWorkspace(root: string, deps: ReadingDeps): ReadingResult {
     ((where: string, forwardFolder: string) => readFeatureFolders({ root: where, forwardFolder }))
   const readBugsFolders =
     deps.readBugsFolders ?? ((where: string) => readBugFolders({ root: where }))
+  const readGreenfieldFolder =
+    deps.readGreenfieldFolder ??
+    ((where: string, outputFolder: string) => readGreenfieldArtifacts({ root: where, outputFolder }))
   const clock = deps.clock ?? (() => new Date())
 
   try {
@@ -109,6 +124,19 @@ export function readWorkspace(root: string, deps: ReadingDeps): ReadingResult {
     // error state and never an exception in the editor.
     const bugs = readBugs(readBugsFolders(root))
 
+    // The greenfield axis runs after the history because it CROSSES it: which
+    // spec has a folder is decided over the judged entries, and judging them
+    // twice would be two authorities over one fact (feature 009). Where the
+    // output folder is comes from the process, the raw pointer comes from the
+    // snapshot, and no layout of REVERSA is written here. Same try, same
+    // reason as the other branches.
+    const greenfield = readGreenfield({
+      lido: readGreenfieldFolder(root, process.discovery.outputFolder),
+      stateJson: snapshot.stateJson,
+      history,
+      outputFolder: process.discovery.outputFolder,
+    })
+
     return {
       kind: 'loaded',
       entry: process.installed ? 'installed' : 'no-reversa',
@@ -118,6 +146,7 @@ export function readWorkspace(root: string, deps: ReadingDeps): ReadingResult {
       decomposition: readDecomposition(snapshot.actionsMd, process.forward.actions.total),
       history,
       bugs,
+      greenfield,
     }
   } catch (cause) {
     const message = cause instanceof Error ? cause.message : String(cause)

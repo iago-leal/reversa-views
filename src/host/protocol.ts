@@ -13,7 +13,12 @@
 
 import type { ReversaProcess } from '../heranca/reversa-domain/src/index.ts'
 import type { ProbeReport } from '../heranca/reversa-probe/src/snapshot.ts'
-import type { ActiveDecomposition, BugRegistry, ProjectHistory } from '../domain/types.ts'
+import type {
+  ActiveDecomposition,
+  BugRegistry,
+  GreenfieldAxis,
+  ProjectHistory,
+} from '../domain/types.ts'
 
 /**
  * The envelope, identical in both directions and inherited from the kit:
@@ -106,6 +111,22 @@ export interface SetProcessData {
    * travels is only how many were left out (D-11).
    */
   bugs: BugRegistry
+  /**
+   * The greenfield axis of the project: how it was born by `/reversa-new`, and
+   * what the PRD and the specs planned against what the forward cycle delivered
+   * (feature 009, D-13).
+   *
+   * APPENDED at the end, like every field before it, and the same warning
+   * applies with the same force: ABSENT means the reading did not happen, and
+   * the panel names it as such. It must NOT be read as "the project is not
+   * greenfield" -- that is a different statement, and the axis carries it by
+   * name in `cenario` (RN-08).
+   *
+   * What travels is what was DERIVED from the artifacts: presence, stage,
+   * scenario, the crossed components and the scope items. The bodies of the
+   * brief, the PRD and the specs never cross the channel.
+   */
+  greenfield: GreenfieldAxis
 }
 
 /** The payload for every situation with no process to show. */

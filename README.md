@@ -259,6 +259,12 @@ consulta à origem. Cada um se alcança por um comando:
 | Com bug restrito | `node scripts/preview.js --workspace="$(node scripts/estragar-registro.js --caso=restrito)"` |
 | Com registro inconsistente | `node scripts/preview.js --workspace="$(node scripts/estragar-registro.js --caso=inconsistente)"` |
 | Com leitura de bugs no teto | `node scripts/preview.js --workspace="$(node scripts/estragar-registro.js --caso=teto)"` |
+| Sem âncora alguma (nem extração, nem `/reversa-new`) | `node scripts/preview.js --workspace="$(node scripts/estragar-greenfield.js --caso=sem-ancora)"` |
+| Pipeline do `/reversa-new` parada nas personas | `node scripts/preview.js --workspace="$(node scripts/estragar-greenfield.js --caso=parcial)"` |
+| Metadado do pipeline divergente do disco | `node scripts/preview.js --workspace="$(node scripts/estragar-greenfield.js --caso=divergente)"` |
+| PRD sem decomposição em specs | `node scripts/preview.js --workspace="$(node scripts/estragar-greenfield.js --caso=sdd-vazio)"` |
+| PRD sem seção de escopo | `node scripts/preview.js --workspace="$(node scripts/estragar-greenfield.js --caso=sem-escopo)"` |
+| Com leitura de specs no teto | `node scripts/preview.js --workspace="$(node scripts/estragar-greenfield.js --caso=teto)"` |
 
 | Desfecho da consulta | Comando |
 |---|---|

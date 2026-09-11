@@ -331,3 +331,273 @@ export const EMPTY_BUG_REGISTRY: BugRegistry = {
   truncado: false,
   anomalias: [],
 }
+
+/* ------------------------------------------------------------ greenfield */
+
+/**
+ * The vocabulary of the greenfield axis, which feature 009 adds (RN-01 to
+ * RN-08, RF-03, RF-05, RF-07).
+ *
+ * Types and constants only, for the same reason as everything above: the
+ * panel needs these SHAPES and must never reach the code that produces them.
+ *
+ * The AUTHORITY over what a greenfield project looks like on disk is the
+ * `/reversa-new` pipeline, and this file holds the copy the panel needs. The
+ * stage is read from the ARTIFACTS, never from the metadata `state.json`
+ * keeps about the pipeline: that metadata lags the disk by one step in guided
+ * mode as a matter of course, and a panel that believed it would tell the
+ * reader the project is one agent behind where it actually is.
+ */
+
+/**
+ * The six physical stages of the greenfield pipeline, in order (RF-03).
+ *
+ * The stage is the longest CONTIGUOUS run of artifacts present, in the order
+ * of `limits.ts`: `aberto` means the brief alone, and each next stage adds the
+ * next artifact. A later artifact present without an earlier one does not
+ * advance the stage; it opens an anomaly instead (D-02).
+ */
+export const GREENFIELD_STAGES = [
+  'ausente',
+  'aberto',
+  'ideado',
+  'pesquisado',
+  'redigido',
+  'especificado',
+] as const
+
+/** One of the six stages. */
+export type GreenfieldStage = (typeof GREENFIELD_STAGES)[number]
+
+/**
+ * The four scenarios of a project, by the anchor rule of `/reversa-coding`
+ * (RN-03).
+ *
+ * Legacy is `architecture.md` and `domain.md` together; greenfield is `prd.md`
+ * and at least one spec; both together is mixed; neither is no anchor. The
+ * scenario is declared and changes the reading of no other axis.
+ */
+export const PROJECT_SCENARIOS = ['legado', 'greenfield', 'misto', 'sem-ancora'] as const
+
+/** One of the four scenarios. */
+export type ProjectScenario = (typeof PROJECT_SCENARIOS)[number]
+
+/**
+ * What `newproject_progress` of `state.json` said, read tolerantly (RF-02,
+ * RF-05).
+ *
+ * Every value is RAW. The mode and the stage are vocabularies of the pipeline
+ * and not of this file, so a token the panel does not know is drawn as it came
+ * and marked unrecognised, never refused. The whole object is null when the
+ * field is absent, which is what a legacy project has, and that is not an
+ * anomaly.
+ */
+export interface GreenfieldMetadata {
+  /** `mode`: `guiado` or `expresso` today; drawn raw when neither. */
+  modo: string | null
+  /** `stage`: the NEXT agent to run, as the pipeline writes it. */
+  estagio: string | null
+  /** `started_at`, absolute, converted only on screen. */
+  iniciadoEm: string | null
+  /** `last_checkpoint_at`, absolute, converted only on screen. */
+  ultimoCheckpointEm: string | null
+  /** `completed_stages`, as written. */
+  concluidos: string[]
+  /** `brief`, the second source of the summary line (RF-06). */
+  brief: string | null
+}
+
+/** Which of the artifacts of the pipeline are on disk; the specs by count. */
+export interface GreenfieldArtifacts {
+  brief: boolean
+  ideacao: boolean
+  personas: boolean
+  prd: boolean
+  /** How many specs exist in the folder, even above the ceiling. */
+  specs: number
+}
+
+/**
+ * The path of each artifact present, relative to the observed root, for
+ * `openFile` to reach; null when the artifact is absent.
+ */
+export interface GreenfieldPaths {
+  brief: string | null
+  ideacao: string | null
+  personas: string | null
+  prd: string | null
+}
+
+/**
+ * Where one planned component stands, projected from the history (RN-06,
+ * D-08).
+ *
+ * It is a PROJECTION of the situation of the feature folder and not a second
+ * judgment: without a folder the component is planned; a folder still open is
+ * in progress; a folder delivered without an addendum is delivered; a folder
+ * with an addendum in force has converged. The names are deliberately not the
+ * ones of `FEATURE_SITUATIONS`, because a component and a folder are two
+ * things, and one spec may be served by more than one folder (RN-05).
+ */
+export const COMPONENT_SITUATIONS = [
+  'planejada',
+  'em-andamento',
+  'entregue',
+  'convergida',
+] as const
+
+/** One of the four situations of a component. */
+export type ComponentSituation = (typeof COMPONENT_SITUATIONS)[number]
+
+/**
+ * One planned component: a spec of the `sdd/` folder, crossed with the
+ * history (RF-07).
+ *
+ * The `Status` field of the spec is NOT read (RN-04): the five specs of this
+ * project say "Rascunho" with the five delivered, and a field nobody updates
+ * would be drawn as a truth with a seal on it. The disk decides.
+ */
+export interface PlannedComponent {
+  /** The file name of the spec without its extension, which is the name of the component. */
+  nome: string
+  /** Path of the spec, relative to the observed root. */
+  spec: string
+  situacao: ComponentSituation
+  /** `ativa` when any matched folder is the active one; `pausada` when any is paused. */
+  marca: FeatureMark
+  /** Every folder that matched, newest first; empty for a planned component. */
+  pastas: string[]
+  /** The addendum in force of the most advanced folder, when there is one. */
+  adendo: string | null
+  /** The tally of the most advanced folder; null when no folder matched, declared by name. */
+  acoes: { total: number; fechadas: number; abertas: number; emendas: number } | null
+}
+
+/** A feature folder the plan did not foresee (RN-05). */
+export interface UnplannedFeature {
+  pasta: string
+  id: string | null
+  nomeCurto: string | null
+  /** The situation of the FOLDER, as the history judged it, with no projection. */
+  situacao: FeatureSituation
+  marca: FeatureMark
+}
+
+/**
+ * One top-level item of the scope section of the PRD, read as prose (RN-14).
+ *
+ * It has no situation, and that is a rule and not an omission (RN-04): an item
+ * of the scope is an axis or a behaviour, not a unit of delivery, and matching
+ * it against a folder would be the panel inventing a correspondence.
+ */
+export interface ScopeItem {
+  /** The bold paragraph the item sat under, when there was one. */
+  grupo: string | null
+  /** The text before the first colon, or the first sentence when there is none. */
+  nome: string
+  /** The rest of the item, when there was a rest. */
+  detalhe: string | null
+  /** The confidence seal the item carried, kept apart from the text. */
+  selo: string | null
+}
+
+/**
+ * The panorama of the product: what was planned, what came outside the plan,
+ * and what the PRD declared (RF-07, RN-07).
+ *
+ * `totalDeSpecs` counts what is on DISK and `componentes` carries what was
+ * read; the two differ only above the ceiling, and the screen measures its
+ * list against the count (RN-05 of feature 006, D-15).
+ */
+export interface ProductPanorama {
+  /** In the order they were read; the order of DISPLAY is decided on screen (D-15). */
+  componentes: PlannedComponent[]
+  foraDoPlano: UnplannedFeature[]
+  escopo: ScopeItem[]
+  /** False when the PRD was read and had no recognisable scope section. */
+  escopoEncontrado: boolean
+  /** How many specs exist in the folder, even when the ceiling cut the reading. */
+  totalDeSpecs: number
+  /** True when the ceiling stopped the reading of the specs short. */
+  truncado: boolean
+  /** The N of "N de M componentes planejados convergidos" (RN-07). */
+  convergidos: number
+}
+
+/** The panorama of a project with no spec and no scope at all. */
+export const EMPTY_PANORAMA: ProductPanorama = {
+  componentes: [],
+  foraDoPlano: [],
+  escopo: [],
+  escopoEncontrado: false,
+  totalDeSpecs: 0,
+  truncado: false,
+  convergidos: 0,
+}
+
+/**
+ * Why a piece of the greenfield axis could not be read as expected (D-19).
+ *
+ * A LOCAL union, by the precedent of `BugAnomalyCode`: the inherited union is
+ * closed, and the common shape `DisplayAnomaly` is what the anomalies section
+ * draws. What is NOT here is as deliberate as what is: an absent PRD, an empty
+ * `sdd/`, an absent metadata field and an unknown mode are all named states of
+ * the reading, never anomalies.
+ */
+export type GreenfieldAnomalyCode =
+  /** The metadata `stage` is outside the set accepted for the physical stage (RN-02). */
+  | 'estagio-greenfield-divergente'
+  /** A later artifact is present without an earlier one (D-02). */
+  | 'sequencia-greenfield-com-buraco'
+  /** `prd.md` was read and no scope section was recognised (RN-14). */
+  | 'escopo-do-prd-nao-encontrado'
+  /** Two specs share one name once normalised; only the first is listed. */
+  | 'spec-duplicada'
+  /** `newproject_progress` is present and is not an object. */
+  | 'metadado-greenfield-malformado'
+  /** An artifact whose body the reading needed was above the byte ceiling. */
+  | 'artefato-greenfield-truncado'
+
+/** One degradation of the greenfield reading, in the inherited shape. */
+export interface GreenfieldAnomaly {
+  file: string
+  code: GreenfieldAnomalyCode
+  detail?: string
+}
+
+/**
+ * The greenfield axis of the project (RF-08).
+ *
+ * ABSENT from the payload means the reading did not happen -- a host older
+ * than this feature. An axis with `cenario: 'legado'` or `'sem-ancora'` means
+ * the reading happened and the project was not born by `/reversa-new`. An
+ * axis with specs at zero means the decomposition was not made yet. RN-08
+ * makes the three distinct, and the screen names each by its own sentence.
+ */
+export interface GreenfieldAxis {
+  cenario: ProjectScenario
+  estagio: GreenfieldStage
+  artefatos: GreenfieldArtifacts
+  caminhos: GreenfieldPaths
+  /** Null when `state.json` has no `newproject_progress`, which a legacy project has not. */
+  metadado: GreenfieldMetadata | null
+  /** One line, derived in the three steps of RF-06; null when neither source had it. */
+  resumo: string | null
+  panorama: ProductPanorama
+  anomalias: GreenfieldAnomaly[]
+  /** Paths whose body was not read because a cap was hit. */
+  truncados: string[]
+}
+
+/** The axis of a project whose output folder holds none of the artifacts. */
+export const EMPTY_GREENFIELD: GreenfieldAxis = {
+  cenario: 'sem-ancora',
+  estagio: 'ausente',
+  artefatos: { brief: false, ideacao: false, personas: false, prd: false, specs: 0 },
+  caminhos: { brief: null, ideacao: null, personas: null, prd: null },
+  metadado: null,
+  resumo: null,
+  panorama: EMPTY_PANORAMA,
+  anomalias: [],
+  truncados: [],
+}

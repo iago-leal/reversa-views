@@ -11,6 +11,7 @@
 
 import type { ReactNode } from 'react'
 import type { ReversaProcess } from '../../heranca/reversa-domain/src/index.ts'
+import type { GreenfieldAxis } from '../../domain/types.ts'
 import { brasiliaInstant } from '../domain/instants.ts'
 import { checkpointMark, phaseMark } from '../domain/labels.ts'
 import { CollapsibleSection } from './CollapsibleSection.tsx'
@@ -18,8 +19,29 @@ import { CollapsibleSection } from './CollapsibleSection.tsx'
 /** What the section draws. */
 export interface DiscoverySectionProps {
   process: ReversaProcess
+  /**
+   * The greenfield axis, or its absence (feature 009, RF-21).
+   *
+   * Optional, because a host older than the field does not send it, and the
+   * card then draws exactly what it drew before: the sentence below is an
+   * ADDITION over a project that was born by `/reversa-new` and has not been
+   * extracted yet, and nothing else changes.
+   */
+  greenfield?: GreenfieldAxis
   collapsed: boolean
   onToggle: () => void
+}
+
+/**
+ * Whether the sentence of RF-21 applies: the project was born by
+ * `/reversa-new` and no phase of the discovery has finished. Once one has, the
+ * extraction has started and the sentence would be false.
+ * @param props - the process and the axis.
+ * @returns true when the five pending phases have an explanation.
+ */
+function bornGreenfield(props: DiscoverySectionProps): boolean {
+  if (props.greenfield?.cenario !== 'greenfield') return false
+  return props.process.discovery.phases.every((phase) => phase.status !== 'done')
 }
 
 /**
@@ -37,6 +59,12 @@ export function DiscoverySection(props: DiscoverySectionProps): ReactNode {
       collapsed={props.collapsed}
       onToggle={props.onToggle}
     >
+      {bornGreenfield(props) ? (
+        <p data-part="discovery-greenfield" className="muted">
+          Projeto nascido por /reversa-new, ainda sem extração: as fases seguem pendentes até que
+          /reversa rode sobre o código novo.
+        </p>
+      ) : null}
       <ul className="rows">
         {discovery.phases.map((phase) => {
           const mark = phaseMark(phase)

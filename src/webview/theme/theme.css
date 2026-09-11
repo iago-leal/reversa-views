@@ -425,13 +425,17 @@ pre {
 /* One context of the registry. The rule that separates the groups is heavier
    than the hairline between rows, because a group is a change of subject and a
    row is not. */
-.bug-group {
+/* The groups of the panorama repeat this shape (feature 009), so that the two
+   cards that group rows say "a group" in the same way; one rule serves both. */
+.bug-group,
+.panorama-group {
   border-block-start: 0.0625rem solid var(--borderColor-default);
   padding-block-start: 0.5rem;
   margin-block-start: 0.5rem;
 }
 
-.bug-group:first-child {
+.bug-group:first-child,
+.panorama-group:first-child {
   border-block-start: none;
   padding-block-start: 0;
   margin-block-start: 0;
@@ -439,7 +443,8 @@ pre {
 
 /* The name of the context, which is a heading and has to read as one without
    growing to the size of the card title above it. */
-.bug-group__name {
+.bug-group__name,
+.panorama-group__name {
   font-size: 1em;
   font-weight: 600;
   margin: 0;
@@ -472,4 +477,13 @@ pre {
   .bug__id {
     overflow-wrap: anywhere;
   }
+}
+
+/* The label a group of the scope carries, in the words of the PRD (feature
+   009): one step below the group heading, and still a heading. */
+.panorama-group__label {
+  font-size: 1em;
+  font-weight: 600;
+  margin: 0.375rem 0 0;
+  color: var(--fgColor-muted);
 }

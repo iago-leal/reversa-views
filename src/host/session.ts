@@ -108,6 +108,10 @@ export function sessionMessages(
       // revision because RF-17 asks for it "like the inherited model".
       extensionVersion: build.version,
       builtFromCommit: build.commit,
+      // The greenfield axis of feature 009, appended last, as the contract
+      // asks: nothing above it moves, and a panel older than the field ignores
+      // what it does not know.
+      greenfield: reading.greenfield,
     },
   })
   return { messages, observedRoot: root }

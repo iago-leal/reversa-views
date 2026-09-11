@@ -38,11 +38,17 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { readBugs } from '../src/domain/bugs.ts'
-import { BUG_CAP } from '../src/domain/limits.ts'
+import { readGreenfield } from '../src/domain/greenfield.ts'
+import { readHistory } from '../src/domain/history.ts'
+import { BUG_CAP, SPEC_CAP } from '../src/domain/limits.ts'
 import { readReversa } from '../src/heranca/reversa-domain/src/index.ts'
 import { readReversaSnapshot } from '../src/heranca/reversa-probe/src/index.ts'
 import { readBugFolders } from '../src/probe/bugs.ts'
+import { readFeatureFolders } from '../src/probe/features.ts'
+import { readGreenfieldArtifacts } from '../src/probe/greenfield.ts'
 import { BugsSection } from '../src/webview/ui/BugsSection.tsx'
+import { OriginSection } from '../src/webview/ui/OriginSection.tsx'
+import { PanoramaSection } from '../src/webview/ui/PanoramaSection.tsx'
 
 /** Teto de tempo para ler o disco e julgar o retrato, em milissegundos. */
 const TETO_MS = 200
@@ -183,10 +189,59 @@ function instalarRegistroDeBugs(): void {
   }
 }
 
+/**
+ * O eixo greenfield da referência, no teto (feature 009): os quatro artefatos
+ * do `/reversa-new`, o brief e o PRD perto do tamanho alvo, e `SPEC_CAP` specs,
+ * que é o máximo que uma passada lista. O PRD carrega uma seção de escopo com
+ * cinquenta itens, que é o teto de itens, e a pasta de saída já tem os
+ * cinquenta adendos da referência ao lado, de modo que a listagem única da
+ * pasta é medida sobre uma pasta cheia.
+ */
+function instalarEixoGreenfield(): void {
+  escrever('_reversa_sdd/newproject-brief.md', encher(
+    '# Brief inicial\n\n## Ideia original\nUm painel do pipeline, sintético, para medir a leitura.\n\n## Reconhecimento prévio\n',
+    (i) => `Parágrafo ${i} do brief de referência, com texto suficiente para chegar ao tamanho alvo.\n\n`,
+  ))
+  escrever('_reversa_sdd/ideation.md', encher('# Ideação\n\n', (i) => `Ideia ${i}.\n\n`))
+  escrever('_reversa_sdd/personas.md', encher('# Personas\n\n', (i) => `Persona ${i}.\n\n`))
+  const itens = Array.from({ length: 50 }, (_, i) => `- 🟡 Item ${i}: detalhe do item ${i} da referência.`).join('\n')
+  escrever('_reversa_sdd/prd.md', encher(
+    `# PRD\n\n## 4. Escopo (in)\n\n**Um grupo:**\n\n${itens}\n\n## 5. Não-objetivos (out)\n\n`,
+    (i) => `Parágrafo ${i} do PRD de referência, fora do escopo e sem efeito sobre a leitura.\n\n`,
+  ))
+  for (let i = 0; i < SPEC_CAP; i++) {
+    escrever(`_reversa_sdd/sdd/componente-${String(i).padStart(3, '0')}.md`, `# Spec ${i}\n`)
+  }
+}
+
+/** A leitura inteira do eixo, do disco ao julgamento, como o host a faz. */
+function lerEixo() {
+  const { snapshot } = readReversaSnapshot(root)
+  const processo = readReversa(snapshot)
+  const pastas = readFeatureFolders({ root, forwardFolder: processo.discovery.forwardFolder })
+  const history = readHistory({
+    pastas: pastas.pastas,
+    truncado: pastas.truncado,
+    total: pastas.total,
+    activeFeatureDir: processo.forward.featureDir,
+    pausedFeatureDirs: [],
+    addendaFiles: snapshot.addendaFiles,
+    addendaBodies: snapshot.addendaBodies,
+    outputFolder: processo.discovery.outputFolder,
+  })
+  return readGreenfield({
+    lido: readGreenfieldArtifacts({ root, outputFolder: processo.discovery.outputFolder }),
+    stateJson: snapshot.stateJson,
+    history,
+    outputFolder: processo.discovery.outputFolder,
+  })
+}
+
 beforeEach(() => {
   root = mkdtempSync(join(tmpdir(), 'reversa-desempenho-'))
   instalarWorkspaceDeReferencia()
   instalarRegistroDeBugs()
+  instalarEixoGreenfield()
 })
 
 afterEach(() => {
@@ -263,6 +318,69 @@ describe('o registro de bugs no workspace de referência', () => {
     expect(
       decorrido,
       `a pintura do bloco levou ${decorrido.toFixed(1)} ms, acima do teto de ${TETO_DA_PINTURA_MS} ms`,
+    ).toBeLessThan(TETO_DA_PINTURA_MS)
+  })
+})
+
+/**
+ * O eixo greenfield na referência (feature 009, RNF-01). Duas medidas, como
+ * para o registro: a LEITURA, que é disco e cabe no teto de 200 ms junto com
+ * a leitura do processo que ela precisa; e a PINTURA dos dois cartões, que é
+ * tela e tem o teto de 100 ms.
+ */
+describe('o eixo greenfield no workspace de referência', () => {
+  it(`lê a pasta de saída e julga o eixo no teto em menos de ${TETO_MS} ms`, () => {
+    lerEixo()
+
+    const inicio = performance.now()
+    const eixo = lerEixo()
+    const decorrido = performance.now() - inicio
+
+    // Sanidade: medir um eixo vazio não prova nada.
+    expect(eixo.cenario).toBe('greenfield')
+    expect(eixo.estagio).toBe('especificado')
+    expect(eixo.panorama.componentes).toHaveLength(SPEC_CAP)
+    expect(eixo.panorama.escopo).toHaveLength(50)
+    expect(eixo.anomalias).toEqual([])
+
+    expect(
+      decorrido,
+      `leitura mais julgamento do eixo levou ${decorrido.toFixed(1)} ms, acima do teto de ${TETO_MS} ms`,
+    ).toBeLessThan(TETO_MS)
+  })
+
+  it(`pinta os dois cartões depois da chegada do processo em menos de ${TETO_DA_PINTURA_MS} ms`, () => {
+    const eixo = lerEixo()
+    const cartoes = () =>
+      renderToStaticMarkup(createElement(PanoramaSection, {
+        greenfield: eixo,
+        collapsed: false,
+        onToggle: () => {},
+        onOpenFile: () => {},
+        scopeRevealed: true,
+        onRevealScope: () => {},
+      })) +
+      renderToStaticMarkup(createElement(OriginSection, {
+        greenfield: eixo,
+        collapsed: false,
+        onToggle: () => {},
+        onOpenFile: () => {},
+      }))
+
+    cartoes()
+
+    const inicio = performance.now()
+    const html = cartoes()
+    const decorrido = performance.now() - inicio
+
+    // Sanidade: os cinquenta componentes, os cinquenta itens e as quatro etapas.
+    expect(html.match(/data-component="/g)).toHaveLength(SPEC_CAP)
+    expect(html.match(/data-scope-item="/g)).toHaveLength(50)
+    expect(html.match(/data-step="/g)).toHaveLength(4)
+
+    expect(
+      decorrido,
+      `a pintura dos dois cartões levou ${decorrido.toFixed(1)} ms, acima do teto de ${TETO_DA_PINTURA_MS} ms`,
     ).toBeLessThan(TETO_DA_PINTURA_MS)
   })
 })

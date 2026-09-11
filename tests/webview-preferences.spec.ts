@@ -118,7 +118,7 @@ describe('escrita da preferência', () => {
 })
 
 describe('as duas ações globais (RF-02, RF-03)', () => {
-  it('recolher tudo recolhe os sete cartões, e só eles', () => {
+  it('recolher tudo recolhe os dez cartões, e só eles', () => {
     const depois = withAll(true)
     expect(depois.declared).toBe(true)
     expect(depois.collapsedSections).toEqual([...COLLAPSIBLE_SECTIONS])
@@ -173,5 +173,36 @@ describe('o nome de seção da feature 008', () => {
   it('nome de seção que esta versão não tem continua descartado', () => {
     const lido = readPreferences({ declared: true, collapsedSections: ['bugs', 'secao-extinta'] })
     expect(lido.collapsedSections).toEqual(['bugs'])
+  })
+})
+
+/**
+ * Os dois nomes de seção que a feature 009 acrescenta (plano de migração,
+ * passo 4).
+ *
+ * Uma preferência gravada antes desta feature não conhece `panorama` nem
+ * `origem`, e a regra de D-03 da feature 006 decide o que acontece: a escolha
+ * declarada vence inteira, os dois cartões novos ficam abertos, e o usuário os
+ * recolhe uma vez. O que esta suíte prende é que os dois nomes passam a ser
+ * ACEITOS na leitura em vez de descartados, e que a preferência antiga segue
+ * válida e intacta.
+ */
+describe('os dois nomes da feature 009', () => {
+  it('uma preferência gravada por versão anterior continua válida, sem os nomes novos', () => {
+    const lida = readPreferences({ collapsedSections: ['history', 'bugs', 'policy'], declared: true })
+    expect(lida.declared).toBe(true)
+    expect(lida.collapsedSections).toEqual(['history', 'bugs', 'policy'])
+    expect(lida.collapsedSections).not.toContain('panorama')
+    expect(lida.collapsedSections).not.toContain('origem')
+  })
+
+  it('`panorama` e `origem` são nomes aceitos, e não descartados', () => {
+    const lida = readPreferences({ collapsedSections: ['origem', 'panorama'], declared: true })
+    expect(lida.collapsedSections).toEqual(['origem', 'panorama'])
+  })
+
+  it('recolher tudo alcança os dois, por derivarem da ordem das seções', () => {
+    expect(withAll(true).collapsedSections).toContain('panorama')
+    expect(withAll(true).collapsedSections).toContain('origem')
   })
 })

@@ -262,10 +262,34 @@ describe('nada de layout do Reversa no host (RF-14)', () => {
     }
   })
 
+  /**
+   * Os artefatos do `/reversa-new` (feature 009, RN-09). Os nomes vivem em
+   * `src/domain/limits.ts` e chegam ao host só como o tipo do eixo; um host que
+   * os escrevesse saberia onde o Reversa guarda arquivo, que é o que RF-14
+   * proíbe. A busca é por nome de arquivo e pela pasta de specs com barra, para
+   * não acusar a palavra `sdd` dentro de `spec-sdd` na prosa de um comentário.
+   */
+  it('nenhum nome de artefato greenfield nem a pasta de specs', () => {
+    for (const fonte of decisores()) {
+      expect(fonte.texto, fonte.nome).not.toMatch(
+        /newproject-brief|newproject_progress|ideation\.md|personas\.md|prd\.md|architecture\.md|domain\.md|\bsdd\//,
+      )
+    }
+  })
+
   it('nenhum cálculo de estágio nem de fase', () => {
     for (const fonte of decisores()) {
       expect(fonte.texto, fonte.nome).not.toMatch(
         /'requirements'|'clarify'|'to-do'|'reconhecimento'|'escavacao'|'geracao'/,
+      )
+    }
+  })
+
+  /** Os agentes e os estágios físicos da pipeline greenfield ficam do lado de lá do canal. */
+  it('nenhum nome de agente nem de estágio da pipeline greenfield', () => {
+    for (const fonte of decisores()) {
+      expect(fonte.texto, fonte.nome).not.toMatch(
+        /'ideator'|'researcher'|'drafter'|'spec-sdd'|'aberto'|'ideado'|'pesquisado'|'redigido'|'especificado'/,
       )
     }
   })

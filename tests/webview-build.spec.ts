@@ -111,22 +111,30 @@ describe('a guarda de tamanho (RF-14, D-11)', () => {
     const soma = emitidos.reduce((total, caminho) => total + statSync(caminho).size, 0)
     // A medida sai no relato do próprio teste, e não só quando ele falha: o que
     // interessa a quem volta daqui a meses é a folga, e uma folga que só
-    // aparece na falha só aparece tarde demais. Na entrega da feature 008 o
-    // pacote somava 194018 B, pouco menos da metade do teto de 400 KiB;
-    // a feature 006 media 176.4 KiB, de modo que o bloco de bugs custou cerca
-    // de 13 KiB.
+    // aparece na falha só aparece tarde demais. Na entrega da feature 009 o
+    // pacote somava 206403 B, pouco mais da metade do teto de 400 KiB; a
+    // feature 008 media 194018 B e a 006, 176.4 KiB, de modo que o bloco de
+    // bugs custou cerca de 13 KiB e os dois cartões da 009 cerca de 12 KiB.
     const folga = TETO_DO_PACOTE_DA_TELA - soma
     expect(
       soma,
       `o pacote da tela soma ${soma} B contra o teto de ${TETO_DO_PACOTE_DA_TELA} B (folga de ${folga} B)`,
     ).toBeLessThanOrEqual(TETO_DO_PACOTE_DA_TELA)
 
-    // A folga medida contra a metade do teto, e não contra ele mesmo. Cartão
+    // A folga medida contra uma FRAÇÃO do teto, e não contra ele mesmo. Cartão
     // novo que só coubesse raspando teria a saída fácil de subir um pouco o
-    // teto, e ninguém veria; exigir metade dá à próxima feature o mesmo espaço
-    // que esta encontrou, e o número continua morando num lugar só (RN-06).
-    expect(soma * 2, 'o pacote da tela passou de metade do teto').toBeLessThanOrEqual(
-      TETO_DO_PACOTE_DA_TELA,
+    // teto, e ninguém veria; exigir a fração dá à próxima feature espaço
+    // declarado, e o número continua morando num lugar só (RN-06).
+    //
+    // A fração era METADE até a feature 009. Os dois cartões dela custaram
+    // 12,1 KiB compactados, onde a metade deixava 10,8 KiB, e o pacote ficou em
+    // 206403 B: 1603 B acima da metade e 203 KiB abaixo do teto. A decisão do
+    // usuário, em 2026-09-11, foi afrouxar a guarda para 60 % em vez de subir o
+    // teto ou cortar o bloco do escopo. O número está escrito aqui de propósito:
+    // uma guarda que se afrouxa em silêncio deixa de guardar.
+    const fracao = 0.6
+    expect(soma, `o pacote da tela passou de ${fracao * 100} % do teto`).toBeLessThanOrEqual(
+      TETO_DO_PACOTE_DA_TELA * fracao,
     )
   })
 })

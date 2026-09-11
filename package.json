@@ -71,7 +71,8 @@
     "atualizar": "node scripts/atualizar.js",
     "observar:webview": "node scripts/build-webview.js --observar",
     "estragar:workspace": "node scripts/estragar-workspace.js",
-    "estragar:registro": "node scripts/estragar-registro.js"
+    "estragar:registro": "node scripts/estragar-registro.js",
+    "estragar:greenfield": "node scripts/estragar-greenfield.js"
   },
   "devDependencies": {
     "@primer/primitives": "11.10.0",

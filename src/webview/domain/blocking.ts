@@ -13,7 +13,9 @@
  */
 
 import type { ReversaProcess } from '../../heranca/reversa-domain/src/index.ts'
-import type { BugEntry, BugRegistry } from '../../domain/types.ts'
+import type { BugEntry, BugRegistry, GreenfieldAxis } from '../../domain/types.ts'
+import { greenfieldStageLabel } from './labels.ts'
+import { lastArtifact, nextAgent, pipelineStarted } from './origin-view.ts'
 import type { BlockingReason } from './types.ts'
 
 /** The stage that means the delivery closed and the addendum never came. */
@@ -184,6 +186,41 @@ function bugReasons(registry: BugRegistry | undefined): BlockingReason[] {
 }
 
 /**
+ * The `/reversa-new` pipeline that started and did not finish (RN-11, RF-16,
+ * D-17 of feature 009).
+ *
+ * It is a reason WHETHER OR NOT there is an active feature, because in guided
+ * mode each agent waits for the user's CONTINUAR: an incomplete pipeline is a
+ * decision pending on a person. It is NOT a reason when the project has the
+ * anchor of the extraction, because the coding skill runs on that anchor and
+ * the specs would be a complement; nor when nothing of `/reversa-new` exists,
+ * because a project that never ran it is not waiting on it.
+ *
+ * The command names the agent that comes next, and never `/reversa-new`
+ * itself: resuming the pipeline is running the agent that is missing, which
+ * for a PRD without specs is `/reversa-spec-sdd` (RF-16).
+ * @param axis - the greenfield axis, or its absence.
+ * @returns one reason, or none.
+ */
+function greenfieldReason(axis: GreenfieldAxis | undefined): BlockingReason[] {
+  if (axis === undefined) return []
+  if (axis.cenario === 'legado' || axis.cenario === 'misto') return []
+  if (!pipelineStarted(axis)) return []
+
+  const agent = nextAgent(axis.estagio)
+  if (agent === null) return []
+
+  const stage = greenfieldStageLabel(axis.estagio)
+  return [
+    {
+      text: `O /reversa-new parou em "${stage.text}" e aguarda o agente ${agent}.`,
+      artifact: lastArtifact(axis),
+      command: `/reversa-${agent}`,
+    },
+  ]
+}
+
+/**
  * Every reason the process is waiting on a human, in the declared order.
  *
  * The registry arrives as a SECOND ARGUMENT, beside the process and not inside
@@ -192,18 +229,25 @@ function bugReasons(registry: BugRegistry | undefined): BlockingReason[] {
  * optional because a host older than feature 008 does not send it, and a panel
  * that treated its absence as an empty registry would be affirming that no bug
  * waits when it simply did not look.
+ *
+ * The greenfield axis arrives as a THIRD, by the same reasoning and with the
+ * same optionality (feature 009): absent is "not read", and not "nothing
+ * waits". Its reason comes LAST, after everything that was already here.
  * @param process - the process the panel received.
  * @param registry - the bug registry, or its absence.
+ * @param greenfield - the greenfield axis, or its absence.
  * @returns the reasons; an empty list means no banner, not an empty banner.
  */
 export function blockingReasons(
   process: ReversaProcess,
   registry?: BugRegistry,
+  greenfield?: GreenfieldAxis,
 ): BlockingReason[] {
   return [
     ...deliveredWithoutAddendum(process),
     ...migrationReasons(process),
     ...openDoubts(process),
     ...bugReasons(registry),
+    ...greenfieldReason(greenfield),
   ]
 }

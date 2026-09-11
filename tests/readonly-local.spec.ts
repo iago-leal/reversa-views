@@ -27,6 +27,9 @@ import * as decomposition from '../src/domain/decomposition.ts'
 import * as history from '../src/domain/history.ts'
 import * as bugs from '../src/domain/bugs.ts'
 import * as frontMatter from '../src/domain/front-matter.ts'
+import * as greenfieldProbe from '../src/probe/greenfield.ts'
+import * as greenfield from '../src/domain/greenfield.ts'
+import * as prdScope from '../src/domain/prd-scope.ts'
 
 /** As duas pastas do código local que esta feature acrescenta. */
 const PASTAS = ['src/probe', 'src/domain']
@@ -71,6 +74,18 @@ describe('a suíte tem o que varrer', () => {
       expect(caminhos, `${modulo} fora da varredura`).toContain(modulo)
     }
   })
+
+  /** Os três da feature 009, pela mesma razão: a varredura precisa tê-los alcançado. */
+  it('alcança os módulos que a feature 009 acrescentou', () => {
+    const caminhos = locais().map((fonte) => fonte.caminho)
+    for (const modulo of [
+      'src/probe/greenfield.ts',
+      'src/domain/greenfield.ts',
+      'src/domain/prd-scope.ts',
+    ]) {
+      expect(caminhos, `${modulo} fora da varredura`).toContain(modulo)
+    }
+  })
 })
 
 describe('módulo de plataforma só onde a leitura acontece (D-06)', () => {
@@ -82,7 +97,7 @@ describe('módulo de plataforma só onde a leitura acontece (D-06)', () => {
   })
 
   it('as sondas locais leem pelas funções que a sonda herdada exporta', () => {
-    for (const sonda of ['src/probe/features.ts', 'src/probe/bugs.ts']) {
+    for (const sonda of ['src/probe/features.ts', 'src/probe/bugs.ts', 'src/probe/greenfield.ts']) {
       const texto = readFileSync(sonda, 'utf8')
       expect(texto, sonda).toMatch(/from\s+'\.\.\/heranca\/reversa-probe\/src\/index\.ts'/)
       for (const funcao of ['listNames', 'readText', 'resolveInside']) {
@@ -97,7 +112,12 @@ describe('módulo de plataforma só onde a leitura acontece (D-06)', () => {
    * e é a metade "o domínio decide" do corte que a casa faz.
    */
   it('o domínio não alcança a sonda herdada: quem lê é a sonda local', () => {
-    for (const julgamento of ['src/domain/bugs.ts', 'src/domain/front-matter.ts']) {
+    for (const julgamento of [
+      'src/domain/bugs.ts',
+      'src/domain/front-matter.ts',
+      'src/domain/greenfield.ts',
+      'src/domain/prd-scope.ts',
+    ]) {
       const texto = readFileSync(julgamento, 'utf8')
       expect(texto, julgamento).not.toMatch(/reversa-probe/)
     }
@@ -139,7 +159,17 @@ describe('nenhuma via de escrita, de execução ou de rede', () => {
 
   it('não exporta nome que sugira escrita', () => {
     const proibido = /^(write|save|update|delete|remove|create|set|persist|install|run|exec)/i
-    for (const modulo of [probe, bugsProbe, decomposition, history, bugs, frontMatter]) {
+    for (const modulo of [
+      probe,
+      bugsProbe,
+      decomposition,
+      history,
+      bugs,
+      frontMatter,
+      greenfieldProbe,
+      greenfield,
+      prdScope,
+    ]) {
       for (const nome of Object.keys(modulo)) {
         expect(nome, `${nome} parece mutador`).not.toMatch(proibido)
       }

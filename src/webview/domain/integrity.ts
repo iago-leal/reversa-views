@@ -25,7 +25,12 @@ export function readingIntegrity(payload: SetProcessData): ReadingIntegrity {
   // different origins and different vocabularies -- and an older host that
   // sends no registry at all contributes nothing rather than throwing.
   const registryAnomalies = payload.bugs === undefined ? 0 : payload.bugs.anomalias.length
-  const anomalies = payload.process.anomalies.length + registryAnomalies
+  // The anomalies of the greenfield axis join by the same rule and for the
+  // same reason (feature 009): counted, not merged, and nothing from a host
+  // that does not send the axis.
+  const greenfieldAnomalies =
+    payload.greenfield === undefined ? 0 : payload.greenfield.anomalias.length
+  const anomalies = payload.process.anomalies.length + registryAnomalies + greenfieldAnomalies
   const refusals = payload.probe.refusals.length
   const truncated = payload.probe.truncated.length
 

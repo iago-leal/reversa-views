@@ -272,3 +272,102 @@ describe('registro de bugs na leitura', () => {
     expect(resultado.bugs).toBeDefined()
   })
 })
+
+/**
+ * O eixo greenfield na leitura (feature 009, RF-01, RF-02, RF-22, D-13).
+ *
+ * A sonda do eixo entra por parâmetro, como as duas herdadas e as duas locais,
+ * e corre DENTRO do mesmo `try`: uma varredura que lança vira o estado de erro
+ * nomeado, e não exceção no editor. O julgamento recebe o histórico já
+ * julgado, o `state.json` cru do retrato e a pasta de saída que o processo
+ * herdado resolveu, para que nenhum caminho do Reversa seja escrito no host.
+ */
+describe('eixo greenfield na leitura', () => {
+  /** O que a sonda do eixo devolveria para uma pasta de saída sem artefato do /reversa-new. */
+  const NADA = {
+    pasta: true,
+    brief: false,
+    briefMd: null,
+    ideacao: false,
+    personas: false,
+    prd: false,
+    prdMd: null,
+    arquitetura: true,
+    dominio: true,
+    specs: [],
+    totalDeSpecs: 0,
+    truncados: [],
+  }
+
+  function greenfieldRead(overrides: Partial<Parameters<typeof readWorkspace>[1]> = {}) {
+    return readWorkspace('/w', {
+      readSnapshot: () => probeResult(INSTALLED),
+      readProcess: readReversa,
+      log: logSpy().port,
+      readGreenfieldFolder: () => NADA,
+      ...overrides,
+    })
+  }
+
+  it('devolve o eixo no resultado da leitura, julgado a partir do que a sonda viu', () => {
+    const resultado = greenfieldRead({
+      readGreenfieldFolder: () => ({
+        ...NADA,
+        arquitetura: false,
+        dominio: false,
+        brief: true,
+        briefMd: '# Brief\n\n## Ideia original\n\nUm painel. Mais nada.\n',
+        ideacao: true,
+        personas: true,
+        prd: true,
+        prdMd: '# PRD\n\n## 4. Escopo (in)\n\n- Painel: o cartão.\n',
+        specs: ['painel.md'],
+        totalDeSpecs: 1,
+      }),
+    })
+
+    if (resultado.kind !== 'loaded') throw new Error('esperava leitura bem-sucedida')
+    expect(resultado.greenfield.cenario).toBe('greenfield')
+    expect(resultado.greenfield.estagio).toBe('especificado')
+    expect(resultado.greenfield.resumo).toBe('Um painel.')
+    expect(resultado.greenfield.panorama.componentes.map((c) => c.nome)).toEqual(['painel'])
+    expect(resultado.greenfield.panorama.escopo.map((item) => item.nome)).toEqual(['Painel'])
+  })
+
+  it('projeto sem artefato do /reversa-new devolve cenário legado, sem anomalia e sem exceção', () => {
+    const resultado = greenfieldRead()
+    if (resultado.kind !== 'loaded') throw new Error('esperava leitura bem-sucedida')
+    expect(resultado.greenfield.cenario).toBe('legado')
+    expect(resultado.greenfield.estagio).toBe('ausente')
+    expect(resultado.greenfield.anomalias).toEqual([])
+  })
+
+  it('a sonda do eixo recebe a raiz observada e a pasta de saída que o processo resolveu', () => {
+    const sonda = vi.fn(() => NADA)
+    greenfieldRead({ readGreenfieldFolder: sonda })
+    expect(sonda).toHaveBeenCalledTimes(1)
+    expect(sonda).toHaveBeenCalledWith('/w', '_reversa_sdd')
+  })
+
+  it('uma varredura do eixo que lança vira o estado de erro, e não exceção no editor', () => {
+    const log = logSpy()
+    const resultado = greenfieldRead({
+      log: log.port,
+      readGreenfieldFolder: () => {
+        throw new Error('eixo recusou')
+      },
+    })
+    expect(resultado.kind).toBe('error')
+    if (resultado.kind !== 'error') return
+    expect(resultado.message).toContain('eixo recusou')
+    expect(log.lines[0]).toContain('reading ·')
+  })
+
+  it('o campo do eixo viaja mesmo num workspace sem Reversa instalado', () => {
+    const resultado = greenfieldRead({ readSnapshot: () => probeResult(null) })
+    if (resultado.kind !== 'loaded') throw new Error('esperava leitura bem-sucedida')
+    expect(resultado.entry).toBe('no-reversa')
+    expect(resultado.greenfield).toBeDefined()
+    expect(resultado.greenfield.cenario).toBe('legado')
+  })
+})

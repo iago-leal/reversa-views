@@ -19,10 +19,15 @@ import type {
   BugContext,
   BugEntry,
   BugRegistry,
+  GreenfieldAxis,
   HistoryEntry,
+  PlannedComponent,
+  ProductPanorama,
   ProjectHistory,
+  ScopeItem,
+  UnplannedFeature,
 } from '../../src/domain/types.ts'
-import { EMPTY_BUG_COUNTS } from '../../src/domain/types.ts'
+import { EMPTY_BUG_COUNTS, EMPTY_PANORAMA } from '../../src/domain/types.ts'
 import type { SetProcessData } from '../../src/host/protocol.ts'
 
 /** What a caller may change about the installation the fixture describes. */
@@ -202,6 +207,7 @@ export function payloadFixture(overrides: Partial<SetProcessData> = {}): SetProc
     extensionVersion: '0.6.1',
     builtFromCommit: 'a23711d481021a978720c0bc478b6dabed94fec3',
     bugs: bugsFixture(),
+    greenfield: greenfieldFixture(),
     ...overrides,
   }
 }
@@ -353,3 +359,227 @@ const BUG_CONTEXTS: readonly BugContext[] = [
     }),
   ]),
 ]
+
+/* ------------------------------------------------------------ greenfield */
+
+/**
+ * One planned component, with only what the caller cares to say.
+ *
+ * The default is a CONVERGED component served by one folder, which is what the
+ * five components of this project are. A case about a planned one overrides
+ * the situation and empties the folders; the fixture does not derive one from
+ * the other, because that derivation is the domain's and a fixture that
+ * repeated it would be a second copy of the rule.
+ */
+export function componentFixture(
+  partes: Partial<PlannedComponent> & { nome: string },
+): PlannedComponent {
+  const id = partes.pastas?.[0]?.match(/\/(\d+)-/)?.[1] ?? '001'
+  return {
+    spec: `_reversa_sdd/sdd/${partes.nome}.md`,
+    situacao: 'convergida',
+    marca: 'nenhuma',
+    pastas: [`_reversa_forward/${id}-${partes.nome}`],
+    adendo: `_reversa_sdd/addenda/${id}-${partes.nome}.md`,
+    acoes: { total: 20, fechadas: 20, abertas: 0, emendas: 0 },
+    ...partes,
+  }
+}
+
+/** One feature folder the plan did not foresee. */
+export function unplannedFixture(
+  partes: Partial<UnplannedFeature> & { nomeCurto: string },
+): UnplannedFeature {
+  return {
+    pasta: `_reversa_forward/006-${partes.nomeCurto}`,
+    id: '006',
+    situacao: 'convergida',
+    marca: 'nenhuma',
+    ...partes,
+  }
+}
+
+/** One item of the declared scope of the PRD. */
+export function scopeItemFixture(partes: Partial<ScopeItem> & { nome: string }): ScopeItem {
+  return { grupo: null, detalhe: null, selo: null, ...partes }
+}
+
+/**
+ * The five components of this project, as the panel reads them on 2026-09-11:
+ * every one converged, each served by the folder of the same name.
+ */
+const COMPONENTS: readonly PlannedComponent[] = [
+  componentFixture({ nome: 'leitura-do-processo', pastas: ['_reversa_forward/001-leitura-do-processo'] }),
+  componentFixture({ nome: 'ponte-e-host', pastas: ['_reversa_forward/002-ponte-e-host'] }),
+  componentFixture({ nome: 'painel-do-processo', pastas: ['_reversa_forward/003-painel-do-processo'] }),
+  componentFixture({ nome: 'heranca-e-sincronia', pastas: ['_reversa_forward/004-heranca-e-sincronia'] }),
+  componentFixture({
+    nome: 'empacotamento-e-verificacao',
+    pastas: ['_reversa_forward/005-empacotamento-e-verificacao'],
+  }),
+]
+
+/** The folders born outside the plan, newest first, the active one included. */
+const UNPLANNED: readonly UnplannedFeature[] = [
+  unplannedFixture({
+    pasta: '_reversa_forward/009-greenfield-e-features-do-prd',
+    id: '009',
+    nomeCurto: 'greenfield-e-features-do-prd',
+    situacao: 'em-aberto',
+    marca: 'ativa',
+  }),
+  unplannedFixture({
+    pasta: '_reversa_forward/008-cronologia-do-ciclo-bugs',
+    id: '008',
+    nomeCurto: 'cronologia-do-ciclo-bugs',
+  }),
+  unplannedFixture({
+    pasta: '_reversa_forward/007-atualizacao-e-progresso',
+    id: '007',
+    nomeCurto: 'atualizacao-e-progresso',
+  }),
+  unplannedFixture({ nomeCurto: 'cartoes-e-cronologia' }),
+]
+
+/** A few items of the scope of this project's PRD, in its three groups. */
+const SCOPE: readonly ScopeItem[] = [
+  scopeItemFixture({
+    grupo: 'Núcleo, o que responde "onde estou e o que faço agora"',
+    nome: 'Identidade da instalação',
+    detalhe: 'projeto, versão do framework, pastas de saída e forward resolvidas.',
+    selo: '🟡',
+  }),
+  scopeItemFixture({
+    grupo: 'Núcleo, o que responde "onde estou e o que faço agora"',
+    nome: 'Bloqueio humano',
+    detalhe: 'destaque do que aguarda decisão sua.',
+    selo: '🟡',
+  }),
+  scopeItemFixture({
+    grupo: 'Diagnóstico, o que impede o painel de mentir em silêncio',
+    nome: 'Anomalias',
+    detalhe: 'toda degradação que o modelo encontrou ao ler.',
+    selo: '🟡',
+  }),
+  scopeItemFixture({
+    grupo: 'Comportamento',
+    nome: 'Leitura automática na ativação, sem comando prévio nem configuração de caminho.',
+    selo: '🟡',
+  }),
+]
+
+/**
+ * The panorama of the project, whose converged count is COUNTED from the
+ * components rather than declared, for the same reason the bug tally is
+ * summed: the case that wants a divergence overrides `convergidos` on purpose.
+ */
+export function panoramaFixture(
+  componentes: PlannedComponent[] = [...COMPONENTS],
+  overrides: Partial<ProductPanorama> = {},
+): ProductPanorama {
+  return {
+    componentes,
+    foraDoPlano: [...UNPLANNED],
+    escopo: [...SCOPE],
+    escopoEncontrado: true,
+    totalDeSpecs: componentes.length,
+    truncado: false,
+    convergidos: componentes.filter((componente) => componente.situacao === 'convergida').length,
+    ...overrides,
+  }
+}
+
+/**
+ * The greenfield axis of this project as it stands: the four artifacts present,
+ * five specs, the pipeline done in guided mode, and the metadata one step
+ * behind nothing.
+ */
+export function greenfieldFixture(overrides: Partial<GreenfieldAxis> = {}): GreenfieldAxis {
+  return {
+    cenario: 'greenfield',
+    estagio: 'especificado',
+    artefatos: { brief: true, ideacao: true, personas: true, prd: true, specs: 5 },
+    caminhos: {
+      brief: '_reversa_sdd/newproject-brief.md',
+      ideacao: '_reversa_sdd/ideation.md',
+      personas: '_reversa_sdd/personas.md',
+      prd: '_reversa_sdd/prd.md',
+    },
+    metadado: {
+      modo: 'guiado',
+      estagio: 'done',
+      iniciadoEm: '2026-09-09T10:31:12Z',
+      ultimoCheckpointEm: '2026-09-09T11:03:11Z',
+      concluidos: ['ideator', 'researcher', 'drafter', 'spec-sdd'],
+      brief: 'criar uma extensao para o VSCode com o intuito de visualizarmos o pipeline do reversa.',
+    },
+    resumo: 'Criar uma extensão para o VSCode com o intuito de visualizarmos o pipeline do Reversa.',
+    panorama: panoramaFixture(),
+    anomalias: [],
+    truncados: [],
+    ...overrides,
+  }
+}
+
+/** The axis of a legacy project: the two anchors of the extraction, and nothing of `/reversa-new`. */
+export function legacyGreenfieldFixture(): GreenfieldAxis {
+  return greenfieldFixture({
+    cenario: 'legado',
+    estagio: 'ausente',
+    artefatos: { brief: false, ideacao: false, personas: false, prd: false, specs: 0 },
+    caminhos: { brief: null, ideacao: null, personas: null, prd: null },
+    metadado: null,
+    resumo: null,
+    panorama: { ...EMPTY_PANORAMA, foraDoPlano: [...UNPLANNED] },
+  })
+}
+
+/** The axis of a project with no anchor at all: neither extraction nor `/reversa-new`. */
+export function anchorlessGreenfieldFixture(): GreenfieldAxis {
+  return { ...legacyGreenfieldFixture(), cenario: 'sem-ancora' }
+}
+
+/**
+ * The axis of a project that ran `/reversa-new` up to the personas and stopped:
+ * the PRD is not written, and the pipeline waits on the drafter.
+ */
+export function partialGreenfieldFixture(): GreenfieldAxis {
+  return greenfieldFixture({
+    cenario: 'sem-ancora',
+    estagio: 'pesquisado',
+    artefatos: { brief: true, ideacao: true, personas: true, prd: false, specs: 0 },
+    caminhos: {
+      brief: '_reversa_sdd/newproject-brief.md',
+      ideacao: '_reversa_sdd/ideation.md',
+      personas: '_reversa_sdd/personas.md',
+      prd: null,
+    },
+    metadado: {
+      modo: 'guiado',
+      estagio: 'drafter',
+      iniciadoEm: '2026-09-09T10:31:12Z',
+      ultimoCheckpointEm: '2026-09-09T10:50:00Z',
+      concluidos: ['ideator', 'researcher'],
+      brief: 'criar uma extensao para o VSCode.',
+    },
+    panorama: { ...EMPTY_PANORAMA, foraDoPlano: [...UNPLANNED] },
+  })
+}
+
+/** The axis of a project whose PRD is written and whose `sdd/` folder is still empty. */
+export function undecomposedGreenfieldFixture(): GreenfieldAxis {
+  return greenfieldFixture({
+    cenario: 'sem-ancora',
+    estagio: 'redigido',
+    artefatos: { brief: true, ideacao: true, personas: true, prd: true, specs: 0 },
+    metadado: {
+      modo: 'guiado',
+      estagio: 'spec-sdd',
+      iniciadoEm: '2026-09-09T10:31:12Z',
+      ultimoCheckpointEm: '2026-09-09T11:00:00Z',
+      concluidos: ['ideator', 'researcher', 'drafter'],
+      brief: 'criar uma extensao para o VSCode.',
+    },
+    panorama: panoramaFixture([], { foraDoPlano: [...UNPLANNED] }),
+  })
+}

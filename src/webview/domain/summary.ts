@@ -19,10 +19,18 @@
  * @module webview/domain/summary
  */
 
-import type { HistoryEntry } from '../../domain/types.ts'
+import type { GreenfieldAxis, HistoryEntry, PlannedComponent } from '../../domain/types.ts'
 import type { SetProcessData } from '../../host/protocol.ts'
 import { brasiliaInstant } from './instants.ts'
-import { markLabel, situationLabel, stageLabel } from './labels.ts'
+import {
+  componentSituationLabel,
+  greenfieldStageLabel,
+  markLabel,
+  situationLabel,
+  stageLabel,
+} from './labels.ts'
+import { pipelineStarted } from './origin-view.ts'
+import { panoramaView } from './panorama-view.ts'
 
 /** The title of the document, which is also the first line of the text. */
 const TITLE = 'Reversa'
@@ -52,7 +60,57 @@ export function summaryText(payload: SetProcessData): string {
   lines.push(...historyLines(payload))
   lines.push('')
 
+  // The block of feature 009 comes AFTER everything that was here: the text a
+  // reader compared yesterday keeps its lines in their places (RF-19).
+  lines.push('## Panorama do produto')
+  lines.push('')
+  lines.push(...panoramaLines(payload.greenfield))
+  lines.push('')
+
   return lines.join('\n')
+}
+
+/**
+ * What the product is made of, as the panorama card draws it (RF-19).
+ *
+ * The same pure function orders the components here and on the card, so the
+ * two never disagree. Absent axis, legacy project and empty specs folder are
+ * three sentences, as on the card, and none of them is a dangling label.
+ * @param axis - the greenfield axis, or its absence.
+ * @returns the lines, never empty.
+ */
+function panoramaLines(axis: GreenfieldAxis | undefined): string[] {
+  if (axis === undefined) return ['O eixo greenfield não foi lido por esta leitura.']
+  if (!pipelineStarted(axis)) return ['Este projeto não nasceu por /reversa-new.']
+
+  const { panorama: p } = axis
+  const vista = panoramaView(p)
+  const lines = [
+    `Nascido por /reversa-new; pipeline em "${greenfieldStageLabel(axis.estagio).text}".`,
+  ]
+  if (vista.total === 0) lines.push('A decomposição em specs ainda não foi feita.')
+  else {
+    lines.push(`${vista.convergidos} de ${vista.total} componentes planejados convergidos.`)
+    for (const g of vista.grupos) for (const c of g.componentes) lines.push(componentLine(c))
+  }
+  lines.push('', `Fora do plano: ${p.foraDoPlano.length} pastas sem spec.`)
+  for (const f of p.foraDoPlano) {
+    lines.push(`- ${f.id ?? ''}-${f.nomeCurto ?? f.pasta} — ${situationLabel(f.situacao).text}`)
+  }
+  lines.push('')
+  if (!p.escopoEncontrado) lines.push('Escopo declarado no PRD: seção não encontrada.')
+  else {
+    lines.push(`Escopo declarado no PRD: ${p.escopo.length} itens.`)
+    for (const item of p.escopo) lines.push(`- ${item.nome}`)
+  }
+  return lines
+}
+
+/** One planned component, in one line. */
+function componentLine(c: PlannedComponent): string {
+  const parts = [c.nome, componentSituationLabel(c.situacao).text, markLabel(c.marca).text]
+  if (c.acoes !== null) parts.push(`${c.acoes.fechadas} de ${c.acoes.total} ações`)
+  return `- ${parts.filter(Boolean).join(' — ')}`
 }
 
 /**

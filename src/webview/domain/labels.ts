@@ -365,3 +365,93 @@ export function bugPriorityLabel(prioridade: string): Label {
 export function inconsistencyLabel(inconsistencia: string): Label {
   return lookUp(inconsistencia, BUG_INCONSISTENCY_LABELS)
 }
+
+/* ---------------------------------------- the vocabularies of the greenfield axis */
+
+/**
+ * The six physical stages of the `/reversa-new` pipeline, as the reader names
+ * them (RF-20). The word for each is the ARTIFACT that closed it, because the
+ * disk is the authority over the stage and the artifact is what the reader can
+ * open to check.
+ */
+const GREENFIELD_STAGE_LABELS: Record<string, string> = {
+  ausente: 'sem artefato do pipeline',
+  aberto: 'brief aberto',
+  ideado: 'ideação feita',
+  pesquisado: 'personas pesquisadas',
+  redigido: 'PRD redigido',
+  especificado: 'specs escritas',
+}
+
+/** The four scenarios of the anchor rule. */
+const SCENARIO_LABELS: Record<string, string> = {
+  legado: 'projeto legado',
+  greenfield: 'projeto greenfield',
+  misto: 'legado e greenfield',
+  'sem-ancora': 'sem âncora de contexto',
+}
+
+/** The two modes the pipeline runs in. */
+const GREENFIELD_MODE_LABELS: Record<string, string> = {
+  guiado: 'Guiado',
+  expresso: 'Expresso',
+}
+
+/**
+ * The four situations of a planned component, as words.
+ *
+ * "em andamento" and not "em aberto" on purpose: the component is not a
+ * folder, and a folder situation spelled the same way would read as the same
+ * fact (D-08).
+ */
+const COMPONENT_SITUATION_LABELS: Record<string, string> = {
+  planejada: 'planejada',
+  'em-andamento': 'em andamento',
+  entregue: 'entregue, sem adendo',
+  convergida: 'convergida',
+}
+
+/** The three states of a step of the origin, as words rather than as colour. */
+const STEP_STATUS_LABELS: Record<string, string> = {
+  done: 'concluído',
+  current: 'corrente',
+  pending: 'pendente',
+}
+
+/** The four steps of the origin, by the artifact each one leaves. */
+const ORIGIN_STEP_LABELS: Record<string, string> = {
+  ideacao: 'Ideação',
+  pesquisa: 'Pesquisa',
+  redacao: 'Redação do PRD',
+  especificacao: 'Especificação',
+}
+
+/** The readable name of the physical stage of the pipeline; never throws. */
+export function greenfieldStageLabel(estagio: string): Label {
+  return lookUp(estagio, GREENFIELD_STAGE_LABELS)
+}
+
+/** The readable name of the scenario; never throws. */
+export function scenarioLabel(cenario: string): Label {
+  return lookUp(cenario, SCENARIO_LABELS)
+}
+
+/** The readable name of the mode of the pipeline; never throws. */
+export function greenfieldModeLabel(modo: string): Label {
+  return lookUp(modo, GREENFIELD_MODE_LABELS)
+}
+
+/** The readable name of the situation of a planned component; never throws. */
+export function componentSituationLabel(situacao: string): Label {
+  return lookUp(situacao, COMPONENT_SITUATION_LABELS)
+}
+
+/** The state of a step of the origin, as a word; never throws. */
+export function stepStatusLabel(status: string): Label {
+  return lookUp(status, STEP_STATUS_LABELS)
+}
+
+/** The readable name of a step of the origin; never throws. */
+export function originStepLabel(etapa: string): Label {
+  return lookUp(etapa, ORIGIN_STEP_LABELS)
+}
