@@ -1,4 +1,4 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-11T21:38:07.837Z a partir de 6 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-11T21:40:12.975Z a partir de 6 bugs -->
 # Índice de bugs · painel-do-processo
 
 ## Resumo

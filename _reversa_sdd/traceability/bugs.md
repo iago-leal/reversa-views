@@ -1,4 +1,4 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-11T21:38:07.837Z a partir de 6 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-11T21:40:12.975Z a partir de 6 bugs -->
 # Bugs por artefato de spec
 
 Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec muda só por adendo.
