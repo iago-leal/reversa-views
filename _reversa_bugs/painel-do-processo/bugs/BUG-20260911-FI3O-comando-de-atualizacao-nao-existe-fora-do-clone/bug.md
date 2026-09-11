@@ -3,7 +3,7 @@ schema_version: 1
 id: BUG-20260911-FI3O
 display_number: 6
 title: O comando que a faixa anuncia não existe fora do clone, e falha como erro do npm
-status: active
+status: resolved
 phase: delivering
 severity: high
 priority: P1
@@ -95,14 +95,15 @@ change_risk:
 
 delivery:
   branch: master
-  commit: null
+  commit: 9f0744a9f74c68509d9d9428bf3f858c4bdef61d
   pull_request: null
   ci: null
-  merged: null
-  published: null
+  merged: 2026-09-11
+  published: 2026-09-11, pacote reversa-views-0.9.1.vsix gerado e instalado por code --install-extension
 
 versions:
-  fixed_in: null
+  fixed_in: "0.9.1"
+  built_from: 9f0744a
   affected: "0.7.0 a 0.9.0"
   installed: "0.9.0, carimbada em fe6a5ff"
 
@@ -162,7 +163,8 @@ change_set:
 
 closure:
   policy: package
-  satisfied: false
+  satisfied: true
+  satisfied_at: 2026-09-11
 resolution_kind: fixed
 ---
 
@@ -359,11 +361,25 @@ que confere a regra. É o critério de aceite nº 4 deste bug.
 | 3 | A spec declara de onde o ritual se chama | atendido por RF-34, RF-35 e RF-36 do adendo |
 | 4 | A suíte lê a linha anunciada contra a forma de invocação suportada | atendido pela ponte por função |
 
-### O que falta para a closure policy `package`
+### A entrega, que é o que a closure policy `package` exige
 
-A suíte verde não encerra nada neste projeto. Falta a entrega: registrar as mudanças, gerar o pacote
-e instalá-lo pelo executável do editor. Até lá o bug segue `active`, em `delivering`, e
-`closure.satisfied` continua falso.
+A suíte verde não encerra nada neste projeto, porque o defeito segue vivo na extensão instalada até
+o pacote novo existir e estar instalado. A entrega foi feita nesta mesma sessão, em 2026-09-11:
+
+| Passo | Resultado |
+|---|---|
+| Registro | commit `9f0744a` em `master`, com código, testes, adendo e a pasta do bug |
+| Construção, suíte e empacotamento | `npm run atualizar -- --aplicar`, percurso inteiro sem parada |
+| Pacote | `reversa-views-0.9.1.vsix`, 207,8 KiB sobre teto de 2048,0 KiB |
+| Instalação | `code --install-extension`, confirmada em `iagoleal-local.reversa-views@0.9.1` |
+| Carimbo da construção instalada | versão `0.9.1`, commit `9f0744a`, raiz `/Users/iagoleal/dev/reversa-views` |
+
+O carimbo é a prova de que a correção chegou ao lugar onde o defeito aparecia: a constante nova está
+no pacote instalado, e é dela que a faixa tira o endereço que anuncia.
+
+A origem **não** recebeu push, por escolha do usuário nesta sessão: o clone fica um commit à frente
+de `origin/master` até que ele decida enviar. Isso não afeta a instalação, que é o eixo que esta
+política mede.
 
 
 ## Agent Notes
