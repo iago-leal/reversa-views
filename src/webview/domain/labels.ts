@@ -171,16 +171,49 @@ export function revisionLabel(revision: string | null | undefined): string {
 }
 
 /**
+ * The ritual as it is spelled INSIDE the clone, and the fallback outside it.
+ *
+ * `npm run` resolves a script by the `package.json` of the current directory,
+ * so this form exists only where the clone is. It stays as the fallback for a
+ * build that declares no root, which is what a build older than
+ * BUG-20260911-FI3O, a host older than the field and the preview all produce.
+ * Handing those a plausible-looking path would be worse than the short form:
+ * the short form is at least true somewhere.
+ */
+const UPDATE_COMMAND_IN_CLONE = 'npm run atualizar -- --aplicar'
+
+/** Where the ritual lives inside the clone, relative to its root. */
+const UPDATE_SCRIPT = 'scripts/atualizar.js'
+
+/**
  * The command of the ritual, spelled once (RF-22), and it is the SECOND act.
  *
  * `npm run atualizar` only checks and never brings a commit (RF-04); the
  * argument is what applies. The header offered the bare check for the whole of
  * feature 007 (BUG-20260910-WIBK): whoever copied it got a diagnosis, and the
- * notice came back on the next reload. The suite now reads this value against
- * the line the script itself prints as "Para aplicar", so the two places that
- * spell the act cannot drift apart again without a red test.
+ * notice came back on the next reload.
+ *
+ * WHERE the command is called from is the other half of the same question, and
+ * it went unasked until BUG-20260911-FI3O. The panel opens on the workspace the
+ * reader has open, which is almost never the clone, so a line resolved by the
+ * current directory died inside npm before the ritual began. The ritual itself
+ * never had that problem: it anchors its root on the file that contains it, so
+ * calling it BY ADDRESS works from any directory. The address is that of the
+ * clone which produced the installed build, which is precisely the clone whose
+ * ritual can fix it.
+ *
+ * The path is quoted only when it carries whitespace, because quotes make a
+ * line harder to read and most paths do not need them. `scripts/atualizar.js`
+ * spells the same rule for the terminal, and the suite compares the two
+ * FUNCTIONS rather than the two texts.
+ * @param root - the root of the clone that produced this build, when known.
+ * @returns the line to copy, executable as it stands from any directory.
  */
-const UPDATE_COMMAND = 'npm run atualizar -- --aplicar'
+export function updateCommand(root: string | null | undefined): string {
+  if (typeof root !== 'string' || root === '') return UPDATE_COMMAND_IN_CLONE
+  const script = `${root.replace(/\/+$/, '')}/${UPDATE_SCRIPT}`
+  return /\s/.test(script) ? `node "${script}" --aplicar` : `node ${script} --aplicar`
+}
 
 /** Why a query could not be made, in the reader's words rather than the wire's. */
 const CAUSE_LABELS: Record<string, string> = {
@@ -213,9 +246,11 @@ function commits(count: number): string {
  * cause outside the vocabulary comes back as a sentence saying so, because RN-05
  * forbids the panel from throwing and forbids it from drawing an empty line.
  * @param status - the outcome as it arrived from the host.
+ * @param root - the root of the clone that produced this build, when the host
+ *   declared one; absent, the command falls back to the form of the clone.
  * @returns the sentence to draw and the command to copy, if any.
  */
-export function updateLabel(status: UpdateStatus): UpdateLabel {
+export function updateLabel(status: UpdateStatus, root?: string | null): UpdateLabel {
   switch (status.estado) {
     case 'desligada':
       return {
@@ -229,7 +264,7 @@ export function updateLabel(status: UpdateStatus): UpdateLabel {
     case 'atrasada':
       return {
         text: `A origem está ${commits(status.commits)} à frente desta construção.`,
-        command: UPDATE_COMMAND,
+        command: updateCommand(root),
       }
     case 'divergente':
       return {
@@ -240,7 +275,7 @@ export function updateLabel(status: UpdateStatus): UpdateLabel {
         // at the moment of applying, and the reader has to know before running
         // anything that there is local work at stake.
         text: `A origem está ${commits(status.commits)} à frente, e este clone tem commit próprio que ela não tem.`,
-        command: UPDATE_COMMAND,
+        command: updateCommand(root),
       }
     case 'commit-desconhecido':
       return {

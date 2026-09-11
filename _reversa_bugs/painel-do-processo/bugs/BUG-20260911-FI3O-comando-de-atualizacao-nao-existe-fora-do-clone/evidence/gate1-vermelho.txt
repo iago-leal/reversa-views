@@ -1,0 +1,62 @@
+Gate 1 aplicado em 2026-09-11, commit base fe6a5ff. Saída resumida do vermelho.
+
+ ❯ tests/carimbo-da-construcao.spec.ts (5 tests | 3 failed) 22ms
+ ❯ tests/atualizador.spec.ts (39 tests | 7 failed) 19ms
+ ❯ tests/webview-header.spec.tsx (35 tests | 9 failed) 35ms
+ ❯ tests/host-provider.spec.ts (29 tests | 1 failed) 20ms
+ FAIL  tests/atualizador.spec.ts > a conferência e seus três desfechos (RF-01, RF-02) > atrás de N commits: código um, a contagem e o comando para aplicar
+TypeError: (0 , comandoDeAplicacao) is not a function
+ ❯ tests/atualizador.spec.ts:119:33
+ FAIL  tests/atualizador.spec.ts > a conferência e seus três desfechos (RF-01, RF-02) > atrás e com commit próprio: avisa que a aplicação vai recusar
+TypeError: (0 , comandoDeAplicacao) is not a function
+ ❯ tests/atualizador.spec.ts:127:37
+ FAIL  tests/atualizador.spec.ts > de onde o ritual se chama (BUG-20260911-FI3O) > a linha do segundo ato chama o script pelo endereço, e não pelo npm
+TypeError: (0 , comandoDeAplicacao) is not a function
+ ❯ tests/atualizador.spec.ts:381:12
+ FAIL  tests/atualizador.spec.ts > de onde o ritual se chama (BUG-20260911-FI3O) > sem raiz, recua para o comando do clone em vez de inventar caminho
+TypeError: (0 , comandoDeAplicacao) is not a function
+ ❯ tests/atualizador.spec.ts:387:14
+ FAIL  tests/atualizador.spec.ts > de onde o ritual se chama (BUG-20260911-FI3O) > caminho com espaço sai entre aspas
+TypeError: (0 , comandoDeAplicacao) is not a function
+ ❯ tests/atualizador.spec.ts:392:12
+ FAIL  tests/atualizador.spec.ts > de onde o ritual se chama (BUG-20260911-FI3O) > a barra final da raiz não vira barra dupla
+TypeError: (0 , comandoDeAplicacao) is not a function
+ ❯ tests/atualizador.spec.ts:398:12
+ FAIL  tests/atualizador.spec.ts > de onde o ritual se chama (BUG-20260911-FI3O) > o relato imprime "Para aplicar" com o endereço da raiz que lhe deram
+TypeError: (0 , comandoDeAplicacao) is not a function
+ ❯ tests/atualizador.spec.ts:405:46
+ FAIL  tests/carimbo-da-construcao.spec.ts > as constantes que a construção declara sobre si > a raiz do clone entra como quinta constante (BUG-20260911-FI3O)
+AssertionError: expected '/**\n * ARQUIVO GERADO: não editar à …' to contain 'export const BUILT_FROM_ROOT = "/home…'
+ ❯ tests/carimbo-da-construcao.spec.ts:45:31
+ FAIL  tests/carimbo-da-construcao.spec.ts > as constantes que a construção declara sobre si > o caminho é escapado, e não interpolado cru
+AssertionError: a constante sumiu do módulo gerado: expected null not to be null
+ ❯ tests/carimbo-da-construcao.spec.ts:56:61
+ FAIL  tests/carimbo-da-construcao.spec.ts > as constantes que a construção declara sobre si > raiz vazia sai como cadeia vazia, que é o que a tela lê como recuo
+AssertionError: expected '/**\n * ARQUIVO GERADO: não editar à …' to contain 'export const BUILT_FROM_ROOT = ""'
+ ❯ tests/carimbo-da-construcao.spec.ts:61:43
+ FAIL  tests/host-provider.spec.ts > a consulta à origem > a procedência viaja na carga da leitura, ao lado da revisão herdada (RF-17)
+AssertionError: expected undefined to be '/home/alguem/dev/reversa-views' // Object.is equality
+ ❯ tests/host-provider.spec.ts:421:41
+ FAIL  tests/webview-header.spec.tsx > a linha do desfecho no cabeçalho (RF-10) > o comando a copiar aparece quando há o que aplicar, e não aparece quando não há
+TypeError: (0 , comandoDeAplicacao) is not a function
+ ❯ tests/webview-header.spec.tsx:206:20
+ FAIL  tests/webview-header.spec.tsx > o comando que a faixa anuncia (BUG-20260910-WIBK) > o comando anunciado é o que o ritual imprime como "Para aplicar"
+TypeError: (0 , comandoDeAplicacao) is not a function
+ ❯ tests/webview-header.spec.tsx:320:64
+ FAIL  tests/webview-header.spec.tsx > o comando que a faixa anuncia (BUG-20260910-WIBK) > o cabeçalho desenha o argumento de aplicação em atrasada e em divergente
+TypeError: (0 , comandoDeAplicacao) is not a function
+ ❯ tests/webview-header.spec.tsx:327:20
+ FAIL  tests/webview-header.spec.tsx > de onde o comando anunciado se chama (BUG-20260911-FI3O) > havendo raiz carimbada, a linha não é resolvida pelo diretório corrente
+AssertionError: expected 'npm run atualizar -- --aplicar' not to match /^npm run /
+ ❯ tests/webview-header.spec.tsx:346:25
+ FAIL  tests/webview-header.spec.tsx > de onde o comando anunciado se chama (BUG-20260911-FI3O) > a linha carrega o endereço do clone que produziu esta construção
+TypeError: (0 , updateCommand) is not a function
+ ❯ tests/webview-header.spec.tsx:351:12
+ FAIL  tests/webview-header.spec.tsx > de onde o comando anunciado se chama (BUG-20260911-FI3O) > sem raiz carimbada a faixa recua para o comando do clone, e não inventa caminho
+TypeError: (0 , updateCommand) is not a function
+ ❯ tests/webview-header.spec.tsx:360:14
+ FAIL  tests/webview-header.spec.tsx > de onde o comando anunciado se chama (BUG-20260911-FI3O) > caminho com espaço sai entre aspas, para sobreviver ao terminal
+TypeError: (0 , updateCommand) is not a function
+ ❯ tests/webview-header.spec.tsx:365:12
+ FAIL  tests/webview-header.spec.tsx > de onde o comando anunciado se chama (BUG-20260911-FI3O) > a barra final da raiz não vira barra dupla no caminho
+TypeError: (0 , updateCommand) is not a function

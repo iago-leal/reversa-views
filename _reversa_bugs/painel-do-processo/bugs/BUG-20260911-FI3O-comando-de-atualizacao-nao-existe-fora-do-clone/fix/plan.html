@@ -1,0 +1,141 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Plano de correção · BUG-20260911-FI3O</title>
+<style>body{margin:0;background:#0d1117;color:#e6edf3;font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;padding:24px;max-width:1100px}h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 8px;border-bottom:1px solid #30363d;padding-bottom:4px}h3{font-size:14px;margin:18px 0 6px;color:#c9d1d9}.meta{color:#8b949e;font-size:12px}.cards{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0}.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px 16px;min-width:130px}.card b{display:block;font-size:20px}.card span{color:#8b949e;font-size:12px}table{border-collapse:collapse;width:100%;font-size:13px;margin:8px 0}th,td{border:1px solid #30363d;padding:6px 8px;text-align:left;vertical-align:top}th{background:#161b22}a{color:#58a6ff}code{background:#161b22;border:1px solid #30363d;border-radius:4px;padding:1px 5px;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}pre{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;overflow-x:auto;font:12px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;color:#c9d1d9}.svgwrap{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:8px;overflow-x:auto}.ok{color:#3fb950}.warn{color:#d29922}.bad{color:#f85149}.box{background:#161b22;border:1px solid #30363d;border-left:3px solid #d29922;border-radius:6px;padding:10px 14px;margin:12px 0}.box.ok{border-left-color:#3fb950;color:#e6edf3}.box.bad{border-left-color:#f85149;color:#e6edf3}p{margin:8px 0}</style></head><body>
+
+<h1>Plano de correção · nº 6 · BUG-20260911-FI3O</h1>
+<p class="meta">Contexto <b>painel-do-processo</b> · 2026-09-11 · severidade <span class="bad">high</span> · prioridade <span class="bad">P1</span> · closure policy <code>package</code> · risco da mudança <span class="warn">média</span></p>
+<p class="meta">Gerado por /reversa-debugger-fix ANTES de qualquer escrita. Nada do que está aqui existe ainda.</p>
+
+<div class="cards">
+<div class="card"><b>10</b><span>itens de change set</span></div>
+<div class="card"><b>4</b><span>arquivos de teste</span></div>
+<div class="card"><b>0</b><span>reparos de dados</span></div>
+<div class="card"><b>1</b><span>adendo de spec</span></div>
+<div class="card"><b>confirmada</b><span>causa raiz</span></div>
+</div>
+
+<h2>1. O defeito</h2>
+<p>O cabeçalho do painel anuncia <code>npm run atualizar -- --aplicar</code> para quem está atrasado, e o anuncia sem dizer de onde rodar. O painel abre no workspace de trabalho, que quase nunca é o clone do <code>reversa-views</code>. Quem copia a linha a executa onde o script não existe e recebe um erro do npm, não uma resposta do ritual.</p>
+<table>
+<tr><th>Onde se chama</th><th>O que acontece</th><th>Código de saída</th></tr>
+<tr><td>Diretório com <code>package.json</code> e sem o script (o caso do usuário em <code>erp-mineracao</code>)</td><td class="bad">npm error Missing script: "atualizar"</td><td class="bad">1, o mesmo da recusa legítima do ritual</td></tr>
+<tr><td>Diretório sem <code>package.json</code> algum</td><td class="bad">npm error code ENOENT</td><td class="bad">254</td></tr>
+</table>
+
+<h2>2. A causa raiz <span class="ok">(estado: confirmada)</span></h2>
+<p>O ritual <b>já é independente do diretório corrente</b>. <code>scripts/atualizar.js</code> ancora a raiz em <code>path.resolve(__dirname, '..')</code>, o clone onde o próprio arquivo mora, e não em <code>process.cwd()</code>. Chamado pelo caminho absoluto, de um diretório temporário neutro, ele conferiu o clone certo e saiu com o código certo:</p>
+<pre>$ node /Users/iagoleal/dev/reversa-views/scripts/atualizar.js
+Clone em fe6a5ff, ramo master.
+Em dia com a origem: não há commit a trazer.
+código de saída: 0</pre>
+<p>O que prende o comando ao clone é a mediação do <code>npm run</code>, que resolve scripts pelo <code>package.json</code> do diretório corrente, e só ela. O defeito está <b>na forma de invocação que a faixa anuncia</b>, não no percurso que ela dispara. Isso reduz o raio da mudança ao ponto em que o comando é soletrado, e é o que sustenta o risco médio em vez de alto.</p>
+<h3>Evidências</h3>
+<table>
+<tr><th>Arquivo</th><th>O que prova</th></tr>
+<tr><td><a href="../evidence/terminal-erp-mineracao.txt">evidence/terminal-erp-mineracao.txt</a></td><td>A saída original do usuário, com a extensão instalada e o painel aberto</td></tr>
+<tr><td><a href="../evidence/reproducao-fora-do-clone.txt">evidence/reproducao-fora-do-clone.txt</a></td><td>As duas caras da falha e os dois códigos de saída</td></tr>
+<tr><td><a href="../evidence/reproducao.md">evidence/reproducao.md</a></td><td>A cápsula desta sessão: três formas de chamada, 3/3 determinísticas, e o caso C que localiza o defeito na invocação</td></tr>
+</table>
+
+<h2>3. A estratégia escolhida</h2>
+<div class="box ok"><b>Endereço carimbado</b>, escolhida por você no menu desta sessão, sem debate multiagente. A faixa passa a anunciar o ritual pelo endereço do clone que produziu a construção instalada, carimbado em tempo de construção.</div>
+<p>A razão de ser esta: o painel compara a <b>construção instalada</b> com a origem, e o clone que a produziu é exatamente o endereço onde o ritual que a corrige mora. O carimbo já carrega versão, commit, origem e ramo pela mesma via; o endereço é a quinta constante da mesma natureza. Não exige instalação nenhuma em máquina alguma, ao contrário do executável global, e roda de qualquer diretório, ao contrário de manter o comando do clone.</p>
+<p>A linha anunciada passa a ser, com a raiz vinda do carimbo:</p>
+<pre>node /Users/iagoleal/dev/reversa-views/scripts/atualizar.js --aplicar</pre>
+<h3>O recuo, e por que ele existe</h3>
+<p>Você respondeu que ainda não sabe se o clone existe dentro do container e do Codespace. O plano trata o caso como não caracterizado: <b>sem endereço carimbado, a faixa recua para o comando do clone</b>, <code>npm run atualizar -- --aplicar</code>, que é o que uma construção anterior a esta correção produz. O recuo é também o que o preview e um host antigo produzem, e ele nunca inventa um caminho.</p>
+<div class="box"><b>Limite declarado, e não escondido.</b> Onde o clone não existir na máquina em que o painel roda, nenhum endereço embutido é alcançável, e a chamada morre em <code>Cannot find module</code>, do node. Isso fica escrito no README e no adendo como o que é: a atualização se faz onde o clone está, e o pacote resultante se instala no ambiente remoto. Caracterizado o ambiente, isso vira pergunta do ciclo forward, não deste conserto.</div>
+
+<h2>4. Correction Change Set proposto</h2>
+<table>
+<tr><th>CHG</th><th>Tipo</th><th>Artefato</th><th>Propósito</th></tr>
+<tr><td>CHG-001</td><td>code</td><td><code>scripts/gerar-carimbo-da-construcao.js</code></td><td>Emitir <code>BUILT_FROM_ROOT</code> no carimbo, com o caminho escapado como literal, ao lado das quatro constantes que já existem</td></tr>
+<tr><td>CHG-002</td><td>code</td><td><code>src/host/session.ts</code></td><td><code>BuildStamp</code> ganha <code>root</code>; o não carimbado ganha cadeia vazia; a carga ganha <code>builtFromRoot</code> por acréscimo ao fim</td></tr>
+<tr><td>CHG-003</td><td>code</td><td><code>src/host/protocol.ts</code></td><td>Declarar <code>builtFromRoot</code> como campo acrescentado, com a regra de ausência que os campos anteriores já seguem</td></tr>
+<tr><td>CHG-004</td><td>code</td><td><code>src/extension.ts</code></td><td>Passar a raiz carimbada ao provedor, junto de versão e commit</td></tr>
+<tr><td>CHG-005</td><td>code</td><td><code>scripts/preview/leitura.js</code></td><td>O preview passa a carregar a raiz do mesmo módulo gerado, para que a tela servida fora do editor anuncie o mesmo comando</td></tr>
+<tr><td>CHG-006</td><td>code</td><td><code>src/webview/domain/labels.ts</code></td><td>A constante fixa vira função total: o comando é derivado da raiz, com recuo declarado para raiz ausente e aspas quando o caminho tem espaço</td></tr>
+<tr><td>CHG-007</td><td>code</td><td><code>src/webview/ui/Header.tsx</code></td><td>Entregar ao rótulo a raiz que veio na carga</td></tr>
+<tr><td>CHG-008</td><td>code</td><td><code>scripts/atualizar.js</code></td><td>O ritual imprime "Para aplicar" na mesma forma, derivada da própria raiz, mantendo viva a ponte que o nº 5 criou</td></tr>
+<tr><td>CHG-009</td><td>documentation</td><td><code>README.md</code></td><td>Declarar de onde o ritual se chama, com as duas formas: a do clone e a do endereço, e o limite do ambiente sem clone</td></tr>
+<tr><td>CHG-010</td><td>specification</td><td><code>_reversa_sdd/addenda/bug-BUG-20260911-FI3O-v001.md</code></td><td>Adendo aditivo que fixa o endereço da invocação, a lacuna que este bug expôs</td></tr>
+</table>
+<p class="meta">Nenhum item é <code>data-repair</code>: não há estado histórico corrompido. Nenhum é <code>migration</code> nem <code>dependency</code>.</p>
+
+<h2>5. Testes planejados</h2>
+<h3>Reprodução, o que fica vermelho antes da correção</h3>
+<table>
+<tr><th>Arquivo</th><th>O que prova</th></tr>
+<tr><td><code>tests/webview-header.spec.tsx</code></td><td>Havendo raiz carimbada, o comando anunciado é a chamada do script por endereço, e não uma chamada resolvida pelo diretório corrente. Vermelho hoje, porque a faixa anuncia <code>npm run</code>.</td></tr>
+<tr><td><code>tests/atualizador.spec.ts</code></td><td>O ritual imprime "Para aplicar" na forma por endereço. Vermelho hoje, pela mesma razão.</td></tr>
+</table>
+<h3>Regressão, o que não pode voltar a quebrar</h3>
+<table>
+<tr><th>Arquivo</th><th>O que protege</th></tr>
+<tr><td><code>tests/webview-header.spec.tsx</code></td><td>A ponte do nº 5, agora mais forte: o rótulo e o ritual são comparados <b>pela função</b>, importada dos dois lados com a mesma raiz, e não mais por expressão regular sobre o texto do script. Inclui o recuo sem raiz e o caminho com espaço.</td></tr>
+<tr><td><code>tests/atualizador.spec.ts</code></td><td>A forma do comando para raiz comum, raiz com espaço e raiz ausente; e que a conferência continua sem escrever nada.</td></tr>
+<tr><td><code>tests/host-provider.spec.ts</code></td><td>A carga entregue ao painel leva a raiz carimbada, ao lado da versão e do commit.</td></tr>
+<tr><td><code>tests/carimbo-da-construcao.spec.ts</code> (novo)</td><td>O módulo gerado declara a raiz, e a escapa em vez de interpolá-la crua. Hoje o gerador não tem suíte alguma: esta é a primeira.</td></tr>
+</table>
+<p>Os dois primeiros cumprem o critério de aceite nº 4 do bug, que pede a suíte lendo a linha anunciada contra a forma de invocação suportada.</p>
+
+<h2>6. Riscos, e o que fica de fora</h2>
+<table>
+<tr><th>Eixo</th><th>Leitura</th></tr>
+<tr><td>Blast radius</td><td class="warn">Médio. Sete arquivos de código, dos quais dois têm regra dura: o carimbo, que não é versionado, e a fronteira que proíbe a tela de importar valor do host, o que obriga o endereço a viajar pelo protocolo.</td></tr>
+<tr><td>Contrato externo</td><td class="ok">Nenhum. O protocolo é interno, e o campo entra por acréscimo ao fim: um painel anterior ignora o que não conhece, um host anterior não envia o campo, e a tela lê a ausência como recuo.</td></tr>
+<tr><td>Dados</td><td class="ok">Nenhum. Nada é lido, escrito ou migrado.</td></tr>
+<tr><td>Concorrência</td><td class="ok">Nenhuma. Tudo é função pura ou constante de construção.</td></tr>
+<tr><td>Reversibilidade</td><td class="ok">Total. Um commit desfaz; o carimbo se regenera a cada construção.</td></tr>
+</table>
+<h3>Fora do escopo deste conserto (Agent Notes do bug)</h3>
+<ul>
+<li><b>A extensão atualizar-se sozinha.</b> Colide com o invariante da seção 6 do PRD, a extensão nunca escreve arquivo, reafirmado em cinco adendos. É evolução, está anotada no relato de intake, e emendar uma restrição de PRD é ato do ciclo forward.</li>
+<li><b>O painel abrir como aba do editor</b>, em vez de view da barra lateral. Terceiro problema do relato, comportamento igual ao especificado, portanto não é defeito.</li>
+<li><b>Refatoração ampla junto da correção.</b> Alterações cirúrgicas, como o registro pede.</li>
+</ul>
+
+<h2>7. O bug e suas relações</h2>
+<div class="svgwrap"><svg viewBox="0 0 960 300" width="100%" role="img" aria-label="Mini-grafo do bug nº 6 e suas relações">
+<defs><marker id="seta" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8b949e"/></marker></defs>
+<line x1="350" y1="90" x2="290" y2="90" stroke="#8b949e" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#seta)"/>
+<text x="320" y="84" fill="#8b949e" font-size="11" text-anchor="middle">related-to (proposed)</text>
+<line x1="480" y1="182" x2="480" y2="140" stroke="#8b949e" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#seta)"/>
+<text x="560" y="166" fill="#8b949e" font-size="11" text-anchor="middle">related-to (proposed)</text>
+<line x1="350" y1="230" x2="290" y2="230" stroke="#8b949e" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#seta)"/>
+<text x="320" y="224" fill="#8b949e" font-size="11" text-anchor="middle">related-to (proposed)</text>
+<a href="../../BUG-20260910-SVZU-ritual-nao-alcanca-construcao-instalada/bug.md"><rect x="30" y="42" width="260" height="96" rx="8" fill="#161b22" stroke="#30363d" stroke-width="2"/><text x="42" y="64" fill="#e6edf3" font-size="13" font-weight="600">nº 4 · SVZU</text><text x="42" y="84" fill="#c9d1d9" font-size="11">Ritual não alcança a construção…</text><text x="42" y="104" fill="#8b949e" font-size="11">high · empacotamento</text><text x="42" y="124" fill="#3fb950" font-size="11" font-weight="600">resolved · fixed (travado)</text></a>
+<a href="../../BUG-20260910-WIBK-faixa-anuncia-comando-que-so-confere/bug.md"><rect x="30" y="182" width="260" height="96" rx="8" fill="#161b22" stroke="#30363d" stroke-width="2"/><text x="42" y="204" fill="#e6edf3" font-size="13" font-weight="600">nº 5 · WIBK</text><text x="42" y="224" fill="#c9d1d9" font-size="11">Faixa anuncia o comando que só…</text><text x="42" y="244" fill="#8b949e" font-size="11">high · webview</text><text x="42" y="264" fill="#3fb950" font-size="11" font-weight="600">resolved · fixed (travado)</text></a>
+<a href="../bug.md"><rect x="350" y="42" width="290" height="96" rx="8" fill="#21262d" stroke="#f85149" stroke-width="3"/><text x="362" y="64" fill="#e6edf3" font-size="13" font-weight="700">nº 6 · FI3O  ← este</text><text x="362" y="84" fill="#c9d1d9" font-size="11">O comando não existe fora do clone</text><text x="362" y="104" fill="#8b949e" font-size="11">high · webview · atualizador</text><text x="362" y="124" fill="#d29922" font-size="11" font-weight="600">active · diagnosing</text></a>
+<a href="../../../intake/relato-20260911-1656.md"><rect x="350" y="182" width="290" height="96" rx="8" fill="#161b22" stroke="#30363d" stroke-width="2" stroke-dasharray="4 3"/><text x="362" y="204" fill="#e6edf3" font-size="13" font-weight="600">relato de intake</text><text x="362" y="224" fill="#c9d1d9" font-size="11">Os três problemas de 2026-09-11</text><text x="362" y="244" fill="#8b949e" font-size="11">dois deles são evolução, não defeito</text></a>
+<rect x="700" y="42" width="230" height="236" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+<text x="712" y="64" fill="#c9d1d9" font-size="12" font-weight="600">A linhagem do atualizador</text>
+<text x="712" y="88" fill="#8b949e" font-size="11">nº 4: QUANDO o ritual roda</text>
+<text x="712" y="108" fill="#8b949e" font-size="11">nº 5: QUAL comando a faixa diz</text>
+<text x="712" y="128" fill="#8b949e" font-size="11">nº 6: DE ONDE ele se chama</text>
+<text x="712" y="160" fill="#8b949e" font-size="11">Os três vivem na mesma constante</text>
+<text x="712" y="178" fill="#8b949e" font-size="11">de labels.ts, e é por isso que a</text>
+<text x="712" y="196" fill="#8b949e" font-size="11">ponte com o script importa mais</text>
+<text x="712" y="214" fill="#8b949e" font-size="11">que qualquer asserção isolada.</text>
+</svg></div>
+
+<h2>8. Matriz de relações</h2>
+<table>
+<tr><th>Origem</th><th>Tipo</th><th>Destino</th><th>Estado</th><th>Observação</th></tr>
+<tr><td><a href="../bug.md">BUG-20260911-FI3O</a> (nº 6)</td><td>related-to</td><td><a href="../../BUG-20260910-WIBK-faixa-anuncia-comando-que-so-confere/bug.md">BUG-20260910-WIBK</a> (nº 5)</td><td class="warn">proposed</td><td>O nº 5 corrigiu qual comando a faixa anuncia; este trata de onde ele pode ser executado. As duas correções vivem na mesma constante.</td></tr>
+<tr><td><a href="../bug.md">BUG-20260911-FI3O</a> (nº 6)</td><td>related-to</td><td><a href="../../BUG-20260910-SVZU-ritual-nao-alcanca-construcao-instalada/bug.md">BUG-20260910-SVZU</a> (nº 4)</td><td class="warn">proposed</td><td>O nº 4 firmou que a aplicação deixa a instalação em dia com o clone; este pergunta como alcançar esse ato da máquina onde o painel roda.</td></tr>
+</table>
+<p>As duas relações são <b>proposed</b> e assim permanecem: a correção as ilumina, mas não produz evidência que feche um caminho causal entre bugs. Promovê-las por conveniência seria transformar parentesco temático em fato.</p>
+
+<h2>9. Ordem de correção</h2>
+<p>A sessão corrige <b>um só bug</b>. Os outros cinco do contexto estão travados por <code>DONE.md</code>, e nenhum deles se reabre por causa desta correção. Não há ordem a derivar do grafo.</p>
+
+<h2>O que acontece depois da sua aprovação</h2>
+<ol>
+<li><b>Gate 1</b>: mostro o diff dos testes, aplico e demonstro o vermelho, com a saída colada.</li>
+<li><b>Gate 2</b>: mostro os dez diffs do change set, aplico e demonstro o verde.</li>
+<li><b>Veredito de spec</b>: <code>spec-gap</code> é a recomendação, e a decisão é sua, no menu.</li>
+<li><b>Closure policy <code>package</code></b>: a suíte verde não encerra nada aqui. O bug só fecha com o pacote novo gerado e instalado pelo executável do editor, e é isso que <code>delivery</code> vai registrar.</li>
+</ol>
+<p class="meta">Política de edição do legado: <code>.reversa/reversa-config.json</code> declara <code>allowLegacyEdits: true</code> com <code>allowedPaths</code> vazio. A liberação é <b>irrestrita</b> neste projeto, e este aviso é o da sessão.</p>
+
+</body></html>

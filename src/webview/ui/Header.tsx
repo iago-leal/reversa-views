@@ -131,7 +131,13 @@ export function Header(props: HeaderProps): ReactNode {
   // authority over the same fact. Undefined is read as null on purpose: a
   // caller assembled before this feature hands over no outcome, and RN-05 says
   // that draws no line rather than breaking the render.
-  const outcome = update === null || update === undefined ? null : updateLabel(update)
+  // A raiz carimbada viaja junto com o desfecho porque o comando a copiar
+  // depende dela: a faixa precisa dizer de onde o ritual se chama, e não só
+  // qual ele é (BUG-20260911-FI3O). Ausente, o rótulo recua sozinho.
+  const outcome =
+    update === null || update === undefined
+      ? null
+      : updateLabel(update, payload?.builtFromRoot ?? null)
 
   const nothingRead = payload === null
   const allExpanded = props.collapsedCount === 0

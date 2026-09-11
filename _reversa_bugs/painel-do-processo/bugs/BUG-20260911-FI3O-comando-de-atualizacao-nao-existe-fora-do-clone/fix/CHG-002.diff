@@ -1,0 +1,39 @@
+--- a/src/host/session.ts
++++ b/src/host/session.ts
+@@ -34,6 +34,15 @@
+   version: string
+   /** The commit it was made from, whole. */
+   commit: string
++  /**
++   * The root of the clone it was made in, or empty when there is none.
++   *
++   * It is the address of the ritual that updates this very build, and the
++   * panel needs it to announce a command that runs from where the reader is
++   * (BUG-20260911-FI3O). Empty is a legitimate answer, and the panel falls
++   * back to the short form of the clone rather than inventing a path.
++   */
++  root: string
+ }
+ 
+ /**
+@@ -43,7 +52,7 @@
+  * value, which is the truthful thing to say, and a plausible-looking number
+  * would be indistinguishable from a real one.
+  */
+-const UNSTAMPED: BuildStamp = { version: '', commit: '' }
++const UNSTAMPED: BuildStamp = { version: '', commit: '', root: '' }
+ 
+ /** The envelopes of one reading, and the root they came from. */
+ export interface SessionSequence {
+@@ -112,6 +121,11 @@
+       // asks: nothing above it moves, and a panel older than the field ignores
+       // what it does not know.
+       greenfield: reading.greenfield,
++      // The address of the clone this build came from (BUG-20260911-FI3O),
++      // appended after it by the same rule. It travels beside the provenance
++      // because it IS provenance: the two say where the build came from, and
++      // one of them is a place the reader can call.
++      builtFromRoot: build.root,
+     },
+   })
+   return { messages, observedRoot: root }

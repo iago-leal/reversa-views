@@ -1,0 +1,19 @@
+--- a/src/extension.ts
++++ b/src/extension.ts
+@@ -25,6 +25,7 @@
+ } from './host/adapters.ts'
+ import {
+   BUILT_FROM_COMMIT,
++  BUILT_FROM_ROOT,
+   DEFAULT_BRANCH,
+   EXTENSION_VERSION,
+   ORIGIN_REPOSITORY,
+@@ -80,7 +81,7 @@
+     // The provenance of this build, from the stamp generated before the
+     // compilation (D-07). It travels in the payload of the reading, like the
+     // inherited revision, because the panel may not import a value of the host.
+-    build: { version: EXTENSION_VERSION, commit: BUILT_FROM_COMMIT },
++    build: { version: EXTENSION_VERSION, commit: BUILT_FROM_COMMIT, root: BUILT_FROM_ROOT },
+     // The query of feature 007, assembled HERE and nowhere else. The reading
+     // layer goes on not seeing it: it receives none of these three, and the
+     // boundary suite holds that by plain text search.

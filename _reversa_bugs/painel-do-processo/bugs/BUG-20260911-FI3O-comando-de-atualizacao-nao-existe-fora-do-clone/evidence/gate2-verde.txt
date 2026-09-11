@@ -1,0 +1,38 @@
+Gate 2 aplicado em 2026-09-11, sobre o commit base fe6a5ff.
+
+== A suíte inteira ==
+
+ Test Files  96 passed (96)
+      Tests  1527 passed (1527)
+   Duration  5.01s
+
+== Os dois verificadores de tipo ==
+
+npm run typecheck     (tsc -p ./ --noEmit)                 saída 0
+npm run check:webview (tsc -p tsconfig.webview.json)       saída 0
+
+== O carimbo gerado ==
+
+$ npm run gerar:carimbo
+src/host/build.ts gerado: versão 0.9.0, commit fe6a5ff, origem iago-leal/reversa-views,
+ramo master, raiz /Users/iagoleal/dev/reversa-views
+
+export const BUILT_FROM_ROOT = "/Users/iagoleal/dev/reversa-views"
+
+== A linha anunciada, pelas três raízes ==
+
+com raiz real   : node /Users/iagoleal/dev/reversa-views/scripts/atualizar.js --aplicar
+com espaço      : node "/Users/alguem/Meus Projetos/reversa-views/scripts/atualizar.js" --aplicar
+sem raiz (recuo): npm run atualizar -- --aplicar
+
+== O ritual chamado por endereço, de um diretório neutro ==
+
+$ cd /var/folders/wy/.../tmp.Rl3nqCRHrA
+$ node /Users/iagoleal/dev/reversa-views/scripts/atualizar.js
+Clone em fe6a5ff, ramo master.
+Em dia com a origem: não há commit a trazer.
+código de saída: 0
+
+Antes da correção, a mesma chamada feita pela grafia que a faixa anunciava morria em
+`npm error Missing script: "atualizar"` com saída 1, ou em `npm error code ENOENT` com
+saída 254, sem que o ritual começasse.

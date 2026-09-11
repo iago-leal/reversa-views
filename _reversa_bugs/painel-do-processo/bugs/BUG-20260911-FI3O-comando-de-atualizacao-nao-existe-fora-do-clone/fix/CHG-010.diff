@@ -1,0 +1,124 @@
+--- /dev/null	2026-09-11 18:31:52
++++ b/_reversa_sdd/addenda/bug-BUG-20260911-FI3O-v001.md
+@@ -0,0 +1,121 @@
++# Adendo de bug: BUG-20260911-FI3O, v001
++
++> Arquivo: `_reversa_sdd/addenda/bug-BUG-20260911-FI3O-v001.md` (imutável)
++> Tipo: especificação inédita (adendo aditivo; a spec não dizia nada sobre o ponto)
++> Vigência: desde 2026-09-11
++> Decisão humana: veredito `spec-gap` aprovado por iago em 2026-09-11, sobre a recomendação do /reversa-debugger-fix
++
++## Seções alvo
++
++1. `_reversa_forward/007-atualizacao-e-progresso/requirements.md#5-requisitos-funcionais`, bloco
++   **A. O comando de atualização, no clone**: RF-01, RF-04 e RF-22 ganham companhia, e nenhum deles
++   é alterado
++2. `_reversa_sdd/sdd/empacotamento-e-verificacao.md#6-requisitos-funcionais`, o parágrafo do ritual
++   da atualização
++3. `_reversa_sdd/addenda/007-atualizacao-e-progresso.md#resumo-da-entrega`
++
++## A lacuna, e por que ela passou
++
++A spec da feature 007 descreve o **ato** e nunca o **endereço**. RF-01 diz que um comando de terminal
++confere; RF-04 diz que a aplicação é um segundo ato, disparado por argumento explícito; RF-22 manda
++os dois entrarem no README. Nenhum dos três diz de onde o comando é chamado, nem o que deve
++acontecer quando alguém o chama de outro lugar.
++
++A pressuposição existia, e existia no lugar onde pressuposição não se questiona: o **título** do
++bloco, "O comando de atualização, no clone". Título não é requisito, não tem critério de aceite e não
++produz vermelho. Por isso a faixa do painel pôde herdar a pressuposição sem que revisão alguma a
++alcançasse, e por isso o bug carregou o rótulo `spec-gap` desde o registro.
++
++O que a lacuna produziu está medido na cápsula de reprodução: o comando anunciado, colado no
++terminal do workspace onde o painel abre, morria dentro do npm com `Missing script` e saída 1, ou com
++`ENOENT` e saída 254, e nenhum dos três desfechos nomeados de D-12 chegava a se pronunciar. A saída 1
++do primeiro caso colidia com a de recusa legítima do ritual, o que tornava a falha indistinguível de
++uma recusa para qualquer script que chamasse o comando de fora.
++
++## O que se especifica pela primeira vez
++
++### RF-34 — O ritual independe do diretório corrente, e o diz
++
++| ID | Requisito | Prioridade | Critério de aceite |
++|---|---|---|---|
++| RF-34 | O ritual de atualização age sempre sobre o clone em que ele mora, qualquer que seja o diretório de onde foi chamado | Must | `scripts/atualizar.js` deriva a raiz do próprio arquivo, nunca de `process.cwd()`; chamado por caminho absoluto de um diretório neutro, confere o clone certo e devolve o código certo |
++
++Este requisito **descreve o que já era verdade** e nunca fora escrito. A cápsula do bug o provou antes
++da correção: o percurso sempre foi independente do lugar. O que dependia do lugar era a grafia
++anunciada, e é o requisito seguinte que a trata.
++
++### RF-35 — A faixa anuncia uma linha executável de onde o leitor está
++
++| ID | Requisito | Prioridade | Critério de aceite |
++|---|---|---|---|
++| RF-35 | O comando que o cabeçalho oferece é executável tal como está, a partir do diretório em que o leitor tem o painel aberto | Must | Havendo raiz carimbada, a linha anunciada chama o ritual por endereço e não é resolvida pelo `package.json` do diretório corrente |
++
++O endereço é o do **clone que produziu a construção instalada**, e a escolha tem razão: o painel
++compara a construção instalada com a origem, e o clone que a produziu é exatamente aquele cujo ritual
++a corrige. O carimbo da construção, que já declarava versão, commit, origem e ramo, passa a declarar
++também a raiz, pela mesma via e pela mesma razão de todas as outras: o valor vem de lá e de nenhum
++outro lugar, nem de argumento, nem de ambiente, nem de arquivo do workspace.
++
++Duas grafias do mesmo ato passam a conviver, e nenhuma é mais verdadeira que a outra:
++
++| Grafia | Vale onde | Segundo ato |
++|---|---|---|
++| Pelo npm | Dentro do clone, e só dentro dele | `npm run atualizar -- --aplicar` |
++| Pelo endereço | De qualquer diretório da máquina | `node <raiz-do-clone>/scripts/atualizar.js --aplicar` |
++
++### RF-36 — Sem endereço declarado, a faixa recua; nunca inventa caminho
++
++| ID | Requisito | Prioridade | Critério de aceite |
++|---|---|---|---|
++| RF-36 | Construção que não declare raiz faz a faixa anunciar a grafia do clone, e jamais um caminho fabricado | Must | Raiz ausente, nula ou vazia produz `npm run atualizar -- --aplicar`; nenhum caminho plausível é montado |
++
++Três situações reais chegam aqui, e não uma hipótese: construção anterior a esta correção, host
++anterior ao campo do protocolo, e o preview servido fora do editor. O recuo é o mesmo princípio que
++RN-05 já aplica ao desfecho desconhecido e que RF-17 aplica à procedência ausente: **dizer a forma
++curta, que é verdadeira em algum lugar, é melhor que dizer um caminho plausível e falso**.
++
++## O limite, declarado em vez de escondido
++
++Onde o clone **não existe** na máquina em que o painel roda, o que inclui container de
++desenvolvimento e Codespace, não há endereço alcançável, e grafia alguma o inventa. A atualização se
++faz onde o clone está, e o pacote resultante se instala no ambiente remoto por
++`code --install-extension`.
++
++Isso é limite de desenho, e não defeito pendente. A caracterização desses dois ambientes ficou
++declaradamente **em aberto** na sessão de conserto, por resposta do próprio usuário, e entra no ciclo
++forward se algum dia deixar de ser aceitável.
++
++## O que este adendo NÃO muda
++
++- **RF-01, RF-04 e RF-22 continuam inteiros, palavra por palavra.** A separação entre conferir e
++  aplicar segue valendo, e o argumento explícito continua sendo o que aplica. O que se acrescenta é
++  o endereço, que nenhum dos três tratava.
++- **Os três códigos de saída de D-12 permanecem.** Zero em dia, um reprovado ou recusado, dois
++  impossível conferir. O que a correção acaba é com a falha que os antecedia, dentro do npm.
++- **A extensão continua sem escrever arquivo**, em si mesma ou no workspace, e continua sem se
++  atualizar sozinha. O invariante da seção 6 do PRD segue intacto, e o pedido de auto-atualização que
++  acompanhou este relato permanece onde deve: no intake, como evolução do ciclo forward.
++- **O painel continua sem interromper.** A faixa é uma linha de texto, e o gesto continua sendo do
++  mantenedor.
++
++## Evidências
++
++| Ref | Observação |
++|---|---|
++| `_reversa_bugs/painel-do-processo/bugs/BUG-20260911-FI3O-comando-de-atualizacao-nao-existe-fora-do-clone/evidence/reproducao.md` | Cápsula com as três formas de chamada; o caso C prova a independência do diretório e localiza o defeito na grafia anunciada |
++| `.../evidence/terminal-erp-mineracao.txt` | A saída original do usuário, em outro projeto, com a extensão instalada |
++| `.../evidence/reproducao-fora-do-clone.txt` | As duas caras da falha, com os códigos 1 e 254 |
++| `.../evidence/gate1-vermelho.txt` | Vinte casos vermelhos antes da correção, em quatro arquivos de suíte |
++| `.../evidence/gate2-verde.txt` | 1527 testes verdes, os dois verificadores de tipo em zero, e o ritual rodando por endereço de um diretório neutro |
++| `.../fix/CHG-001.diff` | A quinta constante do carimbo, escapada em vez de interpolada |
++| `.../fix/CHG-006.diff` | A grafia do lado da tela, com recuo e aspas |
++| `.../fix/CHG-008.diff` | A grafia do lado do ritual, e a linha "Para aplicar" derivada dela |
++
++## Regras sob vigilância acrescentadas
++
++| ID | Origem | Regra | Tipo | Sinal de violação |
++|---|---|---|---|---|
++| W118 | Este adendo, `src/webview/domain/labels.ts`, `scripts/atualizar.js` | A linha que a faixa anuncia e a que o ritual imprime como "Para aplicar" saem da mesma regra, conferida função contra função | presença | Suíte que volte a comparar as duas por expressão regular sobre texto, ou uma das duas grafias mudando sem a outra |
++| W119 | Este adendo, `src/webview/domain/labels.ts` | Raiz ausente produz a grafia do clone, e nunca um caminho montado | ausência | Qualquer caminho fabricado a partir de raiz vazia, nula ou indefinida |
++| W120 | Este adendo, `scripts/gerar-carimbo-da-construcao.js` | A raiz entra no módulo gerado escapada, e não interpolada crua | presença | Literal montado por concatenação, que quebra em caminho com aspas ou barra invertida |
++| W121 | Este adendo, `src/host/protocol.ts` | A raiz do clone e a raiz observada são campos distintos e nunca se substituem | ausência | Painel que use `root` como endereço do ritual, ou `builtFromRoot` como raiz observada |

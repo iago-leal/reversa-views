@@ -1,4 +1,4 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-10T17:35:38.192Z a partir de 5 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-11T19:59:01.985Z a partir de 6 bugs -->
 # Bugs por artefato de spec
 
 Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec muda só por adendo.
@@ -11,6 +11,8 @@ Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec mud
   - seção `#a-o-comando-de-atualizacao-no-clone` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260910-SVZU-ritual-nao-alcanca-construcao-instalada`
 - BUG-20260910-WIBK (resolved/fixed, P1): Faixa de atualização do painel anuncia o comando que apenas confere
   - seção `#7-criterios-de-aceitacao` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260910-WIBK-faixa-anuncia-comando-que-so-confere`
+- BUG-20260911-FI3O (open, P1): O comando que a faixa anuncia não existe fora do clone, e falha como erro do npm
+  - seção `#7-criterios-de-aceitacao` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260911-FI3O-comando-de-atualizacao-nao-existe-fora-do-clone`
 
 ## `_reversa_sdd/addenda/006-cartoes-e-cronologia.md`
 
@@ -27,11 +29,15 @@ Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec mud
   - seção `#resumo-da-entrega` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260910-SVZU-ritual-nao-alcanca-construcao-instalada`
 - BUG-20260910-WIBK (resolved/fixed, P1): Faixa de atualização do painel anuncia o comando que apenas confere
   - seção `#impacto-por-artefato-da-extracao` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260910-WIBK-faixa-anuncia-comando-que-so-confere`
+- BUG-20260911-FI3O (open, P1): O comando que a faixa anuncia não existe fora do clone, e falha como erro do npm
+  - seção `#` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260911-FI3O-comando-de-atualizacao-nao-existe-fora-do-clone`
 
 ## `_reversa_sdd/prd.md`
 
 - BUG-20260909-VHII (resolved/fixed, P1): Extensão instalada anterior à feature 007 não declara procedência nem anuncia atualização
   - seção `#8-riscos` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260909-VHII-instalacao-anterior-a-007`
+- BUG-20260911-FI3O (open, P1): O comando que a faixa anuncia não existe fora do clone, e falha como erro do npm
+  - seção `#6-restricoes` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260911-FI3O-comando-de-atualizacao-nao-existe-fora-do-clone`
 
 ## `_reversa_sdd/sdd/empacotamento-e-verificacao.md`
 
@@ -39,6 +45,8 @@ Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec mud
   - seção `#6-requisitos-funcionais` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260909-VHII-instalacao-anterior-a-007`
 - BUG-20260910-SVZU (resolved/fixed, P1): Ritual de atualização não alcança a construção instalada quando o clone já está em dia
   - seção `#6-requisitos-funcionais` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260910-SVZU-ritual-nao-alcanca-construcao-instalada`
+- BUG-20260911-FI3O (open, P1): O comando que a faixa anuncia não existe fora do clone, e falha como erro do npm
+  - seção `#6-requisitos-funcionais` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260911-FI3O-comando-de-atualizacao-nao-existe-fora-do-clone`
 
 ## `_reversa_sdd/sdd/leitura-do-processo.md`
 

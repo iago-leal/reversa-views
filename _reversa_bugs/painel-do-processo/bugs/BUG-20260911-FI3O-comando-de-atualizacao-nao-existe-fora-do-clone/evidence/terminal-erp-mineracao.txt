@@ -1,0 +1,9 @@
+Colado pelo usuário em 2026-09-11. Terminal aberto no projeto erp-mineracao, na mesma máquina em
+que o clone do reversa-views existe, com a extensão instalada e o painel do processo aberto.
+
+iagoleal@MacBook-Pro-de-Iago erp-mineracao % npm run atualizar -- --aplicar
+npm error Missing script: "atualizar"
+npm error
+npm error To see a list of scripts, run:
+npm error   npm run
+npm error A complete log of this run can be found in: /Users/iagoleal/.npm/_logs/2026-09-11T19_48_11_766Z-debug-0.log

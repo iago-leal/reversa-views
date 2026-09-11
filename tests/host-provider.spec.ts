@@ -310,7 +310,11 @@ describe('estado da webview (RN-06)', () => {
  * por leitura, e não se repete sozinha.
  */
 describe('a consulta à origem', () => {
-  const CARIMBO = { version: '0.6.1', commit: 'a23711d481021a978720c0bc478b6dabed94fec3' }
+  const CARIMBO = {
+    version: '0.6.1',
+    commit: 'a23711d481021a978720c0bc478b6dabed94fec3',
+    root: '/home/alguem/dev/reversa-views',
+  }
 
   it('anuncia a espera depois do processo, e o desfecho quando a origem responde', async () => {
     const b = bancada({ build: CARIMBO, update: {} })
@@ -411,12 +415,20 @@ describe('a consulta à origem', () => {
     ) as { data: Record<string, unknown> }
     expect(processo.data.extensionVersion).toBe('0.6.1')
     expect(processo.data.builtFromCommit).toBe(CARIMBO.commit)
+    // A raiz do clone que produziu esta construção viaja pela mesma via, e é
+    // ela que permite à faixa anunciar um comando executável de onde o leitor
+    // está (BUG-20260911-FI3O). Sem ela a tela recua para o comando do clone.
+    expect(processo.data.builtFromRoot).toBe(CARIMBO.root)
     expect(processo.data.inheritedRevision).toBe(INHERITED_MODEL_REVISION)
   })
 })
 
 describe('quando a consulta NÃO acontece (RF-12, RF-14, RN-09)', () => {
-  const CARIMBO = { version: '0.6.1', commit: 'a23711d481021a978720c0bc478b6dabed94fec3' }
+  const CARIMBO = {
+    version: '0.6.1',
+    commit: 'a23711d481021a978720c0bc478b6dabed94fec3',
+    root: '/home/alguem/dev/reversa-views',
+  }
 
   it('sem pasta aberta, não há leitura a acompanhar e nada é perguntado', async () => {
     const b = bancada({ roots: [], build: CARIMBO, update: {} })
@@ -475,7 +487,11 @@ describe('quando a consulta NÃO acontece (RF-12, RF-14, RN-09)', () => {
 })
 
 describe('releitura durante consulta em voo', () => {
-  const CARIMBO = { version: '0.6.1', commit: 'a23711d481021a978720c0bc478b6dabed94fec3' }
+  const CARIMBO = {
+    version: '0.6.1',
+    commit: 'a23711d481021a978720c0bc478b6dabed94fec3',
+    root: '/home/alguem/dev/reversa-views',
+  }
 
   it('a resposta da leitura anterior não sobrescreve a da leitura corrente', async () => {
     // Sem a guarda de geração, a resposta velha chegaria depois e o cabeçalho
@@ -509,7 +525,11 @@ describe('releitura durante consulta em voo', () => {
 })
 
 describe('a falha da consulta no canal de saída (T041)', () => {
-  const CARIMBO = { version: '0.6.1', commit: 'a23711d481021a978720c0bc478b6dabed94fec3' }
+  const CARIMBO = {
+    version: '0.6.1',
+    commit: 'a23711d481021a978720c0bc478b6dabed94fec3',
+    root: '/home/alguem/dev/reversa-views',
+  }
 
   it('escreve uma linha, com origem, ato e razão', async () => {
     const b = bancada({

@@ -1,0 +1,22 @@
+--- a/scripts/preview/leitura.js
++++ b/scripts/preview/leitura.js
+@@ -29,13 +29,17 @@
+ 
+ const { EMPTY_SNAPSHOT, readReversa } = require('../../out/heranca/reversa-domain/src/index.js')
+ const { EMPTY_DECOMPOSITION, EMPTY_HISTORY } = require('../../out/domain/types.js')
+-const { BUILT_FROM_COMMIT, EXTENSION_VERSION } = require('../../out/host/build.js')
++const {
++  BUILT_FROM_COMMIT,
++  BUILT_FROM_ROOT,
++  EXTENSION_VERSION,
++} = require('../../out/host/build.js')
+ const { INHERITED_MODEL_REVISION } = require('../../out/host/inheritance.js')
+ const { readWorkspace } = require('../../out/host/reading.js')
+ const { sessionMessages } = require('../../out/host/session.js')
+ 
+ /** O carimbo desta construção, o mesmo que o host de verdade passa (RF-17). */
+-const CARIMBO = { version: EXTENSION_VERSION, commit: BUILT_FROM_COMMIT }
++const CARIMBO = { version: EXTENSION_VERSION, commit: BUILT_FROM_COMMIT, root: BUILT_FROM_ROOT }
+ 
+ /**
+  * Quanto o cliente espera entre o processo e o desfecho forçado, quando o

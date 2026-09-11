@@ -1,0 +1,393 @@
+--- a/tests/helpers/reversa-fixtures.ts
++++ b/tests/helpers/reversa-fixtures.ts
+@@ -206,6 +206,7 @@
+     history: historyFixture(),
+     extensionVersion: '0.6.1',
+     builtFromCommit: 'a23711d481021a978720c0bc478b6dabed94fec3',
++    builtFromRoot: '/home/alguem/dev/reversa-views',
+     bugs: bugsFixture(),
+     greenfield: greenfieldFixture(),
+     ...overrides,
+--- a/tests/webview-header.spec.tsx
++++ b/tests/webview-header.spec.tsx
+@@ -25,13 +25,13 @@
+  * @module tests/webview-header
+  */
+ 
+-import { readFileSync } from 'node:fs'
+ import { renderToStaticMarkup } from 'react-dom/server'
+ import { describe, expect, it } from 'vitest'
++import { comandoDeAplicacao } from '../scripts/atualizar.js'
+ import { UPDATE_CAUSES, UPDATE_STATES } from '../src/host/protocol.ts'
+ import type { UpdateCause, UpdateStatus } from '../src/host/protocol.ts'
+ import { readingIntegrity } from '../src/webview/domain/integrity.ts'
+-import { updateLabel } from '../src/webview/domain/labels.ts'
++import { updateCommand, updateLabel } from '../src/webview/domain/labels.ts'
+ import { COLLAPSIBLE_SECTIONS } from '../src/webview/domain/types.ts'
+ import type { EffectiveEntry } from '../src/webview/domain/types.ts'
+ import { Header } from '../src/webview/ui/Header.tsx'
+@@ -112,6 +112,9 @@
+   })
+ 
+   it('atrasada diz quantos commits, e nomeia o comando que os aplica', () => {
++    // Sem raiz carimbada, o comando é o RECUO: a forma do clone, que é o que
++    // uma construção anterior ao BUG-20260911-FI3O produz. O bloco do fim
++    // exercita a forma por endereço, que é a desta correção.
+     const rótulo = updateLabel(DESFECHOS.atrasada)
+     expect(rótulo.text).toContain('4')
+     expect(rótulo.command).toBe('npm run atualizar -- --aplicar')
+@@ -198,7 +201,11 @@
+   })
+ 
+   it('o comando a copiar aparece quando há o que aplicar, e não aparece quando não há', () => {
+-    expect(cabeçalho(DESFECHOS.atrasada)).toContain('npm run atualizar -- --aplicar')
++    // A carga da fixture carrega raiz carimbada, e por isso o que o cabeçalho
++    // desenha é a forma por endereço (BUG-20260911-FI3O).
++    const aplica = comandoDeAplicacao('/home/alguem/dev/reversa-views')
++    expect(cabeçalho(DESFECHOS.atrasada)).toContain(aplica)
++    expect(cabeçalho(DESFECHOS['em-dia'])).not.toContain('atualizar.js')
+     expect(cabeçalho(DESFECHOS['em-dia'])).not.toContain('npm run atualizar')
+   })
+ 
+@@ -271,41 +278,108 @@
+   // primeiro nunca traz commit algum, e foi ele que a faixa anunciou durante
+   // toda a feature 007: quem o copiava recebia um diagnóstico, e o aviso
+   // voltava na recarga seguinte.
+-  const CONFERE = 'npm run atualizar'
+-  const APLICA = 'npm run atualizar -- --aplicar'
++  //
++  // As duas formas do segundo ato convivem desde o BUG-20260911-FI3O: a do
++  // clone, que é o recuo de quem não tem raiz carimbada, e a do endereço, que
++  // é a que o painel anuncia quando sabe de onde veio a construção.
++  const RAIZ = '/home/alguem/dev/reversa-views'
++  const CONFERE_NO_CLONE = 'npm run atualizar'
++  const APLICA_NO_CLONE = 'npm run atualizar -- --aplicar'
++  const CONFERE_POR_ENDEREÇO = `node ${RAIZ}/scripts/atualizar.js`
+ 
+   it('atrasada anuncia o comando que aplica, e não o que apenas confere', () => {
+-    // Reprodução do defeito: vermelho enquanto a faixa oferecer a conferência.
+-    expect(updateLabel(DESFECHOS.atrasada).command).toBe(APLICA)
++    // Reprodução do defeito do nº 5: vermelho enquanto a faixa oferecer a
++    // conferência. Vale nas duas formas, com raiz e sem ela.
++    expect(updateLabel(DESFECHOS.atrasada, RAIZ).command).not.toBe(CONFERE_POR_ENDEREÇO)
++    expect(updateLabel(DESFECHOS.atrasada, RAIZ).command).toContain('--aplicar')
++    expect(updateLabel(DESFECHOS.atrasada).command).toBe(APLICA_NO_CLONE)
+   })
+ 
+   it('divergente anuncia o mesmo comando de atrasada', () => {
+     // A spec manda o mesmo comando nos dois desfechos que pedem ação. A recusa
+     // de RF-05 sobre commit próprio é nomeada pelo script no momento de
+     // aplicar, e não cabe ao rótulo antecipá-la.
+-    expect(updateLabel(DESFECHOS.divergente).command).toBe(updateLabel(DESFECHOS.atrasada).command)
++    expect(updateLabel(DESFECHOS.divergente, RAIZ).command).toBe(
++      updateLabel(DESFECHOS.atrasada, RAIZ).command,
++    )
+   })
+ 
+   it('nenhum desfecho oferece a conferência nua como se ela aplicasse', () => {
+     for (const estado of UPDATE_STATES) {
+-      expect(updateLabel(DESFECHOS[estado]).command, estado).not.toBe(CONFERE)
++      expect(updateLabel(DESFECHOS[estado]).command, estado).not.toBe(CONFERE_NO_CLONE)
++      expect(updateLabel(DESFECHOS[estado], RAIZ).command, estado).not.toBe(CONFERE_POR_ENDEREÇO)
+     }
+   })
+ 
+   it('o comando anunciado é o que o ritual imprime como "Para aplicar"', () => {
+-    // Verificação cruzada: o rótulo e o script soletram o segundo ato em dois
+-    // lugares, e foi a ausência desta ponte que deixou os dois divergirem sem
+-    // sinal. O script é lido como texto porque a tela não pode importá-lo.
+-    const script = readFileSync(new URL('../scripts/atualizar.js', import.meta.url), 'utf8')
+-    const impresso = /Para aplicar: ([^'\n]+)'/.exec(script)?.[1]
+-    expect(impresso, 'o ritual deixou de imprimir a linha "Para aplicar"').toBeDefined()
+-    expect(updateLabel(DESFECHOS.atrasada).command).toBe(impresso)
++    // Verificação cruzada, e a ponte que o nº 5 deixou. Ela era uma expressão
++    // regular sobre o TEXTO do script, e o BUG-20260911-FI3O a promove: o
++    // rótulo e o ritual passam a ser comparados PELA FUNÇÃO, importada dos dois
++    // lados e alimentada com a mesma raiz. Texto lido por expressão regular
++    // confere a grafia; função confere a regra.
++    expect(updateLabel(DESFECHOS.atrasada, RAIZ).command).toBe(comandoDeAplicacao(RAIZ))
++    expect(updateCommand(RAIZ)).toBe(comandoDeAplicacao(RAIZ))
+   })
+ 
+   it('o cabeçalho desenha o argumento de aplicação em atrasada e em divergente', () => {
+     // A asserção por substring que já existia passava com qualquer dos dois
+     // comandos; esta exige o argumento no markup.
+-    expect(cabeçalho(DESFECHOS.atrasada)).toContain(APLICA)
+-    expect(cabeçalho(DESFECHOS.divergente)).toContain(APLICA)
++    const aplica = comandoDeAplicacao(RAIZ)
++    expect(cabeçalho(DESFECHOS.atrasada)).toContain(aplica)
++    expect(cabeçalho(DESFECHOS.divergente)).toContain(aplica)
+   })
+ })
++
++describe('de onde o comando anunciado se chama (BUG-20260911-FI3O)', () => {
++  // O defeito: a faixa anunciava uma linha cuja resolução depende do diretório
++  // corrente de quem a colou, e o painel abre no workspace de trabalho, que
++  // quase nunca é o clone. O ritual, esse, já é independente do diretório: ele
++  // ancora a raiz no arquivo que o contém. O que se corrige aqui é o endereço
++  // anunciado, e não o percurso disparado.
++  const RAIZ = '/home/alguem/dev/reversa-views'
++  const RAIZ_COM_ESPAÇO = '/Users/alguem/Meus Projetos/reversa-views'
++
++  it('havendo raiz carimbada, a linha não é resolvida pelo diretório corrente', () => {
++    // Reprodução: vermelho enquanto a faixa anunciar a forma do `npm run`, que
++    // só existe dentro do clone.
++    const comando = updateLabel(DESFECHOS.atrasada, RAIZ).command
++    expect(comando).not.toMatch(/^npm run /)
++    expect(comando).toBe(`node ${RAIZ}/scripts/atualizar.js --aplicar`)
++  })
++
++  it('a linha carrega o endereço do clone que produziu esta construção', () => {
++    expect(updateCommand(RAIZ)).toContain(RAIZ)
++    expect(updateCommand(RAIZ)).toContain('scripts/atualizar.js')
++  })
++
++  it('sem raiz carimbada a faixa recua para o comando do clone, e não inventa caminho', () => {
++    // Construção anterior a esta correção, host anterior ao campo, ou preview
++    // sem carimbo: os três chegam aqui, e nenhum deles pode receber um caminho
++    // plausível e falso.
++    for (const ausente of [null, undefined, '']) {
++      expect(updateCommand(ausente), String(ausente)).toBe('npm run atualizar -- --aplicar')
++    }
++  })
++
++  it('caminho com espaço sai entre aspas, para sobreviver ao terminal', () => {
++    expect(updateCommand(RAIZ_COM_ESPAÇO)).toBe(
++      `node "${RAIZ_COM_ESPAÇO}/scripts/atualizar.js" --aplicar`,
++    )
++  })
++
++  it('a barra final da raiz não vira barra dupla no caminho', () => {
++    expect(updateCommand(`${RAIZ}/`)).toBe(updateCommand(RAIZ))
++  })
++
++  it('o rótulo e o ritual soletram a mesma linha para toda raiz', () => {
++    for (const raiz of [RAIZ, RAIZ_COM_ESPAÇO, `${RAIZ}/`, '', null]) {
++      expect(updateCommand(raiz), String(raiz)).toBe(comandoDeAplicacao(raiz))
++    }
++  })
++
++  it('os desfechos que nada pedem continuam sem comando, com raiz ou sem ela', () => {
++    for (const estado of ['desligada', 'consultando', 'em-dia', 'commit-desconhecido', 'impossivel']) {
++      expect(updateLabel(DESFECHOS[estado], RAIZ).command, estado).toBeNull()
++    }
++  })
++})
+--- a/tests/atualizador.spec.ts
++++ b/tests/atualizador.spec.ts
+@@ -19,6 +19,7 @@
+   SAIDA_IMPOSSIVEL,
+   SAIDA_REPROVADO,
+   aplicar,
++  comandoDeAplicacao,
+   conferir,
+   encurtar,
+   principal,
+@@ -98,8 +99,8 @@
+ 
+   it('o relato imprime o commit na forma curta', () => {
+     const m = mundo()
+-    expect(relatar(conferir('/repo', m.ferramentas))).toContain('a23711d')
+-    expect(relatar(conferir('/repo', m.ferramentas))).not.toContain(COMMIT)
++    expect(relatar(conferir('/repo', m.ferramentas), '/repo')).toContain('a23711d')
++    expect(relatar(conferir('/repo', m.ferramentas), '/repo')).not.toContain(COMMIT)
+   })
+ })
+ 
+@@ -115,7 +116,7 @@
+     const m = mundo({ atras: 3 })
+     expect(principal([], '/repo', m.ferramentas)).toBe(SAIDA_REPROVADO)
+     expect(m.saida()).toContain('3 commit')
+-    expect(m.saida()).toContain('npm run atualizar -- --aplicar')
++    expect(m.saida()).toContain(comandoDeAplicacao('/repo'))
+     expect(m.feito).toEqual(['buscar'])
+   })
+ 
+@@ -123,7 +124,7 @@
+     const m = mundo({ atras: 3, aFrente: 1 })
+     principal([], '/repo', m.ferramentas)
+     expect(m.saida()).toMatch(/próprio/)
+-    expect(m.saida()).not.toContain('npm run atualizar -- --aplicar')
++    expect(m.saida()).not.toContain(comandoDeAplicacao('/repo'))
+   })
+ 
+   it('a conferência nunca incorpora nem roda passo algum', () => {
+@@ -364,5 +365,44 @@
+     const m = mundo({ atras: 1, pacoteExiste: false })
+     expect(aplicar('/repo', m.ferramentas)).toBe(SAIDA_REPROVADO)
+     expect(m.erro()).toContain('reversa-views-0.6.2.vsix')
++  })
++})
++
++describe('de onde o ritual se chama (BUG-20260911-FI3O)', () => {
++  // O ritual JÁ é independente do diretório corrente: `atualizar.js` ancora a
++  // raiz no arquivo que o contém, e não em `process.cwd()`. O que o prendia ao
++  // clone era a forma anunciada, que passava pelo `npm run`. Esta é a única
++  // grafia do segundo ato do lado do script, e o cabeçalho a confere contra a
++  // sua, pela função e não mais pelo texto.
++  const RAIZ = '/home/alguem/dev/reversa-views'
++  const RAIZ_COM_ESPAÇO = '/Users/alguem/Meus Projetos/reversa-views'
++
++  it('a linha do segundo ato chama o script pelo endereço, e não pelo npm', () => {
++    expect(comandoDeAplicacao(RAIZ)).toBe(`node ${RAIZ}/scripts/atualizar.js --aplicar`)
++    expect(comandoDeAplicacao(RAIZ)).not.toMatch(/^npm run /)
++  })
++
++  it('sem raiz, recua para o comando do clone em vez de inventar caminho', () => {
++    for (const ausente of [null, undefined, '']) {
++      expect(comandoDeAplicacao(ausente), String(ausente)).toBe('npm run atualizar -- --aplicar')
++    }
+   })
++
++  it('caminho com espaço sai entre aspas', () => {
++    expect(comandoDeAplicacao(RAIZ_COM_ESPAÇO)).toBe(
++      `node "${RAIZ_COM_ESPAÇO}/scripts/atualizar.js" --aplicar`,
++    )
++  })
++
++  it('a barra final da raiz não vira barra dupla', () => {
++    expect(comandoDeAplicacao(`${RAIZ}/`)).toBe(comandoDeAplicacao(RAIZ))
++  })
++
++  it('o relato imprime "Para aplicar" com o endereço da raiz que lhe deram', () => {
++    // Reprodução: vermelho enquanto o ritual imprimir a forma do `npm run`.
++    const m = mundo({ atras: 2 })
++    const texto = relatar(conferir(RAIZ, m.ferramentas), RAIZ)
++    expect(texto).toContain(`Para aplicar: ${comandoDeAplicacao(RAIZ)}`)
++    expect(texto).not.toContain('npm run atualizar')
++  })
+ })
+--- a/tests/host-provider.spec.ts
++++ b/tests/host-provider.spec.ts
+@@ -310,7 +310,11 @@
+  * por leitura, e não se repete sozinha.
+  */
+ describe('a consulta à origem', () => {
+-  const CARIMBO = { version: '0.6.1', commit: 'a23711d481021a978720c0bc478b6dabed94fec3' }
++  const CARIMBO = {
++    version: '0.6.1',
++    commit: 'a23711d481021a978720c0bc478b6dabed94fec3',
++    root: '/home/alguem/dev/reversa-views',
++  }
+ 
+   it('anuncia a espera depois do processo, e o desfecho quando a origem responde', async () => {
+     const b = bancada({ build: CARIMBO, update: {} })
+@@ -411,12 +415,20 @@
+     ) as { data: Record<string, unknown> }
+     expect(processo.data.extensionVersion).toBe('0.6.1')
+     expect(processo.data.builtFromCommit).toBe(CARIMBO.commit)
++    // A raiz do clone que produziu esta construção viaja pela mesma via, e é
++    // ela que permite à faixa anunciar um comando executável de onde o leitor
++    // está (BUG-20260911-FI3O). Sem ela a tela recua para o comando do clone.
++    expect(processo.data.builtFromRoot).toBe(CARIMBO.root)
+     expect(processo.data.inheritedRevision).toBe(INHERITED_MODEL_REVISION)
+   })
+ })
+ 
+ describe('quando a consulta NÃO acontece (RF-12, RF-14, RN-09)', () => {
+-  const CARIMBO = { version: '0.6.1', commit: 'a23711d481021a978720c0bc478b6dabed94fec3' }
++  const CARIMBO = {
++    version: '0.6.1',
++    commit: 'a23711d481021a978720c0bc478b6dabed94fec3',
++    root: '/home/alguem/dev/reversa-views',
++  }
+ 
+   it('sem pasta aberta, não há leitura a acompanhar e nada é perguntado', async () => {
+     const b = bancada({ roots: [], build: CARIMBO, update: {} })
+@@ -475,7 +487,11 @@
+ })
+ 
+ describe('releitura durante consulta em voo', () => {
+-  const CARIMBO = { version: '0.6.1', commit: 'a23711d481021a978720c0bc478b6dabed94fec3' }
++  const CARIMBO = {
++    version: '0.6.1',
++    commit: 'a23711d481021a978720c0bc478b6dabed94fec3',
++    root: '/home/alguem/dev/reversa-views',
++  }
+ 
+   it('a resposta da leitura anterior não sobrescreve a da leitura corrente', async () => {
+     // Sem a guarda de geração, a resposta velha chegaria depois e o cabeçalho
+@@ -509,7 +525,11 @@
+ })
+ 
+ describe('a falha da consulta no canal de saída (T041)', () => {
+-  const CARIMBO = { version: '0.6.1', commit: 'a23711d481021a978720c0bc478b6dabed94fec3' }
++  const CARIMBO = {
++    version: '0.6.1',
++    commit: 'a23711d481021a978720c0bc478b6dabed94fec3',
++    root: '/home/alguem/dev/reversa-views',
++  }
+ 
+   it('escreve uma linha, com origem, ato e razão', async () => {
+     const b = bancada({
+--- /dev/null
++++ b/tests/carimbo-da-construcao.spec.ts
+@@ -0,0 +1,68 @@
++/**
++ * Suíte do gerador do carimbo da construção (BUG-20260911-FI3O).
++ *
++ * O gerador existe desde a feature 007 e nunca teve suíte própria: o que dele
++ * se verificava era indireto, pelo manifesto, que confere a ORDEM em que ele
++ * roda, e nunca o que ele escreve. A quinta constante deu razão para a suíte
++ * existir, porque ela é a primeira cujo valor é um CAMINHO, e caminho tem
++ * caractere que quebra literal.
++ *
++ * Nada aqui escreve arquivo: o que se exercita é `modulo()`, a função pura que
++ * produz o texto, e não `principal()`, que lê o git e grava.
++ * @module tests/carimbo-da-construcao
++ */
++
++import { describe, expect, it } from 'vitest'
++import { modulo } from '../scripts/gerar-carimbo-da-construcao.js'
++
++/** Um carimbo completo, como o gerador o monta antes de escrever. */
++function carimbo(sobrescritas: Record<string, unknown> = {}) {
++  return {
++    versao: '0.9.0',
++    commit: 'a23711d481021a978720c0bc478b6dabed94fec3',
++    origem: 'iago-leal/reversa-views',
++    ramo: 'master',
++    raiz: '/home/alguem/dev/reversa-views',
++    ...sobrescritas,
++  }
++}
++
++describe('as constantes que a construção declara sobre si', () => {
++  it('as quatro que já existiam continuam onde estavam', () => {
++    const texto = modulo(carimbo())
++    expect(texto).toContain("export const EXTENSION_VERSION = '0.9.0'")
++    expect(texto).toContain(
++      "export const BUILT_FROM_COMMIT = 'a23711d481021a978720c0bc478b6dabed94fec3'",
++    )
++    expect(texto).toContain("export const ORIGIN_REPOSITORY: string | null = 'iago-leal/reversa-views'")
++    expect(texto).toContain("export const DEFAULT_BRANCH = 'master'")
++  })
++
++  it('a raiz do clone entra como quinta constante (BUG-20260911-FI3O)', () => {
++    // Reprodução: vermelho enquanto o carimbo não disser de onde a construção
++    // foi feita. Sem esse endereço a faixa não tem o que anunciar, e o leitor
++    // fica com um comando que só existe dentro do clone.
++    expect(modulo(carimbo())).toContain(
++      'export const BUILT_FROM_ROOT = "/home/alguem/dev/reversa-views"',
++    )
++  })
++
++  it('o caminho é escapado, e não interpolado cru', () => {
++    // Caminho aceita aspas, barra invertida e quebra de linha, e um literal
++    // montado por concatenação com qualquer um deles gera um módulo que não
++    // compila. O que sai daqui tem de ser JSON válido em toda raiz.
++    const texto = modulo(carimbo({ raiz: 'C:\\Users\\alguém\\O "Projeto"' }))
++    const casou = /export const BUILT_FROM_ROOT = (.+)\n/.exec(texto)
++    expect(casou, 'a constante sumiu do módulo gerado').not.toBeNull()
++    expect(JSON.parse(casou?.[1] ?? '')).toBe('C:\\Users\\alguém\\O "Projeto"')
++  })
++
++  it('raiz vazia sai como cadeia vazia, que é o que a tela lê como recuo', () => {
++    expect(modulo(carimbo({ raiz: '' }))).toContain('export const BUILT_FROM_ROOT = ""')
++  })
++
++  it('o módulo gerado continua declarando que não se edita à mão', () => {
++    expect(modulo(carimbo())).toContain('ARQUIVO GERADO')
++    expect(modulo(carimbo())).toContain('@module host/build')
++  })
++})

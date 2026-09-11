@@ -1,0 +1,80 @@
+--- a/scripts/gerar-carimbo-da-construcao.js
++++ b/scripts/gerar-carimbo-da-construcao.js
+@@ -13,11 +13,18 @@
+  * justamente o que o atualizador da feature 007 recusa. Ele entra no
+  * `.gitignore` e é gerado por toda construção.
+  *
+- * As quatro constantes são o que a consulta à origem precisa saber sem
+- * perguntar a ninguém: quem somos, de que commit fomos feitos, onde mora a
+- * origem e qual é o ramo a comparar. O endereço vem daqui e de nenhum outro
+- * lugar: nem argumento, nem variável de ambiente, nem arquivo do workspace,
+- * para que um workspace hostil não redirecione a requisição.
++ * Quatro constantes são o que a consulta à origem precisa saber sem perguntar
++ * a ninguém: quem somos, de que commit fomos feitos, onde mora a origem e qual
++ * é o ramo a comparar. O endereço vem daqui e de nenhum outro lugar: nem
++ * argumento, nem variável de ambiente, nem arquivo do workspace, para que um
++ * workspace hostil não redirecione a requisição.
++ *
++ * A quinta é de outra natureza, e entrou com o BUG-20260911-FI3O: a RAIZ do
++ * clone que produziu esta construção. Ela não serve à consulta, e sim à faixa
++ * que anuncia o ritual, que precisa dizer de onde ele se chama. Vem daqui pela
++ * mesma razão das outras, e é escapada em vez de interpolada, porque caminho
++ * aceita aspas e barra invertida e um literal montado por concatenação com
++ * qualquer um dos dois gera um módulo que não compila.
+  * @module scripts/gerar-carimbo-da-construcao
+  */
+ 
+@@ -74,7 +81,8 @@
+ 
+ /**
+  * O texto do módulo gerado.
+- * @param {{versao: string, commit: string, origem: string|null, ramo: string}} carimbo - os valores.
++ * @param {{versao: string, commit: string, origem: string|null, ramo: string,
++ *   raiz: string}} carimbo - os valores.
+  * @returns {string} o arquivo inteiro.
+  */
+ function modulo(carimbo) {
+@@ -105,6 +113,16 @@
+ 
+ /** O ramo da origem contra o qual a construção se compara. */
+ export const DEFAULT_BRANCH = '${carimbo.ramo}'
++
++/**
++ * A raiz do clone de onde esta construção saiu (BUG-20260911-FI3O).
++ *
++ * O painel abre no workspace do leitor, que quase nunca é este clone, e sem
++ * este endereço a faixa só sabe anunciar um comando que o \`npm run\` resolve
++ * pelo diretório corrente. Cadeia vazia é resposta legítima: a tela recua para
++ * a grafia do clone em vez de inventar um caminho.
++ */
++export const BUILT_FROM_ROOT = ${JSON.stringify(carimbo.raiz)}
+ `
+ }
+ 
+@@ -112,7 +130,7 @@
+  * Lê o git e a derivação, e grava o carimbo.
+  * @param {string} raiz - a raiz do repositório.
+  * @returns {{versao: string, commit: string, origem: string|null, ramo: string,
+- *   recuo: {causa: string, explicacao: string}|null}} o que foi gravado.
++ *   raiz: string, recuo: {causa: string, explicacao: string}|null}} o que foi gravado.
+  */
+ function principal(raiz) {
+   const derivada = derivarVersao(raiz)
+@@ -123,7 +141,7 @@
+   const origem = normalizarOrigem(tentar(['remote', 'get-url', 'origin'], { caminho: raiz }))
+   const ramo = ramoPadrao(raiz)
+ 
+-  const carimbo = { versao: derivada.versao, commit, origem, ramo }
++  const carimbo = { versao: derivada.versao, commit, origem, ramo, raiz }
+   writeFileSync(join(raiz, DESTINO), modulo(carimbo), 'utf8')
+   return { ...carimbo, recuo: derivada.recuo }
+ }
+@@ -132,7 +150,7 @@
+   const carimbo = principal(process.cwd())
+   const curto = carimbo.commit === '' ? 'sem commit' : carimbo.commit.slice(0, 7)
+   process.stdout.write(
+-    `${DESTINO} gerado: versão ${carimbo.versao}, commit ${curto}, origem ${carimbo.origem ?? 'nenhuma'}, ramo ${carimbo.ramo}\n`,
++    `${DESTINO} gerado: versão ${carimbo.versao}, commit ${curto}, origem ${carimbo.origem ?? 'nenhuma'}, ramo ${carimbo.ramo}, raiz ${carimbo.raiz}\n`,
+   )
+   if (carimbo.recuo !== null) {
+     process.stderr.write(`versão recuada: ${carimbo.recuo.explicacao}\n`)

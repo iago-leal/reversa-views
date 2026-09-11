@@ -1,0 +1,22 @@
+Reprodução em diretório neutro, 2026-09-11T19:57:46Z, fora do clone: /var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/tmp.IowMMVjq8Y
+
+npm error code ENOENT
+npm error syscall open
+npm error path /private/var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/tmp.IowMMVjq8Y/package.json
+npm error errno -2
+npm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open '/private/var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/tmp.IowMMVjq8Y/package.json'
+npm error enoent This is related to npm not being able to find a file.
+npm error enoent
+npm error A complete log of this run can be found in: /Users/iagoleal/.npm/_logs/2026-09-11T19_57_46_546Z-debug-0.log
+código de saída: 254
+
+Leitura: a falha tem duas caras, conforme o diretório de onde se chama.
+
+  - Diretório com package.json e sem o script, o caso do usuário em erp-mineracao:
+    npm error Missing script: "atualizar", saída 1.
+  - Diretório sem package.json algum, a reprodução acima: npm error code ENOENT, saída 254.
+
+As duas são do npm, não do ritual. Nenhum dos três códigos de saída que `scripts/atualizar.js`
+define (0 em dia, 1 reprovado, 2 impossível conferir) chega a ser produzido, porque o processo do
+ritual nunca começa. A saída 1 do primeiro caso colide por acaso com a de recusa do ritual, o que
+torna a falha indistinguível de uma recusa legítima para qualquer script que a chame de fora.

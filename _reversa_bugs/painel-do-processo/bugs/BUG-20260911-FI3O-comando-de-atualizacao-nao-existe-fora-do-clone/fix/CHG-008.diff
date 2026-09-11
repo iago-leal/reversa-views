@@ -1,0 +1,101 @@
+--- a/scripts/atualizar.js
++++ b/scripts/atualizar.js
+@@ -36,9 +36,17 @@
+  * Todo acesso ao mundo entra por `FERRAMENTAS`, para que a suíte exercite os
+  * desfechos sem rede, sem clone e sem editor.
+  *
++ * De onde se chama, desde o BUG-20260911-FI3O: de qualquer diretório. A raiz
++ * sai de `__dirname`, e não de `process.cwd()`, de modo que o ritual sempre
++ * age sobre o clone em que ele mora. O que dependia do diretório corrente era
++ * a grafia do `npm run`, que resolve scripts pelo `package.json` de onde se
++ * chama; a faixa do painel passou a anunciar a grafia por endereço, e
++ * `comandoDeAplicacao` é a única autoridade sobre ela deste lado.
++ *
+  * Uso:
+- *     npm run atualizar               # confere, e nada mais
++ *     npm run atualizar               # confere; só dentro do clone
+  *     npm run atualizar -- --aplicar  # confere, incorpora se houver, e reinstala
++ *     node <raiz>/scripts/atualizar.js --aplicar   # o mesmo, de qualquer lugar
+  * @module scripts/atualizar
+  */
+ 
+@@ -97,6 +105,32 @@
+   { nome: 'suíte', comando: 'npm', argumentos: ['test'] },
+   { nome: 'empacotamento', comando: 'npm', argumentos: ['run', 'empacotar'] },
+ ]
++
++/** Onde o ritual mora dentro do clone, relativo à raiz. */
++const CAMINHO_DO_RITUAL = 'scripts/atualizar.js'
++
++/**
++ * A linha do segundo ato, executável do diretório em que o leitor estiver
++ * (BUG-20260911-FI3O).
++ *
++ * Esta é a única grafia do ato deste lado, e `updateCommand`, em
++ * `src/webview/domain/labels.ts`, é a do outro. As duas seguem a mesma regra e
++ * a suíte as compara função contra função, e não mais texto contra expressão
++ * regular: a ponte que o BUG-20260910-WIBK deixou conferia a grafia, e esta
++ * confere a regra.
++ *
++ * Sem raiz, recua para a grafia do clone: quem não tem endereço não recebe um
++ * caminho plausível e falso. O caminho sai entre aspas só quando carrega
++ * espaço, porque aspas atrapalham a leitura e a maioria dos caminhos não
++ * precisa delas.
++ * @param {string|null|undefined} raiz - a raiz do clone, quando se sabe qual é.
++ * @returns {string} a linha a copiar.
++ */
++function comandoDeAplicacao(raiz) {
++  if (typeof raiz !== 'string' || raiz === '') return 'npm run atualizar -- --aplicar'
++  const caminho = `${raiz.replace(/\/+$/, '')}/${CAMINHO_DO_RITUAL}`
++  return /\s/.test(caminho) ? `node "${caminho}" --aplicar` : `node ${caminho} --aplicar`
++}
+ 
+ /**
+  * A forma curta de um commit, a mesma que o painel exibe.
+@@ -266,9 +300,10 @@
+ /**
+  * O relato da conferência, em texto para o terminal (RF-02, RF-08).
+  * @param {ReturnType<typeof conferir>} resultado - o que se apurou.
++ * @param {string} raiz - a raiz do clone, para soletrar o comando a copiar.
+  * @returns {string} as linhas a imprimir.
+  */
+-function relatar(resultado) {
++function relatar(resultado, raiz) {
+   const linhas = []
+   if (resultado.commit !== null) {
+     linhas.push(`Clone em ${encurtar(resultado.commit)}, ramo ${resultado.ramo}.`)
+@@ -287,7 +322,7 @@
+           `Este clone também tem ${resultado.aFrente} commit(s) próprio(s): a aplicação vai recusar até que sejam enviados ou desfeitos.`,
+         )
+       } else {
+-        linhas.push('Para aplicar: npm run atualizar -- --aplicar')
++        linhas.push(`Para aplicar: ${comandoDeAplicacao(raiz)}`)
+       }
+       break
+     default:
+@@ -330,7 +365,7 @@
+  */
+ function aplicar(raiz, ferramentas = FERRAMENTAS) {
+   const resultado = conferir(raiz, ferramentas)
+-  ferramentas.escrever(relatar(resultado))
++  ferramentas.escrever(relatar(resultado, raiz))
+   if (resultado.desfecho === 'impossivel') return codigoDaConferencia(resultado)
+ 
+   const sujeira = ferramentas.sujeira(raiz)
+@@ -446,7 +481,7 @@
+   if (argumentos.includes('--aplicar')) return aplicar(raiz, ferramentas)
+ 
+   const resultado = conferir(raiz, ferramentas)
+-  ferramentas.escrever(relatar(resultado))
++  ferramentas.escrever(relatar(resultado, raiz))
+   return codigoDaConferencia(resultado)
+ }
+ 
+@@ -466,6 +501,7 @@
+   SAIDA_REPROVADO,
+   aplicar,
+   codigoDaConferencia,
++  comandoDeAplicacao,
+   conferir,
+   encurtar,
+   principal,

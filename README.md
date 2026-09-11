@@ -121,7 +121,7 @@ Isto é trabalho de manutenção, e só é preciso depois de mexer no código.
 ```bash
 npm install            # traz as ferramentas, inclusive o empacotador
 npm run build          # confere a herança, compila o host e empacota a tela
-npm test               # 1123 testes; nenhum deles abre navegador
+npm test               # 1527 testes; nenhum deles abre navegador
 npm run empacotar      # regenera o .vsix e lista o que entrou nele
 ```
 
@@ -145,10 +145,36 @@ no workspace nem em si mesma. O que ela faz é **anunciar**, no cabeçalho do
 painel, se esta construção está atrás da origem do repositório. Trazer a
 novidade é ato seu, no terminal, em dois passos separados de propósito.
 
+### De onde se chama
+
+O ritual mora no clone e é sobre ele que age: `scripts/atualizar.js` ancora a
+raiz no arquivo que o contém, e não no diretório de onde você o chamou. Daí
+existirem duas grafias do mesmo ato, nenhuma mais verdadeira que a outra.
+
+| Grafia | Vale onde | Segundo ato |
+|---|---|---|
+| Pelo npm | Dentro do clone, e só dentro dele | `npm run atualizar -- --aplicar` |
+| Pelo endereço | De qualquer diretório da máquina | `node <raiz-do-clone>/scripts/atualizar.js --aplicar` |
+
+A faixa do painel anuncia a segunda, com a raiz que o carimbo da construção
+declara, e a razão é que o painel abre no workspace que você tem aberto, que
+quase nunca é este clone. Anunciar ali a grafia do npm era o `BUG-20260911-FI3O`:
+o npm resolve scripts pelo `package.json` do diretório corrente, e recusava com
+`Missing script` ou `ENOENT` antes de o ritual começar, sem que nenhum dos três
+desfechos nomeados chegasse a existir. Construção que não declare raiz faz a
+faixa recuar para a grafia do npm, e é o que as anteriores à correção produzem.
+
+Uma consequência a dizer em voz alta: onde o clone **não existe** na máquina em
+que o painel roda, o que inclui container de desenvolvimento e Codespace, não há
+endereço alcançável, e grafia alguma o inventa. A atualização se faz onde o clone
+está, e o pacote resultante se instala no ambiente remoto com
+`code --install-extension`.
+
 ### Conferir
 
 ```bash
-npm run atualizar
+npm run atualizar                                  # de dentro do clone
+node /caminho/do/clone/scripts/atualizar.js        # de qualquer diretório
 ```
 
 O comando busca as referências da origem e não toca a árvore de trabalho:
@@ -184,7 +210,8 @@ avisa.
 ### Aplicar
 
 ```bash
-npm run atualizar -- --aplicar
+npm run atualizar -- --aplicar                              # de dentro do clone
+node /caminho/do/clone/scripts/atualizar.js --aplicar       # de qualquer diretório
 ```
 
 Este ato tem uma frase só: **deixe a instalação em dia com este clone**. Havendo

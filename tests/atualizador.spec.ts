@@ -19,6 +19,7 @@ import {
   SAIDA_IMPOSSIVEL,
   SAIDA_REPROVADO,
   aplicar,
+  comandoDeAplicacao,
   conferir,
   encurtar,
   principal,
@@ -98,8 +99,8 @@ describe('a forma curta do commit (RF-08, D-18)', () => {
 
   it('o relato imprime o commit na forma curta', () => {
     const m = mundo()
-    expect(relatar(conferir('/repo', m.ferramentas))).toContain('a23711d')
-    expect(relatar(conferir('/repo', m.ferramentas))).not.toContain(COMMIT)
+    expect(relatar(conferir('/repo', m.ferramentas), '/repo')).toContain('a23711d')
+    expect(relatar(conferir('/repo', m.ferramentas), '/repo')).not.toContain(COMMIT)
   })
 })
 
@@ -115,7 +116,7 @@ describe('a conferência e seus três desfechos (RF-01, RF-02)', () => {
     const m = mundo({ atras: 3 })
     expect(principal([], '/repo', m.ferramentas)).toBe(SAIDA_REPROVADO)
     expect(m.saida()).toContain('3 commit')
-    expect(m.saida()).toContain('npm run atualizar -- --aplicar')
+    expect(m.saida()).toContain(comandoDeAplicacao('/repo'))
     expect(m.feito).toEqual(['buscar'])
   })
 
@@ -123,7 +124,7 @@ describe('a conferência e seus três desfechos (RF-01, RF-02)', () => {
     const m = mundo({ atras: 3, aFrente: 1 })
     principal([], '/repo', m.ferramentas)
     expect(m.saida()).toMatch(/próprio/)
-    expect(m.saida()).not.toContain('npm run atualizar -- --aplicar')
+    expect(m.saida()).not.toContain(comandoDeAplicacao('/repo'))
   })
 
   it('a conferência nunca incorpora nem roda passo algum', () => {
@@ -364,5 +365,44 @@ describe('o fecho: a linha de instalação (RF-07)', () => {
     const m = mundo({ atras: 1, pacoteExiste: false })
     expect(aplicar('/repo', m.ferramentas)).toBe(SAIDA_REPROVADO)
     expect(m.erro()).toContain('reversa-views-0.6.2.vsix')
+  })
+})
+
+describe('de onde o ritual se chama (BUG-20260911-FI3O)', () => {
+  // O ritual JÁ é independente do diretório corrente: `atualizar.js` ancora a
+  // raiz no arquivo que o contém, e não em `process.cwd()`. O que o prendia ao
+  // clone era a forma anunciada, que passava pelo `npm run`. Esta é a única
+  // grafia do segundo ato do lado do script, e o cabeçalho a confere contra a
+  // sua, pela função e não mais pelo texto.
+  const RAIZ = '/home/alguem/dev/reversa-views'
+  const RAIZ_COM_ESPAÇO = '/Users/alguem/Meus Projetos/reversa-views'
+
+  it('a linha do segundo ato chama o script pelo endereço, e não pelo npm', () => {
+    expect(comandoDeAplicacao(RAIZ)).toBe(`node ${RAIZ}/scripts/atualizar.js --aplicar`)
+    expect(comandoDeAplicacao(RAIZ)).not.toMatch(/^npm run /)
+  })
+
+  it('sem raiz, recua para o comando do clone em vez de inventar caminho', () => {
+    for (const ausente of [null, undefined, '']) {
+      expect(comandoDeAplicacao(ausente), String(ausente)).toBe('npm run atualizar -- --aplicar')
+    }
+  })
+
+  it('caminho com espaço sai entre aspas', () => {
+    expect(comandoDeAplicacao(RAIZ_COM_ESPAÇO)).toBe(
+      `node "${RAIZ_COM_ESPAÇO}/scripts/atualizar.js" --aplicar`,
+    )
+  })
+
+  it('a barra final da raiz não vira barra dupla', () => {
+    expect(comandoDeAplicacao(`${RAIZ}/`)).toBe(comandoDeAplicacao(RAIZ))
+  })
+
+  it('o relato imprime "Para aplicar" com o endereço da raiz que lhe deram', () => {
+    // Reprodução: vermelho enquanto o ritual imprimir a forma do `npm run`.
+    const m = mundo({ atras: 2 })
+    const texto = relatar(conferir(RAIZ, m.ferramentas), RAIZ)
+    expect(texto).toContain(`Para aplicar: ${comandoDeAplicacao(RAIZ)}`)
+    expect(texto).not.toContain('npm run atualizar')
   })
 })

@@ -206,6 +206,7 @@ export function payloadFixture(overrides: Partial<SetProcessData> = {}): SetProc
     history: historyFixture(),
     extensionVersion: '0.6.1',
     builtFromCommit: 'a23711d481021a978720c0bc478b6dabed94fec3',
+    builtFromRoot: '/home/alguem/dev/reversa-views',
     bugs: bugsFixture(),
     greenfield: greenfieldFixture(),
     ...overrides,

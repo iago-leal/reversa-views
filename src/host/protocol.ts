@@ -127,6 +127,20 @@ export interface SetProcessData {
    * brief, the PRD and the specs never cross the channel.
    */
   greenfield: GreenfieldAxis
+  /**
+   * The root of the clone this build was made in (BUG-20260911-FI3O).
+   *
+   * APPENDED at the end, by the same rule as every field before it, and with
+   * the same consequence: a host built before it sends nothing, and the panel
+   * reads the absence as "no address declared" and falls back to the command
+   * of the clone. It never reads the absence as a path.
+   *
+   * It is the OBSERVED root's opposite number, and the two must not be
+   * confused. `root` is the workspace the reader has open; this is the clone
+   * that produced the extension they are running. The whole of the bug was a
+   * panel assuming the two were the same place.
+   */
+  builtFromRoot: string
 }
 
 /** The payload for every situation with no process to show. */
