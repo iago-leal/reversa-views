@@ -1,15 +1,17 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/008-cronologia-do-ciclo-bugs",
-  "feature-id": "008",
-  "short-name": "cronologia-do-ciclo-bugs",
-  "started-at": "2026-09-10T12:08:10Z",
-  "current-stage": "to-do",
+  "feature-dir": "_reversa_forward/009-greenfield-e-features-do-prd",
+  "feature-id": "009",
+  "short-name": "greenfield-e-features-do-prd",
+  "started-at": "2026-09-11T18:20:58Z",
+  "current-stage": "sync",
   "stages-completed": [
     "requirements",
     "clarify",
     "plan",
-    "to-do"
+    "to-do",
+    "coding",
+    "sync"
   ],
   "paused-features": [
     {
