@@ -3,7 +3,7 @@
  * caminho:     packages/reversa-domain/src/index.ts
  * revisão:     420305daa6cdd10858b720a34cb8db67d8e5c5e9 (2026-09-08)
  * copiado em:  2026-09-09
- * adaptações:  nenhuma
+ * adaptações:  A7
  */
 /**
  * Read-only domain for the REVERSA framework (v0.29, comp-72).
@@ -59,7 +59,7 @@ export { ACTIVE_REQUIREMENTS_FILE, ForwardContract } from './forward.ts'
 export type { ForwardInput, ForwardState, PausedFeature, Stage } from './forward.ts'
 export { ProgressContract } from './progress.ts'
 export type { ActionProgress, ProgressEvent, ProgressTrail } from './progress.ts'
-export { findTable, normalizeCell, splitSections } from './table.ts'
+export { cellsOf, findTable, normalizeCell, splitSections } from './table.ts'
 export { IMPACT_TYPES, ImpactContract, SEVERITIES } from './impact.ts'
 export type { ImpactState, ImpactedFile, Scenario, Tally } from './impact.ts'
 export { VERIFICATION_TYPES, WatchContract } from './watch.ts'

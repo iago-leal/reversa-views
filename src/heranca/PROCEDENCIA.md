@@ -74,9 +74,10 @@ O descarte tem consequência no índice da sonda, registrada como adaptação A3
 
 ## 5. Adaptações
 
-Cinco. Três (A1 a A3) são de resolução de importação ou de exportação. Duas (A4 e A5) tocam uma
-regra de leitura, e são a exceção registrada: nasceram do `BUG-20260909-FJBD`, e o caminho para
-aposentá-las é levar a mesma mudança à origem e ressincronizar.
+Sete. Quatro (A1 a A3 e A7) são de resolução de importação ou de exportação. Três (A4 a A6) tocam
+uma regra de leitura, ou a suíte que a fixa, e são a exceção registrada: nasceram de defeito
+encontrado no uso, `BUG-20260909-FJBD` e `BUG-20260912-PIPE`, e o caminho para aposentá-las é o
+mesmo, levar a mudança à origem e ressincronizar.
 
 ### A1, importações de `reversa-probe/src/snapshot.ts`
 
@@ -156,6 +157,39 @@ Adaptado:
 
 Consequência de A4: o caso que fixava a anomalia passa a fixar a aceitação. Só a asserção final e o
 nome do caso mudam.
+
+### A6, a barra vertical escapada em `reversa-domain/src/table.ts`
+
+A barra vertical dentro de uma célula se escreve escapada. É assim que o markdown diz "aqui vai uma
+barra literal", e é a única forma de a linha sobreviver a qualquer renderizador, o preview do editor
+incluído. O divisor da origem parte em toda barra: a linha ganha colunas que não existem, as
+verdadeiras saem da posição e a leitura a descarta sem dizer nada. O efeito apareceu no
+`erp-mineracao`, onde o Reversa escreve mensagem de erro e linha de log com campos separados por
+barra: 63 ações sumiram da decomposição das oito features, e 11 justificativas da tabela de impacto
+chegaram cortadas na primeira barra. Nenhum arquivo estava errado; o leitor é que não reconhecia a
+notação (`BUG-20260912-PIPE`).
+
+O divisor passa a honrar o escape e a devolver cada célula desescapada, porque o painel mostra o
+texto que a célula quer dizer, e não a notação que o carregou. Passa também a ser exportado: a
+decomposição de `actions.md` lia linha por conta própria, e duas cópias da mesma regra são
+exatamente a divergência que o cabeçalho deste módulo diz existir para evitar.
+
+O trecho original e o adaptado estão em `adaptacoes.yml`, literais.
+
+### A7, a exportação correspondente em `reversa-domain/src/index.ts`
+
+Consequência de A6: o divisor exportado chega ao domínio próprio pelo índice do pacote, e não por
+importação que fure a fachada. Uma linha, um nome a mais.
+
+### Onde a regressão de A6 foi fixada, e por quê
+
+Em `tests/leitura-tabela-barra-escapada.spec.ts`, suíte local, e não na herdada
+`reversa-domain/tests/table.spec.ts`. A suíte herdada é código sob o mesmo regime dos módulos: um
+caso acrescentado ali seria mais uma adaptação a reaplicar em cada ressincronização, e o defeito foi
+descoberto pelo uso deste projeto, não pela origem. A5 mostra quando o caminho é o outro: lá a
+suíte herdada fixava o comportamento que A4 mudou, e deixá-la intacta faria a suíte reprovar o
+código. Aqui nada do que a origem fixa deixou de valer, e as 1527 asserções da árvore continuam
+verdes sem tocar em caso algum.
 
 ### O que deliberadamente não foi adaptado
 

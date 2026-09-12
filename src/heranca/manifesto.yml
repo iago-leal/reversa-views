@@ -94,9 +94,9 @@ arquivos:
     origem: scrum-harness
     caminhoNaOrigem: packages/reversa-domain/src/index.ts
     carimbado: true
-    resumo: sha256:f0529a1bfbe2f8ca6b3bf60baa96e22c45a09a8cd437db48320f6bf5da26b558
+    resumo: sha256:934488f6e5b4ee55fcab6632dec2ac47b95de2cc1c72fc01867406e63062b76d
     dataDaCopia: 2026-09-09
-    adaptacoes: []
+    adaptacoes: [A7]
   - caminho: src/heranca/reversa-domain/src/json.ts
     origem: scrum-harness
     caminhoNaOrigem: packages/reversa-domain/src/json.ts
@@ -136,9 +136,9 @@ arquivos:
     origem: scrum-harness
     caminhoNaOrigem: packages/reversa-domain/src/table.ts
     carimbado: true
-    resumo: sha256:f694f1e9e85e80b27a0a6b0e354152e012dde0b4fcf1dbc2a3001f39e5e743c5
+    resumo: sha256:d44fe05eb9ad3451da8bd1a1aac33787dd11e8bb681ad8ced626af4dc2f38e5f
     dataDaCopia: 2026-09-09
-    adaptacoes: []
+    adaptacoes: [A6]
   - caminho: src/heranca/reversa-domain/src/watch.ts
     origem: scrum-harness
     caminhoNaOrigem: packages/reversa-domain/src/watch.ts

@@ -1,0 +1,25 @@
+[32m- Expected[39m
+[31m+ Received[39m
+
+[2m  {[22m
+[2m    "contadas": 2,[22m
+[32m-   "listadas": 1,[39m
+[31m+   "listadas": 0,[39m
+[2m  }[22m
+
+ ❯ tests/leitura-tabela-barra-escapada.spec.ts:88:30
+     86|     const lido = readDecomposition(arquivo([ACAO]), 2)
+     87| 
+     88|     expect(lido.divergencia).toEqual({ contadas: 2, listadas: 1 })
+       |                              ^
+     89|   })
+     90| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed (5)
+   Start at  10:57:34
+   Duration  321ms (transform 61ms, setup 0ms, collect 74ms, tests 8ms, environment 0ms, prepare 48ms)
+

@@ -1,0 +1,17 @@
+Leitura de erp-mineracao pela construção instalada (reversa-views 0.9.3, de 878b22c).
+Comando: o próprio domínio da extensão, sobre as oito features do projeto.
+
+feature                           contadas  listadas  perdidas linhas com escape
+001-catalogo-de-fontes                  44        31        13   13
+002-retrato-de-mercado                  48        36        12   12
+003-mapa-competitivo                    38        28        10   10
+004-modelo-de-negocio                   44        38         6   6
+005-posicionamento-e-premissas          44        37         7   7
+006-cadastro-de-alvos                   47        39         8   8
+007-coleta-e-deteccao                   40        36         4   4
+008-resumo-periodico                    44        41         3   3
+
+Total de ações perdidas: 63. Em todas as oito, perdidas == linhas com barra escapada.
+
+Na feature ativa (004), as ausentes são T006, T017, T023, T035, T038 e T039,
+todas com a caixa marcada no arquivo e todas com \| na descrição.

@@ -1,0 +1,30 @@
+diff --git a/src/domain/decomposition.ts b/src/domain/decomposition.ts
+index e776533..611fd2d 100644
+--- a/src/domain/decomposition.ts
++++ b/src/domain/decomposition.ts
+@@ -21,7 +21,7 @@
+  * @module domain/decomposition
+  */
+ 
+-import { findTable, normalizeCell, splitSections } from '../heranca/reversa-domain/src/index.ts'
++import { cellsOf, findTable, normalizeCell, splitSections } from '../heranca/reversa-domain/src/index.ts'
+ import type { ActiveDecomposition, PlanAction } from './types.ts'
+ import { EMPTY_DECOMPOSITION } from './types.ts'
+ 
+@@ -168,12 +168,10 @@ function fromLines(text: string, block: Block): PlanAction[] {
+     const closed = CLOSED_ROW.test(line)
+     if (!closed && !OPEN_ROW.test(line)) continue
+ 
+-    const cells = line
+-      .trim()
+-      .replace(/^\|/, '')
+-      .replace(/\|$/, '')
+-      .split('|')
+-      .map((cell) => cell.trim())
++    // The same splitter the table reader uses, escape included: a row whose
++    // description cites a pipe is written escaped, and a split of its own here
++    // would lose exactly the rows the header path already learned to keep.
++    const cells = cellsOf(line)
+ 
+     const id = bare(cells[0] ?? '')
+     if (id === '') continue

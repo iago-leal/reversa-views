@@ -1,0 +1,9 @@
+A justificativa cortada na tabela de impacto, lida pela construção instalada (0.9.3).
+
+`modelo_negocio/modelo/erros.py` -> "`ErroNegocio` base com `alvo \\"
+`modelo_negocio/controlador/registro.py` -> "Linha `HH:MM:SS \\"
+
+O que o arquivo diz, na mesma linha:
+`ErroNegocio` base com `alvo \| motivo \| instrução`
+
+Onze linhas nas quatro tabelas de impacto têm barra escapada, todas na justificativa.

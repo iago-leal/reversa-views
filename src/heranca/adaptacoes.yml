@@ -78,3 +78,55 @@ adaptacoes:
           expect(impact.cenario).toBe('greenfield')
           expect(impact.anomalies.some(a => a.code === 'cenario-ambiguo')).toBe(false)
         })
+
+  - id: A6
+    arquivo: src/heranca/reversa-domain/src/table.ts
+    motivo: |
+      BUG-20260912-PIPE. A barra vertical dentro de célula se escreve escapada, que é como o
+      markdown diz "aqui vai uma barra literal" e a única forma de a linha sobreviver a qualquer
+      renderizador. O divisor da origem parte em toda barra: inventa colunas, tira as verdadeiras
+      da posição e perde a linha em silêncio. No erp-mineracao isso apagou 63 ações da decomposição
+      e cortou 11 justificativas da tabela de impacto. O divisor passa a honrar o escape e a
+      devolver cada célula desescapada, como o texto que ela quer dizer; e passa a ser exportado,
+      porque a decomposição de `actions.md` lê linha do mesmo jeito e uma regra em dois lugares é
+      justamente a divergência que este módulo existe para evitar.
+    original: |
+      /** Split one markdown table row into its cells, dropping the outer pipes. */
+      function cellsOf(line: string): string[] {
+        const trimmed = line.trim()
+        if (!trimmed.startsWith('|')) return []
+        const inner = trimmed.replace(/^\|/, '').replace(/\|$/, '')
+        return inner.split('|').map(cell => cell.trim())
+      }
+    adaptado: |
+      /**
+       * Split one markdown table row into its cells, dropping the outer pipes.
+       *
+       * A6 (BUG-20260912-PIPE): a pipe INSIDE a cell is written escaped, which is
+       * how markdown says "a literal pipe here" and the only way a row carrying one
+       * survives any renderer. Splitting on every pipe therefore invents columns,
+       * pushes the real ones out of position and drops the row on the floor: the
+       * status column of an action, the justification of an impact. So the split
+       * honours the escape, and each cell comes back unescaped, as the text it
+       * means rather than as the notation that carried it.
+       *
+       * It is exported because the decomposition of `actions.md` reads rows the
+       * same way, and one rule read in two places is the divergence this module
+       * was written to avoid.
+       */
+      export function cellsOf(line: string): string[] {
+        const trimmed = line.trim()
+        if (!trimmed.startsWith('|')) return []
+        const inner = trimmed.replace(/^\|/, '').replace(/(?<!\\)\|$/, '')
+        return inner.split(/(?<!\\)\|/).map(cell => cell.trim().replace(/\\\|/g, '|'))
+      }
+
+  - id: A7
+    arquivo: src/heranca/reversa-domain/src/index.ts
+    motivo: |
+      Consequência de A6: o divisor exportado precisa chegar ao domínio próprio pelo índice, e não
+      por importação que fure a fachada do pacote herdado.
+    original: |
+      export { findTable, normalizeCell, splitSections } from './table.ts'
+    adaptado: |
+      export { cellsOf, findTable, normalizeCell, splitSections } from './table.ts'
