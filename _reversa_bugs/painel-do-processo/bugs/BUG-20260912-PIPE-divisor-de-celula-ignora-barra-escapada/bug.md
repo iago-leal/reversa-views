@@ -78,15 +78,15 @@ change_risk:
 
 delivery:
   branch: master
-  commit: null
+  commit: ecbebb90f8a5422f038420e2be6cd1dcc34ede10
   pull_request: null
   ci: null
-  merged: null
-  published: null
+  merged: 2026-09-12
+  published: 2026-09-12, pacote reversa-views-0.9.4.vsix gerado e instalado por code --install-extension
 
 versions:
-  fixed_in: null
-  built_from: null
+  fixed_in: "0.9.4"
+  built_from: ecbebb9
   affected: "0.7.0 a 0.9.3"
   installed: "0.9.3, carimbada em 878b22c"
 
@@ -111,8 +111,8 @@ change_set:
 
 closure:
   policy: package
-  satisfied: false
-  satisfied_at: null
+  satisfied: true
+  satisfied_at: 2026-09-12
 resolution_kind: fixed
 ---
 
@@ -238,6 +238,22 @@ motivo está registrado em `PROCEDENCIA.md`.
 | 2 | A justificativa de impacto chega inteira | atendido |
 | 3 | A célula volta desescapada | atendido |
 | 4 | A divergência real continua sendo declarada | atendido, com caso próprio |
+
+### A entrega, que é o que a closure policy `package` exige
+
+| Passo | Resultado |
+|---|---|
+| Registro | commit `ecbebb9` em `master`, com código, testes, adaptações e a pasta do bug |
+| Construção, suíte e empacotamento | `npm run atualizar -- --aplicar`, percurso inteiro sem parada |
+| Pacote | `reversa-views-0.9.4.vsix`, 208,2 KiB sobre teto de 2048,0 KiB |
+| Instalação | `code --install-extension`, confirmada em `iagoleal-local.reversa-views@0.9.4` |
+
+Conferência sobre `erp-mineracao` com a construção instalada: nas oito features a contagem e a
+lista coincidem, sem divergência alguma, onde antes faltavam 63 ações. A justificativa que chegava
+cortada na primeira barra chega inteira.
+
+A origem **não** recebeu push: o clone fica um commit à frente de `origin/master` até que o usuário
+decida enviar.
 
 ## Agent Notes
 
