@@ -1,4 +1,4 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-11T21:40:12.975Z a partir de 6 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-12T14:00:58.117Z a partir de 7 bugs -->
 # Grafo de bugs · painel-do-processo
 
 ```mermaid
@@ -9,6 +9,7 @@ graph LR
   BUG_20260910_SVZU["nº 4 · BUG-20260910-SVZU<br/>Ritual de atualização não alcança a construção instalada quando o clone já está em dia<br/>resolved · high"]
   BUG_20260910_WIBK["nº 5 · BUG-20260910-WIBK<br/>Faixa de atualização do painel anuncia o comando que apenas confere<br/>resolved · high"]
   BUG_20260911_FI3O["nº 6 · BUG-20260911-FI3O<br/>O comando que a faixa anuncia não existe fora do clone, e falha como erro do npm<br/>resolved · high"]
+  BUG_20260912_PIPE["nº 7 · BUG-20260912-PIPE<br/>O divisor de célula parte na barra escapada, e perde a linha inteira em silêncio<br/>resolved · high"]
   BUG_20260909_VHII -. related-to (proposed) .-> BUG_20260909_FJBD
   BUG_20260910_74UL -. related-to (proposed) .-> BUG_20260909_FJBD
   BUG_20260910_SVZU -. related-to (proposed) .-> BUG_20260909_VHII
@@ -19,7 +20,7 @@ graph LR
 
 ## Clusters
 
-- `leitura-do-processo`: 2 bug(s): BUG-20260909-FJBD, BUG-20260910-74UL
+- `leitura-do-processo`: 3 bug(s): BUG-20260909-FJBD, BUG-20260910-74UL, BUG-20260912-PIPE
 - `empacotamento-e-verificacao`: 2 bug(s): BUG-20260909-VHII, BUG-20260910-SVZU
 - `painel-do-processo`: 2 bug(s): BUG-20260910-WIBK, BUG-20260911-FI3O
 

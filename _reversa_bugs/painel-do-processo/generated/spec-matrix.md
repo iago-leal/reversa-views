@@ -1,8 +1,9 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-11T21:40:12.975Z a partir de 6 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-12T14:00:58.117Z a partir de 7 bugs -->
 # Matriz BUG ↔ SPEC · painel-do-processo
 
 | Seção de spec | open | active | resolved |
 |---|---|---|---|
+| `_reversa_forward/001-leitura-do-processo/requirements.md` | - | - | BUG-20260912-PIPE |
 | `_reversa_forward/007-atualizacao-e-progresso/requirements.md#10-lacunas` | - | - | BUG-20260910-74UL |
 | `_reversa_forward/007-atualizacao-e-progresso/requirements.md#7-criterios-de-aceitacao` | - | - | BUG-20260910-WIBK, BUG-20260911-FI3O |
 | `_reversa_forward/007-atualizacao-e-progresso/requirements.md#a-o-comando-de-atualizacao-no-clone` | - | - | BUG-20260910-SVZU |
@@ -14,6 +15,7 @@
 | `_reversa_sdd/prd.md#8-riscos` | - | - | BUG-20260909-VHII |
 | `_reversa_sdd/sdd/empacotamento-e-verificacao.md#6-requisitos-funcionais` | - | - | BUG-20260909-VHII, BUG-20260910-SVZU, BUG-20260911-FI3O |
 | `_reversa_sdd/sdd/leitura-do-processo.md#11-edge-cases-e-tratamento-de-erros` | - | - | BUG-20260909-FJBD, BUG-20260910-74UL |
+| `_reversa_sdd/sdd/leitura-do-processo.md#6-requisitos-funcionais` | - | - | BUG-20260912-PIPE |
 | `_reversa_sdd/sdd/painel-do-processo.md#6-requisitos-funcionais` | - | - | BUG-20260909-FJBD, BUG-20260909-VHII, BUG-20260910-74UL, BUG-20260910-WIBK |
 | spec-gap | - | - | - |
 

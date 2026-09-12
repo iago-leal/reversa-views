@@ -1,7 +1,12 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-11T21:40:12.975Z a partir de 6 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-12T14:00:58.117Z a partir de 7 bugs -->
 # Bugs por artefato de spec
 
 Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec muda só por adendo.
+
+## `_reversa_forward/001-leitura-do-processo/requirements.md`
+
+- BUG-20260912-PIPE (resolved/fixed, P1): O divisor de célula parte na barra escapada, e perde a linha inteira em silêncio
+  - seção `#` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260912-PIPE-divisor-de-celula-ignora-barra-escapada`
 
 ## `_reversa_forward/007-atualizacao-e-progresso/requirements.md`
 
@@ -54,6 +59,8 @@ Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec mud
   - seção `#11-edge-cases-e-tratamento-de-erros` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260909-FJBD-anomalia-cenario-ambiguo`
 - BUG-20260910-74UL (resolved/fixed, P2): Painel conta uma dúvida na feature 007 por menção ao marcador no histórico de alterações
   - seção `#11-edge-cases-e-tratamento-de-erros` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260910-74UL-duvida-falsa-no-historico`
+- BUG-20260912-PIPE (resolved/fixed, P1): O divisor de célula parte na barra escapada, e perde a linha inteira em silêncio
+  - seção `#6-requisitos-funcionais` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260912-PIPE-divisor-de-celula-ignora-barra-escapada`
 
 ## `_reversa_sdd/sdd/painel-do-processo.md`
 
