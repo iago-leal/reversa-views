@@ -1,0 +1,20 @@
+# Leitura do financas-ali em 2026-09-19T16:55-0300, somente leitura
+
+## Tamanho dos actions.md (teto REVERSA_FILE_CAP = 262144 B)
+  275630 _reversa_forward/001-fechamento-mensal-mvp/actions.md
+   92804 _reversa_forward/002-infra-remota-auth-assistente/actions.md
+  368434 total
+
+## Checkboxes no actions.md da 001
+linhas com [X] ou [ ]: 185
+
+## Histórico julgado (readWorkspace)
+ H 002 convergida lido 6 lido 3 / 20
+ H 001 sem-acoes lido 1 sem-registro 0 / 0
+anomalias []
+
+## Entrada 001 e perdas declaradas
+menções a actions.md na carga: 1
+probe.truncated []
+greenfield anomalias []
+001 {"situacao":"sem-acoes","acoes":{"total":0,"fechadas":0,"abertas":0,"emendas":0},"adendo":null}

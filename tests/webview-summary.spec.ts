@@ -19,6 +19,11 @@ import type { HistoryEntry } from '../src/domain/types.ts'
 import {
   actionsMd,
   componentFixture,
+  conferenceFixture,
+  linkedEntryFixture,
+  linkedGreenfieldFixture,
+  linkedHistoryFixture,
+  UNSPECIFIED,
   emptyProcessFixture,
   greenfieldFixture,
   historyFixture,
@@ -209,5 +214,77 @@ describe('o panorama do produto no resumo (feature 009)', () => {
   it('segue determinístico com o bloco novo', () => {
     const carga = payloadFixture({ greenfield: greenfieldFixture() })
     expect(summaryText(carga)).toBe(summaryText(carga))
+  })
+})
+
+/**
+ * As linhas da feature 010 no resumo consultável (RF-12, D-17): os
+ * componentes sem spec no bloco do panorama e a contagem de conferências no
+ * bloco das entregas, compostos pela mesma função pura, sem tocar em linha
+ * alguma que já existia.
+ */
+describe('o vínculo e as conferências no resumo (feature 010, RF-12, D-17)', () => {
+  const PASTA = '_reversa_forward/002-ponte-e-host'
+  const historico = linkedHistoryFixture([], [
+    linkedEntryFixture(
+      entrada({ pasta: PASTA, id: '002', nomeCurto: 'ponte-e-host' }),
+      undefined,
+      conferenceFixture('lido', PASTA),
+    ),
+    linkedEntryFixture(entrada()),
+  ])
+  const COMPLETO = payloadFixture({ history: historico, greenfield: linkedGreenfieldFixture([...UNSPECIFIED]) })
+
+  /** O bloco de uma seção do resumo, até a próxima. */
+  function bloco(texto: string, titulo: string): string {
+    const inicio = texto.indexOf(`## ${titulo}`)
+    const fim = texto.indexOf('\n## ', inicio + 1)
+    return texto.slice(inicio, fim === -1 ? undefined : fim)
+  }
+
+  it('o bloco do panorama traz uma linha por componente sem spec, por nome, e a contagem', () => {
+    const panorama = bloco(summaryText(COMPLETO), 'Panorama do produto')
+    expect(panorama).toContain('3 componentes entregues sem spec.')
+    const linhas = panorama.split('\n').filter((l) => /^- (acesso|assistente|operacao)/.test(l))
+    expect(linhas.map((l) => l.split(' — ')[0])).toEqual([
+      '- acesso-e-identidade',
+      '- assistente',
+      '- operacao-de-producao',
+    ])
+    expect(linhas[0]).toContain('002-infra-remota-auth-assistente')
+  })
+
+  it('o bloco das entregas traz a contagem de conferências por pasta', () => {
+    const entregas = bloco(summaryText(COMPLETO), 'Entregas anteriores')
+    expect(entregas).toContain('- 002-ponte-e-host — 2 de 20 conferências registradas')
+    expect(entregas).toContain('- 001-leitura-do-processo — sem registro de conferências')
+  })
+
+  it('as linhas que já existiam ficam onde estavam, idênticas', () => {
+    const antes = summaryText(payloadFixture({ history: historyFixture(historico.entradas.map(({ vinculo, conferencias, ...e }) => e)) }))
+    const depois = summaryText(COMPLETO)
+    const linhasAntes = bloco(antes, 'Entregas anteriores').split('\n').filter((l) => l.startsWith('- '))
+    const linhasDepois = bloco(depois, 'Entregas anteriores').split('\n').filter((l) => l.startsWith('- '))
+    expect(linhasDepois.slice(0, linhasAntes.length)).toEqual(linhasAntes)
+  })
+
+  it('documento e cópia: duas montagens dão o mesmo texto com as linhas novas', () => {
+    expect(summaryText(COMPLETO)).toBe(summaryText(COMPLETO))
+  })
+
+  it('sem componente sem spec, uma frase, e não lista vazia', () => {
+    const texto = summaryText(payloadFixture({ greenfield: linkedGreenfieldFixture([]) }))
+    expect(bloco(texto, 'Panorama do produto')).toContain('Nenhum componente entregue sem spec.')
+  })
+
+  it('campos ausentes viram linha de leitura não realizada, e não silêncio', () => {
+    const texto = summaryText(payloadFixture())
+    expect(bloco(texto, 'Panorama do produto')).toContain('Vínculo declarado não lido por esta leitura.')
+    expect(bloco(texto, 'Entregas anteriores')).toContain('Conferências não lidas por esta leitura.')
+  })
+
+  it('não deixa rótulo pendurado com as linhas novas', () => {
+    const texto = summaryText(COMPLETO)
+    expect(texto.split('\n').filter((linha) => linha.trim().endsWith(':'))).toEqual([])
   })
 })

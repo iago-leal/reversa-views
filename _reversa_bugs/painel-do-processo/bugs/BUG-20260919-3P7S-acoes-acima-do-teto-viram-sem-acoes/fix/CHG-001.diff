@@ -1,0 +1,40 @@
+--- a/src/domain/types.ts
++++ b/src/domain/types.ts
+@@ -68,9 +68,13 @@
+   'entregue-sem-adendo',
+   'em-aberto',
+   'sem-acoes',
++  // The `actions.md` is present and was not read (bug nº 11, EC-06): none of
++  // the four above can be verified, and `sem-acoes` would state a fact the
++  // panel never checked.
++  'acoes-nao-lidas',
+ ] as const
+ 
+-/** One of the four situations. */
++/** One of the five situations. */
+ export type FeatureSituation = (typeof FEATURE_SITUATIONS)[number]
+ 
+ /** What the pointer REVERSA keeps says about one feature folder. */
+@@ -128,7 +132,8 @@
+   /** How many folders exist, even when not all of them were read. */
+   total: number
+   /**
+-   * The losses of the delivery axis, in the common shape (feature 010, D-12).
++   * The losses of the folder reading and of the delivery axis, in the common
++   * shape (feature 010, D-12; bug nº 11).
+    * APPENDED and optional: ABSENT is a host older than feature 010.
+    */
+   anomalias?: DeliveryAnomaly[]
+@@ -755,7 +760,11 @@
+ export type DeliveryAnomalyCode =
+   /** A register section with no table carrying `Data` and `Resultado`; detail: section and header found. */
+   | 'tabela-nao-reconhecida'
+-  /** A `legacy-impact.md` or `onboarding.md` present and not read; detail: which reading is partial. */
++  /**
++   * A file of the folder present and not read: `actions.md`, `requirements.md`
++   * or `progress.jsonl` (bug nº 11), `legacy-impact.md` or `onboarding.md`
++   * (feature 010); detail: which reading is partial.
++   */
+   | 'artefato-da-entrega-nao-lido'
+ 
+ /** One degradation of the delivery reading, in the common shape. */

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>Plano de correção · nº 11 · 3P7S</title>
+<style>body{margin:0;background:#0d1117;color:#e6edf3;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;padding:24px;max-width:1100px}h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 8px;border-bottom:1px solid #30363d;padding-bottom:4px}.meta{color:#8b949e;font-size:12px}.cards{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0}.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px 16px;min-width:140px}.card b{display:block;font-size:18px}.card span{color:#8b949e;font-size:12px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border:1px solid #30363d;padding:6px 8px;text-align:left;vertical-align:top}th{background:#161b22}a{color:#58a6ff}code{background:#161b22;border:1px solid #30363d;border-radius:4px;padding:0 4px;font-size:12px}pre{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;overflow-x:auto;font-size:12px}.svgwrap{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:8px;overflow-x:auto}.ok{color:#3fb950}.warn{color:#d29922}.bad{color:#f85149}ul{margin:4px 0 0 18px;padding:0}</style></head><body>
+<h1>Plano de correção · nº 11 · BUG-20260919-3P7S</h1>
+<p class="meta">Contexto painel-do-processo · 2026-09-19 · /reversa-debugger-fix · plano anterior a qualquer alteração no código</p>
+<div class="cards"><div class="card"><b class="warn">medium</b><span>severidade</span></div><div class="card"><b>P2</b><span>prioridade</span></div><div class="card"><b class="ok">confirmed</b><span>causa raiz</span></div><div class="card"><b class="warn">média</b><span>change_risk</span></div><div class="card"><b>package</b><span>closure policy</span></div></div>
+
+<h2>Defeito</h2>
+<p>Pasta de feature cujo <code>actions.md</code> passa de 262.144 B (<code>REVERSA_FILE_CAP</code>) aparece no histórico como <code>sem-acoes</code>, com 0 de 0 ações, e nenhuma anomalia declara a perda. No <code>financas-ali</code>, a 001 tem 185 ações e 275.630 B; o RF-09 da feature 010 falha por isso. O mesmo silêncio vale para <code>requirements.md</code> (resumo nulo) e <code>progress.jsonl</code> (último evento nulo).</p>
+
+<h2>Causa raiz <span class="ok">(confirmed)</span></h2>
+<p><code>src/domain/history.ts</code>, <code>situationOf</code>: recebe só o texto do <code>actions.md</code> e, quando ele é nulo, devolve <code>sem-acoes</code>, sem consultar <code>naoLidos</code>. A sonda local (<code>src/probe/features.ts</code>) já distingue o ausente do presente e não lido desde a 010; o julgamento só usa essa informação em <code>deliveryOf</code>, e apenas para <code>legacy-impact.md</code> e <code>onboarding.md</code>. O defeito nasce no domínio, não na sonda.</p>
+<p>Evidências: <a href="../evidence/reproduction.md">evidence/reproduction.md</a> (reprodução isolada, 1/1, <code>naoLidos ["actions.md"]</code> → <code>sem-acoes</code>, anomalias <code>[]</code>) e <a href="../evidence/leitura-actions-acima-do-teto-2026-09-19.txt">leitura real do financas-ali</a>.</p>
+
+<h2>Estratégia escolhida: correção direta, com situação nova</h2>
+<p>Decisão do usuário em 2026-09-19. Há uma única hipótese e ela está confirmada, por isso o debate não se justificou. A situação nova cumpre o critério 1 (a pasta deixa de sair como <code>sem-acoes</code>); a alternativa de só declarar a anomalia foi descartada porque deixaria na tela o "sem ações" falso.</p>
+<ul>
+<li>Quinta situação <code>acoes-nao-lidas</code>, rótulo "ações não lidas", com precedência sobre as outras quatro: sem as ações lidas, nenhuma das quatro é verificável.</li>
+<li>Anomalia <code>artefato-da-entrega-nao-lido</code>, já existente, para cada um de <code>actions.md</code>, <code>requirements.md</code> e <code>progress.jsonl</code> presente e não lido, com detalhe próprio que diz o que ficou sem julgamento. Nenhum código de anomalia novo.</li>
+<li>Panorama: avanço 0 (a pasta não lida nunca vence uma lida ao escolher a mais avançada) e projeção <code>em-andamento</code>, a mesma de <code>sem-acoes</code>.</li>
+<li>Tela: na entrada da pasta, a linha "0 de 0 ações fechadas" dá lugar a "ações não lidas: actions.md acima do teto de bytes ou ilegível".</li>
+</ul>
+
+<h2>Correction Change Set proposto</h2>
+<table><tr><th>CHG</th><th>tipo</th><th>artefato</th><th>propósito</th></tr>
+<tr><td>CHG-001</td><td>code</td><td><code>src/domain/types.ts</code></td><td><code>FEATURE_SITUATIONS</code> ganha <code>acoes-nao-lidas</code>; comentário de <code>DeliveryAnomalyCode</code> passa a citar os três arquivos da pasta</td></tr>
+<tr><td>CHG-002</td><td>code</td><td><code>src/domain/history.ts</code></td><td><code>situationOf</code> consulta <code>naoLidos</code>; nova função declara as perdas dos três arquivos, que entram em <code>anomalias</code> antes das do vínculo e das conferências</td></tr>
+<tr><td>CHG-003</td><td>code</td><td><code>src/domain/greenfield.ts</code></td><td><code>ADVANCE</code> = 0 e <code>PROJECTION</code> = <code>em-andamento</code> para a situação nova (as tabelas são exaustivas: o tipo obriga)</td></tr>
+<tr><td>CHG-004</td><td>code</td><td><code>src/webview/domain/labels.ts</code></td><td>rótulo "ações não lidas"; comentário "quatro situações" vira "cinco"</td></tr>
+<tr><td>CHG-005</td><td>code</td><td><code>src/webview/ui/HistorySection.tsx</code></td><td>linha de contagem declara a leitura faltante em vez de "0 de 0"</td></tr>
+<tr><td>CHG-006</td><td>specification</td><td><code>_reversa_sdd/addenda/bug-BUG-20260919-3P7S-v001.md</code></td><td>só se o veredito for <code>spec-desatualizada</code> ou <code>spec-gap</code>: a 006 fixou quatro situações e a 010 lista o que é anomalia do eixo</td></tr>
+</table>
+
+<h2>Testes planejados</h2>
+<table><tr><th>tipo</th><th>arquivo</th><th>o que prova</th></tr>
+<tr><td>reprodução</td><td><code>tests/domain-history.spec.ts</code></td><td>pasta real em diretório temporário com <code>actions.md</code> acima do teto, lida pela sonda local e julgada: sai <code>acoes-nao-lidas</code> e a anomalia nomeia <code>_reversa_forward/001-grande/actions.md</code>. Hoje sai <code>sem-acoes</code> e sem anomalia</td></tr>
+<tr><td>regressão</td><td><code>tests/domain-history.spec.ts</code></td><td><code>requirements.md</code> e <code>progress.jsonl</code> em <code>naoLidos</code> viram anomalias nomeando o arquivo, sem mudar a situação de uma pasta com ações lidas; a ordem das anomalias é actions, requirements, progress, vínculo, conferências</td></tr>
+<tr><td>regressão</td><td><code>tests/domain-history.spec.ts</code></td><td>critério 4: pasta sem <code>actions.md</code> e arquivo sem linha de ação seguem <code>sem-acoes</code> (casos existentes, mantidos) e sem anomalia</td></tr>
+<tr><td>regressão</td><td><code>tests/domain-greenfield-panorama.spec.ts</code></td><td><code>acoes-nao-lidas</code> projeta <code>em-andamento</code>; uma pasta lida vence a não lida na escolha da mais avançada</td></tr>
+<tr><td>regressão</td><td><code>tests/webview-progress-cards.spec.tsx</code></td><td>rótulo conhecido "ações não lidas" e a linha de contagem sem "0 de 0"</td></tr>
+</table>
+
+<h2>Riscos</h2>
+<p><b class="warn">change_risk: média.</b> Vocabulário novo no contrato host↔tela e no panorama. Mitigantes: host e tela saem no mesmo <code>.vsix</code>, não há persistência nem dado a reparar, a mudança é reversível, e <code>situationLabel</code> já degrada valor desconhecido sem lançar. As tabelas <code>Record&lt;FeatureSituation, …&gt;</code> fazem o compilador apontar todo consumidor esquecido.</p>
+<p>Fora da correção (Agent Notes): o teto de bytes não muda, e o <code>actions.md</code> continua sem ser lido; o componente do panorama cuja única pasta não foi lida mostra <code>em-andamento</code> com a contagem zerada, e a perda fica dita pela anomalia; o teto de pastas (<code>FEATURE_FOLDER_CAP</code>) não é tocado; a relação com o nº 9 segue <code>related-to</code>.</p>
+
+<h2>Mini-grafo do bug</h2>
+<div class="svgwrap"><svg viewBox="0 0 700 170" width="100%" role="img" aria-label="Mini-grafo do bug nº 11"><defs><marker id="seta" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#8b949e"/></marker></defs>
+<line x1="300" y1="85" x2="400" y2="85" stroke="#8b949e" stroke-width="1.5" stroke-dasharray="6 4" marker-end="url(#seta)"/><text x="350" y="76" fill="#8b949e" font-size="11" text-anchor="middle">related-to (proposed)</text>
+<a href="../bug.md"><rect x="30" y="37" width="270" height="96" rx="8" fill="#161b22" stroke="#d29922" stroke-width="3"/><text x="42" y="60" fill="#e6edf3" font-size="13" font-weight="600">nº 11 · 3P7S</text><text x="42" y="80" fill="#c9d1d9" font-size="11">actions.md acima do teto vira sem-ações</text><text x="42" y="100" fill="#8b949e" font-size="11">medium · leitura</text><text x="42" y="120" fill="#d29922" font-size="11" font-weight="600">active · diagnosing</text></a>
+<a href="../../BUG-20260914-5UH7-vigia-le-so-o-preambulo-e-cala/bug.md"><rect x="400" y="37" width="270" height="96" rx="8" fill="#161b22" stroke="#30363d" stroke-width="2"/><text x="412" y="60" fill="#e6edf3" font-size="13" font-weight="600">nº 9 · 5UH7</text><text x="412" y="80" fill="#c9d1d9" font-size="11">Vigia lê só o preâmbulo e cala</text><text x="412" y="100" fill="#8b949e" font-size="11">low · leitura</text><text x="412" y="120" fill="#3fb950" font-size="11" font-weight="600">resolved · fixed</text></a>
+</svg></div>
+
+<h2>Matriz de relações</h2>
+<table><tr><th>origem</th><th>tipo</th><th>destino</th><th>estado</th></tr>
+<tr><td><a href="../bug.md">BUG-20260919-3P7S</a> (nº 11)</td><td>related-to</td><td><a href="../../BUG-20260914-5UH7-vigia-le-so-o-preambulo-e-cala/bug.md">BUG-20260914-5UH7</a> (nº 9)</td><td class="warn">proposed</td></tr>
+</table>
+</body></html>

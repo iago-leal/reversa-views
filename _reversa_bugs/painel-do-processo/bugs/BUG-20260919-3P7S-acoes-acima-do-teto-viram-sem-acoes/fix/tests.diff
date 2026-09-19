@@ -1,0 +1,158 @@
+diff -ru a/tests/domain-greenfield-panorama.spec.ts b/tests/domain-greenfield-panorama.spec.ts
+--- a/tests/domain-greenfield-panorama.spec.ts	2026-09-19 17:51:30
++++ b/tests/domain-greenfield-panorama.spec.ts	2026-09-19 17:51:53
+@@ -111,6 +111,7 @@
+     ['entregue-sem-adendo', 'entregue'],
+     ['em-aberto', 'em-andamento'],
+     ['sem-acoes', 'em-andamento'],
++    ['acoes-nao-lidas', 'em-andamento'],
+   ]
+   for (const [doHistorico, doComponente] of casos) {
+     it(`pasta em ${doHistorico} faz componente ${doComponente}`, () => {
+@@ -139,6 +140,15 @@
+     expect(p.componentes[0]?.situacao).toBe('convergida')
+     expect(p.componentes[0]?.adendo).toBe(`${SAIDA}/addenda/001-a.md`)
+     expect(p.componentes[0]?.marca).toBe('pausada')
++  })
++
++  it('uma pasta de ações não lidas nunca vence uma pasta lida (bug nº 11)', () => {
++    const p = panorama(['a.md'], [
++      entrada({ pasta: '_reversa_forward/007-a', situacao: 'acoes-nao-lidas', adendo: null }),
++      entrada({ pasta: '_reversa_forward/001-a', situacao: 'sem-acoes' }),
++    ])
++    expect(p.componentes[0]?.situacao).toBe('em-andamento')
++    expect(p.componentes[0]?.adendo).toBe(`${SAIDA}/addenda/001-a.md`)
+   })
+ })
+ 
+diff -ru a/tests/domain-history.spec.ts b/tests/domain-history.spec.ts
+--- a/tests/domain-history.spec.ts	2026-09-19 17:51:30
++++ b/tests/domain-history.spec.ts	2026-09-19 17:51:53
+@@ -14,10 +14,14 @@
+  * @module tests/domain-history
+  */
+ 
+-import { readFileSync } from 'node:fs'
++import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
++import { tmpdir } from 'node:os'
++import { join } from 'node:path'
+ import { describe, expect, it } from 'vitest'
+ import { readDeliveryLinks } from '../src/domain/delivery-link.ts'
+ import { readHistory } from '../src/domain/history.ts'
++import { REVERSA_FILE_CAP } from '../src/heranca/reversa-probe/src/index.ts'
++import { readFeatureFolders } from '../src/probe/features.ts'
+ import type { FeatureFolderRead } from '../src/probe/features.ts'
+ 
+ const SAIDA = '_reversa_sdd'
+@@ -435,5 +439,79 @@
+     const lido = historico([pasta('001-a')])
+     expect(lido.entradas[0]?.vinculo?.estado).toBe('ausente')
+     expect(lido.entradas[0]?.conferencias?.estado).toBe('sem-registro')
++  })
++})
++
++/**
++ * Arquivo presente e não lido não é arquivo ausente (bug nº 11,
++ * BUG-20260919-3P7S, EC-06). A sonda local já distingue os dois pela listagem;
++ * o julgamento tem de dizer a perda, e a situação não pode afirmar "sem ações"
++ * de um arquivo que ela não leu.
++ */
++describe('arquivo da pasta presente e não lido (bug nº 11, EC-06)', () => {
++  it('reprodução: `actions.md` acima do teto sai `acoes-nao-lidas`, com a anomalia que nomeia o arquivo', () => {
++    const raiz = mkdtempSync(join(tmpdir(), 'reversa-bug11-'))
++    try {
++      const dir = join(raiz, FORWARD, '001-grande')
++      mkdirSync(dir, { recursive: true })
++      const linha = `| T1 | ${'x'.repeat(200)} | \`[X]\` |\n`
++      const linhas = linha.repeat(Math.ceil(REVERSA_FILE_CAP / linha.length) + 1)
++      writeFileSync(join(dir, 'actions.md'), `# Actions\n\n| ID | Descrição | Status |\n|--|--|--|\n${linhas}`)
++
++      const lido = historico(readFeatureFolders({ root: raiz, forwardFolder: FORWARD }).pastas)
++
++      expect(lido.entradas[0]?.situacao).toBe('acoes-nao-lidas')
++      expect(lido.anomalias).toEqual([
++        expect.objectContaining({ file: `${FORWARD}/001-grande/actions.md`, code: 'artefato-da-entrega-nao-lido' }),
++      ])
++      expect(lido.anomalias?.[0]?.detail).toContain('ações')
++    } finally {
++      rmSync(raiz, { recursive: true, force: true })
++    }
++  })
++
++  it('`acoes-nao-lidas` vale para qualquer `actions.md` que a sonda marcou como não lido', () => {
++    const lido = historico([pasta('001-a', { naoLidos: ['actions.md'] })], {
++      addendaFiles: ['001-a.md'],
++      addendaBodies: { '001-a.md': 'vigente' },
++    })
++    expect(lido.entradas[0]?.situacao).toBe('acoes-nao-lidas')
++  })
++
++  it('`requirements.md` e `progress.jsonl` não lidos viram anomalia, sem mudar a situação de ações lidas', () => {
++    const lido = historico([
++      pasta('002-b', { actionsMd: acoesMd(3, 0), naoLidos: ['requirements.md', 'progress.jsonl'] }),
++    ])
++    expect(lido.entradas[0]?.situacao).toBe('entregue-sem-adendo')
++    expect(lido.anomalias?.map((anomalia) => [anomalia.file, anomalia.code])).toEqual([
++      [`${FORWARD}/002-b/requirements.md`, 'artefato-da-entrega-nao-lido'],
++      [`${FORWARD}/002-b/progress.jsonl`, 'artefato-da-entrega-nao-lido'],
++    ])
++    expect(lido.anomalias?.[0]?.detail).toContain('resumo')
++    expect(lido.anomalias?.[1]?.detail).toContain('último evento')
++  })
++
++  it('as perdas da pasta vêm na ordem dos arquivos, antes das do vínculo e das conferências', () => {
++    const lido = historico([
++      pasta('002-b', {
++        naoLidos: ['onboarding.md', 'progress.jsonl', 'legacy-impact.md', 'requirements.md', 'actions.md'],
++      }),
++    ])
++    expect(lido.anomalias?.map((anomalia) => anomalia.file)).toEqual([
++      `${FORWARD}/002-b/actions.md`,
++      `${FORWARD}/002-b/requirements.md`,
++      `${FORWARD}/002-b/progress.jsonl`,
++      `${FORWARD}/002-b/legacy-impact.md`,
++      `${FORWARD}/002-b/onboarding.md`,
++    ])
++  })
++
++  it('pasta sem `actions.md` e arquivo sem linha de ação seguem `sem-acoes`, sem anomalia', () => {
++    const lido = historico([
++      pasta('006-a', { naoLidos: [] }),
++      pasta('007-b', { actionsMd: '# Actions\n\nsó prosa\n', naoLidos: [] }),
++    ])
++    expect(lido.entradas.map((entrada) => entrada.situacao)).toEqual(['sem-acoes', 'sem-acoes'])
++    expect(lido.anomalias).toEqual([])
+   })
+ })
+diff -ru a/tests/webview-progress-cards.spec.tsx b/tests/webview-progress-cards.spec.tsx
+--- a/tests/webview-progress-cards.spec.tsx	2026-09-19 17:51:30
++++ b/tests/webview-progress-cards.spec.tsx	2026-09-19 17:51:53
+@@ -15,6 +15,7 @@
+ import { readDecomposition } from '../src/domain/decomposition.ts'
+ import { DecompositionSection } from '../src/webview/ui/DecompositionSection.tsx'
+ import { ForwardSection } from '../src/webview/ui/ForwardSection.tsx'
++import { situationLabel } from '../src/webview/domain/labels.ts'
+ import { HistorySection } from '../src/webview/ui/HistorySection.tsx'
+ import type { HistoryEntry } from '../src/domain/types.ts'
+ import type { ConferenceState } from '../src/domain/types.ts'
+@@ -299,5 +300,20 @@
+         <HistorySection history={linkedHistoryFixture()} collapsed={false} onToggle={() => {}} onOpenFile={vi.fn()} />,
+       ),
+     ).not.toThrow()
++  })
++})
++
++describe('a pasta cujas ações não foram lidas (bug nº 11)', () => {
++  it('tem rótulo conhecido e não afirma "0 de 0 ações fechadas"', () => {
++    expect(situationLabel('acoes-nao-lidas')).toMatchObject({ text: 'ações não lidas', known: true })
++
++    const e = { ...entrada('001', 'acoes-nao-lidas'), acoes: { total: 0, fechadas: 0, abertas: 0, emendas: 0 } }
++    const markup = renderToStaticMarkup(
++      <HistorySection history={historyFixture([e])} collapsed={false} onToggle={() => {}} onOpenFile={() => {}} />,
++    )
++    expect(markup).toContain('data-situation="acoes-nao-lidas"')
++    expect(markup).toContain('ações não lidas')
++    expect(markup).not.toContain('0 de 0 ações fechadas')
++    expect(markup).toMatch(/data-part="feature-actions"[^>]*>[^<]*actions\.md/)
+   })
+ })

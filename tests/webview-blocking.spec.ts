@@ -8,7 +8,18 @@ import { describe, expect, it } from 'vitest'
 import { blockingReasons } from '../src/webview/domain/blocking.ts'
 import type { BugEntry, BugRegistry } from '../src/domain/types.ts'
 import { EMPTY_BUG_COUNTS } from '../src/domain/types.ts'
-import { actionsMd, processFixture, requirementsMd } from './helpers/reversa-fixtures.ts'
+import { readFileSync } from 'node:fs'
+import {
+  actionsMd,
+  bugsFixture,
+  conferenceFixture,
+  linkedEntryFixture,
+  linkedGreenfieldFixture,
+  linkedHistoryFixture,
+  processFixture,
+  requirementsMd,
+  UNSPECIFIED,
+} from './helpers/reversa-fixtures.ts'
 
 /**
  * A migration state file with the given wait and pending decisions.
@@ -339,5 +350,55 @@ describe('registro ausente e registro não lido', () => {
 
     expect(razoes).toHaveLength(2)
     expect(razoes[1].artifact).toBe('_reversa_bugs/outro/bugs/BUG-B/bug.md')
+  })
+})
+
+/**
+ * A conferência pendente não é razão de bloqueio (feature 010, RN-07, D-14,
+ * RF-08). A faixa continua reservada ao que o processo prescreve, e o registro
+ * de conferências é prática do agente: ele fica como contagem no histórico e
+ * no panorama, e a função das razões nem o recebe.
+ */
+describe('as conferências pendentes (feature 010, D-14, RF-08)', () => {
+  /** A 002 do `financas-ali`: convergida, com dezoito conferências pendentes. */
+  const convergidaPendente = linkedEntryFixture(
+    {
+      pasta: '_reversa_forward/002-infra-remota-auth-assistente',
+      id: '002',
+      nomeCurto: 'infra-remota-auth-assistente',
+      situacao: 'convergida',
+      marca: 'nenhuma',
+      acoes: { total: 40, fechadas: 40, abertas: 0, emendas: 0 },
+      adendo: '_reversa_sdd/addenda/002-infra-remota-auth-assistente.md',
+      resumo: null,
+      ultimoEvento: null,
+    },
+    undefined,
+    conferenceFixture('lido', '_reversa_forward/002-infra-remota-auth-assistente'),
+  )
+
+  it('pasta convergida com conferências pendentes não produz razão', () => {
+    const historico = linkedHistoryFixture([], [convergidaPendente])
+    expect(historico.entradas[0]?.conferencias?.registradas).toBe(2)
+    expect(historico.entradas[0]?.conferencias?.total).toBe(20)
+
+    const razoes = blockingReasons(processFixture(), bugsFixture(), linkedGreenfieldFixture([...UNSPECIFIED]))
+    expect(razoes).toEqual([])
+  })
+
+  it('as razões existentes não mudam de ordem com o eixo da 010 presente', () => {
+    const processo = processFixture({ actionsMd: actionsMd(5, 0), addendaFiles: [], requirementsMd: requirementsMd(1) })
+    const antes = blockingReasons(processo, bugsFixture())
+    const depois = blockingReasons(processo, bugsFixture(), linkedGreenfieldFixture([...UNSPECIFIED]))
+    expect(depois).toEqual(antes)
+    expect(depois.length).toBeGreaterThan(0)
+  })
+
+  it('a função das razões não recebe o histórico, e o painel não o passa', () => {
+    expect(blockingReasons.length).toBe(3)
+    const app = readFileSync('src/webview/ui/App.tsx', 'utf8')
+    expect(app).toMatch(/blockingReasons\(payload\.process, payload\.bugs, payload\.greenfield\)/)
+    const faixa = readFileSync('src/webview/domain/blocking.ts', 'utf8')
+    expect(faixa).not.toMatch(/conferencias|registradas/)
   })
 })

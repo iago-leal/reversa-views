@@ -115,6 +115,10 @@ describe('a guarda de tamanho (RF-14, D-11)', () => {
     // pacote somava 206403 B, pouco mais da metade do teto de 400 KiB; a
     // feature 008 media 194018 B e a 006, 176.4 KiB, de modo que o bloco de
     // bugs custou cerca de 13 KiB e os dois cartões da 009 cerca de 12 KiB.
+    // Na entrega da feature 010, em 2026-09-19, o pacote somava 212316 B
+    // (51,8 % do teto, 33444 B abaixo da guarda de 60 %): a origem das
+    // ligações, o bloco "Entregues sem spec" e a contagem de conferências
+    // custaram 5694 B sobre os 206622 B medidos na mesma manhã.
     const folga = TETO_DO_PACOTE_DA_TELA - soma
     expect(
       soma,

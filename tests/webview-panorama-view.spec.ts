@@ -13,7 +13,13 @@
 
 import { describe, expect, it } from 'vitest'
 import { panoramaView } from '../src/webview/domain/panorama-view.ts'
-import { componentFixture, panoramaFixture } from './helpers/reversa-fixtures.ts'
+import {
+  componentFixture,
+  linkedComponentFixture,
+  linkedPanoramaFixture,
+  panoramaFixture,
+  UNSPECIFIED,
+} from './helpers/reversa-fixtures.ts'
 
 const MISTO = panoramaFixture([
   componentFixture({ nome: 'zeta', situacao: 'convergida' }),
@@ -84,5 +90,42 @@ describe('a contagem conferida contra a lista (RN-07, D-15)', () => {
     expect(vista.grupos).toEqual([])
     expect(vista.total).toBe(0)
     expect(vista.convergidos).toBe(0)
+  })
+})
+
+describe('os componentes sem spec (feature 010, D-16)', () => {
+  it('vêm ordenados por nome, sem mexer na lista da leitura', () => {
+    const lidos = [...UNSPECIFIED]
+    const vista = panoramaView(linkedPanoramaFixture(lidos))
+    expect(vista.semSpec?.map((c) => c.nome)).toEqual(['acesso-e-identidade', 'assistente', 'operacao-de-producao'])
+    expect(lidos.map((c) => c.nome)).toEqual(['operacao-de-producao', 'assistente', 'acesso-e-identidade'])
+  })
+
+  it('a origem das ligações chega intacta aos componentes dos grupos', () => {
+    const declarado = linkedComponentFixture(
+      { nome: 'ajustes', pastas: ['_reversa_forward/002-infra', '_reversa_forward/001-mvp'] },
+      'declarada',
+    )
+    const vista = panoramaView(linkedPanoramaFixture([], { componentes: [declarado] }))
+    const ligacoes = vista.grupos.flatMap((g) => g.componentes).flatMap((c) => c.ligacoes ?? [])
+    expect(ligacoes.map((l) => [l.pasta, l.origem, l.impacto])).toEqual([
+      ['_reversa_forward/002-infra', 'declarada', '_reversa_forward/002-infra/legacy-impact.md'],
+      ['_reversa_forward/001-mvp', 'declarada', '_reversa_forward/001-mvp/legacy-impact.md'],
+    ])
+  })
+
+  it('duas passagens sobre a mesma leitura dão a mesma saída', () => {
+    const panorama = linkedPanoramaFixture([...UNSPECIFIED])
+    expect(panoramaView(panorama)).toEqual(panoramaView(panorama))
+  })
+
+  it('lista vazia é lista vazia; campo ausente é nulo, e o cartão não desenha bloco', () => {
+    expect(panoramaView(linkedPanoramaFixture([])).semSpec).toEqual([])
+    expect(panoramaView(panoramaFixture()).semSpec).toBeNull()
+  })
+
+  it('o vínculo parcial é repassado, e falso quando o campo falta', () => {
+    expect(panoramaView(linkedPanoramaFixture([], { vinculoParcial: true })).vinculoParcial).toBe(true)
+    expect(panoramaView(panoramaFixture()).vinculoParcial).toBe(false)
   })
 })

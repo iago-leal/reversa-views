@@ -244,6 +244,9 @@ export function App(props: AppProps): ReactNode {
                 ...payload.process.anomalies,
                 ...(payload.bugs?.anomalias ?? []),
                 ...(payload.greenfield?.anomalias ?? []),
+                // Feature 010: the losses of the delivery axis, after the
+                // greenfield ones, in the common shape.
+                ...(payload.history?.anomalias ?? []),
               ]}
               collapsed={collapsed.has(anomalies)}
               onToggle={toggle(anomalies)}

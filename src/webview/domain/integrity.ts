@@ -30,7 +30,12 @@ export function readingIntegrity(payload: SetProcessData): ReadingIntegrity {
   // that does not send the axis.
   const greenfieldAnomalies =
     payload.greenfield === undefined ? 0 : payload.greenfield.anomalias.length
-  const anomalies = payload.process.anomalies.length + registryAnomalies + greenfieldAnomalies
+  // The losses of the delivery axis join last, by the same rule (feature 010,
+  // D-12): an older host sends a history without the field, and a host older
+  // still sends no history at all; both contribute nothing.
+  const deliveryAnomalies = payload.history?.anomalias?.length ?? 0
+  const anomalies =
+    payload.process.anomalies.length + registryAnomalies + greenfieldAnomalies + deliveryAnomalies
   const refusals = payload.probe.refusals.length
   const truncated = payload.probe.truncated.length
 

@@ -1,0 +1,20 @@
+--- a/src/domain/greenfield.ts
++++ b/src/domain/greenfield.ts
+@@ -103,6 +103,9 @@
+   'entregue-sem-adendo': 2,
+   'em-aberto': 1,
+   'sem-acoes': 1,
++  // Unknown, not behind: a folder whose actions were not read never stands for
++  // the component over one that was (bug nº 11).
++  'acoes-nao-lidas': 0,
+ }
+ 
+ /** The projection of RN-06: a situation of the history onto one of the component. */
+@@ -111,6 +114,7 @@
+   'entregue-sem-adendo': 'entregue',
+   'em-aberto': 'em-andamento',
+   'sem-acoes': 'em-andamento',
++  'acoes-nao-lidas': 'em-andamento',
+ }
+ 
+ /**

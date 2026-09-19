@@ -33,7 +33,9 @@ import type {
   UpdateStatus,
   WebviewMessage,
 } from '../src/host/protocol.ts'
+import { readFileSync } from 'node:fs'
 import { EMPTY_DECOMPOSITION, EMPTY_GREENFIELD, EMPTY_HISTORY } from '../src/domain/types.ts'
+import type { HistoryEntry, PlannedComponent, ProductPanorama, ProjectHistory } from '../src/domain/types.ts'
 
 const probe: ProbeReport = {
   workspace: '/w',
@@ -284,5 +286,97 @@ describe('carga de dados', () => {
     expect(Object.keys(probe)).toEqual(
       expect.arrayContaining(['workspace', 'featureDir', 'refusals', 'truncated']),
     )
+  })
+})
+
+/**
+ * Os campos da feature 010 entram DENTRO de estruturas existentes, e nunca no
+ * topo da carga (D-13, RF-10). A ordem de declaração de uma interface não
+ * existe em tempo de execução, e por isso o que se confere aqui é o fonte que
+ * as declara: os campos novos são os últimos de cada estrutura, e opcionais.
+ */
+describe('os campos da feature 010 (D-13, RF-10)', () => {
+  const tipos = readFileSync('src/domain/types.ts', 'utf8')
+
+  /** Os campos de uma interface, na ordem do fonte, com a marca de opcional. */
+  function campos(nome: string): Array<{ nome: string; opcional: boolean }> {
+    const corpo = new RegExp(`export interface ${nome} \\{([\\s\\S]*?)\\n\\}`).exec(tipos)?.[1] ?? ''
+    return [...corpo.matchAll(/^ {2}(\w+)(\??):/gm)].map((m) => ({ nome: m[1] ?? '', opcional: m[2] === '?' }))
+  }
+
+  const esperados: Array<[string, string[]]> = [
+    ['HistoryEntry', ['vinculo', 'conferencias']],
+    ['ProjectHistory', ['anomalias']],
+    ['PlannedComponent', ['ligacoes']],
+    ['ProductPanorama', ['semSpec', 'vinculoParcial']],
+  ]
+
+  for (const [estrutura, novos] of esperados) {
+    it(`${estrutura} termina com ${novos.join(' e ')}, opcionais`, () => {
+      const lista = campos(estrutura)
+      expect(lista.length).toBeGreaterThan(novos.length)
+      const fim = lista.slice(-novos.length)
+      expect(fim.map((c) => c.nome)).toEqual(novos)
+      expect(fim.every((c) => c.opcional)).toBe(true)
+      // Os campos de antes continuam obrigatórios: nada foi afrouxado.
+      expect(lista.slice(0, -novos.length).every((c) => !c.opcional)).toBe(true)
+    })
+  }
+
+  /**
+   * O topo não ganha campo. A lista inclui, além dos dez que o caso da carga
+   * conta, os quatro de procedência e do registro de bugs, que o tipo declara
+   * e aquele caso deixa de fora de propósito.
+   */
+  it('o topo da carga não ganha campo algum', () => {
+    const corpo = /export interface SetProcessData \{([\s\S]*?)\n\}/.exec(readFileSync('src/host/protocol.ts', 'utf8'))?.[1] ?? ''
+    const declarados = [...corpo.matchAll(/^ {2}(\w+)\??:/gm)].map((m) => m[1])
+    expect(declarados).toEqual([
+      'process',
+      'probe',
+      'readAt',
+      'entry',
+      'root',
+      'ignoredRoots',
+      'inheritedRevision',
+      'decomposition',
+      'history',
+      'extensionVersion',
+      'builtFromCommit',
+      'bugs',
+      'greenfield',
+      'builtFromRoot',
+    ])
+  })
+
+  it('a carga sem os campos novos é aceita como leitura não realizada', () => {
+    const entrada: HistoryEntry = {
+      pasta: '_reversa_forward/001-a',
+      id: '001',
+      nomeCurto: 'a',
+      situacao: 'convergida',
+      marca: 'nenhuma',
+      acoes: { total: 1, fechadas: 1, abertas: 0, emendas: 0 },
+      adendo: null,
+      resumo: null,
+      ultimoEvento: null,
+    }
+    const historico: ProjectHistory = { entradas: [entrada], truncado: false, total: 1 }
+    const componente: PlannedComponent = {
+      nome: 'a',
+      spec: '_reversa_sdd/sdd/a.md',
+      situacao: 'planejada',
+      marca: 'nenhuma',
+      pastas: [],
+      adendo: null,
+      acoes: null,
+    }
+    const panorama: ProductPanorama = { ...EMPTY_GREENFIELD.panorama, componentes: [componente] }
+    expect(entrada.vinculo).toBeUndefined()
+    expect(entrada.conferencias).toBeUndefined()
+    expect(historico.anomalias).toBeUndefined()
+    expect(componente.ligacoes).toBeUndefined()
+    expect(panorama.semSpec).toBeUndefined()
+    expect(panorama.vinculoParcial).toBeUndefined()
   })
 })

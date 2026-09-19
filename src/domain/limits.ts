@@ -115,3 +115,29 @@ export const SPEC_CAP = 50
  * the PRD of this project today.
  */
 export const SCOPE_ITEM_CAP = 50
+
+/* ------------------------------------------- the artifacts of a delivery */
+
+/**
+ * The two artifacts of a feature folder that say what a delivery realised and
+ * what a person checked of it (feature 010, D-01, RN-01, RN-05).
+ *
+ * Both are DUPLICATIONS in relation to the skills of REVERSA, accepted for the
+ * reason `BUGS_FOLDER` and the greenfield names above are: `/reversa-coding`
+ * names the impact file and `/reversa-plan` the onboarding, no inherited
+ * package exports either name, and writing them once on the local side is what
+ * turns a future renaming into a one-line edit here. They also keep the host
+ * free of any layout of REVERSA, which the boundary suite holds.
+ */
+export const LEGACY_IMPACT_FILE = 'legacy-impact.md'
+export const ONBOARDING_FILE = 'onboarding.md'
+
+/**
+ * The most rows read from the conference register of one folder (D-11).
+ *
+ * The precedent is `SCOPE_ITEM_CAP`: a register is written by an agent and a
+ * person, and nothing bounds it but this. Above it the first hundred rows are
+ * read and the reading DECLARES itself cut, keeping the total beside what was
+ * read. The largest register measured on 2026-09-19 has twenty rows.
+ */
+export const CONFERENCE_ROW_CAP = 100

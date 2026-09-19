@@ -14,7 +14,7 @@
 
 import type { ReactElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { GreenfieldAxis } from '../src/domain/types.ts'
 import type { EffectiveEntry } from '../src/webview/domain/types.ts'
 import { EMPTY_PREFERENCES } from '../src/webview/domain/types.ts'
@@ -26,7 +26,11 @@ import {
   componentFixture,
   greenfieldFixture,
   legacyGreenfieldFixture,
+  linkedComponentFixture,
+  linkedGreenfieldFixture,
+  linkedHistoryFixture,
   panoramaFixture,
+  UNSPECIFIED,
   payloadFixture,
   processFixture,
   requirementsMd,
@@ -267,5 +271,144 @@ describe('os três vazios (RN-08, RF-15)', () => {
     for (const eixo of [undefined, legacyGreenfieldFixture(), undecomposedGreenfieldFixture()]) {
       expect(cartao(eixo)).not.toMatch(/<ul[^>]*>\s*<\/ul>/)
     }
+  })
+})
+
+/* ------------------------------------------------------------ feature 010 */
+
+describe('a origem de cada ligação (feature 010, RF-13, D-15)', () => {
+  it('cada pasta ligada traz a origem em texto', () => {
+    const marcacao = cartao(linkedGreenfieldFixture())
+    const leitura = marcacao.slice(marcacao.indexOf('data-component="leitura-do-processo"'))
+    expect(leitura).toContain('data-link="_reversa_forward/001-leitura-do-processo"')
+    expect(leitura).toContain('data-origin="nome"')
+    expect(texto(leitura)).toContain('pelo nome')
+  })
+
+  it('a ligação declarada abre o `legacy-impact.md` da pasta pela mensagem de abertura', () => {
+    const ajustes = linkedComponentFixture(
+      { nome: 'ajustes', pastas: ['_reversa_forward/002-infra-remota-auth-assistente'] },
+      'declarada',
+    )
+    const eixo = linkedGreenfieldFixture([], { componentes: [ajustes], totalDeSpecs: 1, convergidos: 1 })
+    const abrir = vi.fn()
+    const marcacao = render(
+      <PanoramaSection
+        greenfield={eixo}
+        collapsed={false}
+        onToggle={() => {}}
+        onOpenFile={abrir}
+        scopeRevealed={false}
+        onRevealScope={() => {}}
+      />,
+    )
+    const ligacao = marcacao.slice(marcacao.indexOf('data-link="_reversa_forward/002-infra-remota-auth-assistente"'))
+    expect(ligacao).toContain('data-origin="declarada"')
+    expect(ligacao).toContain(
+      'data-action="open-file" data-path="_reversa_forward/002-infra-remota-auth-assistente/legacy-impact.md"',
+    )
+    expect(texto(ligacao)).toContain('declarada')
+  })
+
+  it('a origem é texto, e não só cor: a palavra está na marcação', () => {
+    const marcacao = cartao(linkedGreenfieldFixture())
+    expect(marcacao).toMatch(/data-part="link-origin"[^>]*>[^<]*pelo nome/)
+  })
+})
+
+describe('o bloco "Entregues sem spec" (feature 010, RF-04, D-16)', () => {
+  it('fica entre os grupos de componentes e "Fora do plano", ordenado por nome', () => {
+    const marcacao = cartao(linkedGreenfieldFixture([...UNSPECIFIED]))
+    const bloco = marcacao.indexOf('data-part="unspecified"')
+    expect(bloco).toBeGreaterThan(marcacao.lastIndexOf('data-component-group='))
+    expect(bloco).toBeLessThan(marcacao.indexOf('data-part="unplanned"'))
+    const nomes = [...marcacao.matchAll(/data-unspecified="([^"]+)"/g)].map((m) => m[1])
+    expect(nomes).toEqual(['acesso-e-identidade', 'assistente', 'operacao-de-producao'])
+  })
+
+  it('cada componente sem spec traz a pasta que o declara, clicável para o `legacy-impact.md`, e a situação', () => {
+    const marcacao = cartao(linkedGreenfieldFixture([...UNSPECIFIED]))
+    const assistente = marcacao.slice(marcacao.indexOf('data-unspecified="assistente"'))
+    expect(assistente).toContain(
+      'data-path="_reversa_forward/002-infra-remota-auth-assistente/legacy-impact.md"',
+    )
+    expect(texto(assistente)).toContain('002-infra-remota-auth-assistente')
+    expect(assistente).toContain('data-situation="convergida"')
+    expect(texto(assistente)).toContain('sem spec')
+  })
+
+  it('a frase de contagem é própria, separada da dos planejados', () => {
+    const marcacao = cartao(linkedGreenfieldFixture([...UNSPECIFIED]))
+    expect(marcacao).toMatch(/data-part="unspecified-counts"[^>]*>3 componentes entregues sem spec/)
+    expect(texto(marcacao)).toContain('5 de 5 componentes planejados convergidos')
+  })
+
+  it('no singular, um componente', () => {
+    const marcacao = cartao(linkedGreenfieldFixture([UNSPECIFIED[1]!]))
+    expect(marcacao).toMatch(/data-part="unspecified-counts"[^>]*>1 componente entregue sem spec/)
+  })
+
+  it('sem componente sem spec, o bloco é uma frase', () => {
+    const marcacao = cartao(linkedGreenfieldFixture([]))
+    expect(marcacao).toContain('data-part="unspecified-none"')
+    expect(texto(marcacao)).toContain('Nenhum componente entregue sem spec')
+    expect(marcacao).not.toContain('data-unspecified=')
+  })
+
+  it('o vínculo parcial é dito por frase', () => {
+    const marcacao = cartao(linkedGreenfieldFixture([], { vinculoParcial: true }))
+    expect(marcacao).toContain('data-part="link-partial"')
+    expect(texto(marcacao)).toContain('Vínculo declarado parcial')
+  })
+
+  it('host anterior: "vínculo declarado não lido", sem bloco vazio e sem origem', () => {
+    const marcacao = cartao(greenfieldFixture())
+    expect(marcacao).toContain('data-part="link-unread"')
+    expect(texto(marcacao).toLowerCase()).toContain('vínculo declarado não lido')
+    expect(marcacao).not.toContain('data-part="unspecified"')
+    expect(marcacao).not.toContain('data-part="unspecified-none"')
+    expect(marcacao).not.toContain('data-origin=')
+    // As pastas continuam ditas, como na 009.
+    expect(marcacao).toContain('data-part="component-folders"')
+  })
+})
+
+describe('as anomalias do histórico na seção de anomalias (feature 010, RF-11)', () => {
+  it('entram na lista depois das do eixo greenfield', () => {
+    const entry: EffectiveEntry = {
+      kind: 'installed',
+      rereading: false,
+      loaded: payloadFixture({
+        greenfield: greenfieldFixture({
+          anomalias: [{ file: '_reversa_sdd/prd.md', code: 'escopo-do-prd-nao-encontrado' }],
+        }),
+        history: linkedHistoryFixture([
+          {
+            file: '_reversa_forward/002-x/onboarding.md',
+            code: 'tabela-nao-reconhecida',
+            detail: '9. Registro de conferências: Marco | Item | Resultado',
+          },
+        ]),
+      }),
+      message: null,
+      root: '/w/reversa-views',
+      update: null,
+    }
+    const marcacao = render(
+      <App
+        entry={entry}
+        update={null}
+        notice={null}
+        preferences={EMPTY_PREFERENCES}
+        theme={{ mode: 'dark', highContrast: false }}
+        onReload={() => {}}
+        onOpenFile={() => {}}
+        onLog={() => {}}
+      />,
+    )
+    const secao = marcacao.slice(marcacao.indexOf('data-section="anomalies"'))
+    expect(secao).toContain('tabela-nao-reconhecida')
+    expect(secao).toContain('Marco | Item | Resultado')
+    expect(secao.indexOf('escopo-do-prd-nao-encontrado')).toBeLessThan(secao.indexOf('tabela-nao-reconhecida'))
   })
 })

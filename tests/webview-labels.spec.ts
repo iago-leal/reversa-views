@@ -11,7 +11,9 @@ import {
   bugSeverityLabel,
   bugStateLabel,
   checkpointMark,
+  conferenceStateLabel,
   inconsistencyLabel,
+  linkOriginLabel,
   phaseMark,
   revisionLabel,
   stageLabel,
@@ -23,6 +25,8 @@ import {
   BUG_PRIORITIES,
   BUG_SEVERITIES,
   BUG_STATES,
+  CONFERENCE_STATES,
+  LINK_ORIGINS,
 } from '../src/domain/types.ts'
 import { processFixture } from './helpers/reversa-fixtures.ts'
 
@@ -217,5 +221,32 @@ describe('rótulos do registro de bugs (RF-12)', () => {
     expect(semResolvido.known).toBe(true)
     expect(semTrava.text).not.toBe(semResolvido.text)
     expect(inconsistencyLabel('outra-coisa').known).toBe(false)
+  })
+})
+
+/**
+ * Os dois vocabulários da feature 010: a origem de uma ligação entre spec e
+ * pasta, e os seis estados do registro de conferências. Totais como todos os
+ * outros: o que está fora volta cru e marcado, e nada lança.
+ */
+describe('a origem da ligação e o estado da conferência (feature 010)', () => {
+  it('a origem é dita em texto: "pelo nome" e "declarada"', () => {
+    expect(linkOriginLabel('nome')).toEqual({ text: 'pelo nome', known: true, raw: 'nome' })
+    expect(linkOriginLabel('declarada')).toEqual({ text: 'declarada', known: true, raw: 'declarada' })
+    expect(LINK_ORIGINS.map((o) => linkOriginLabel(o).known)).toEqual([true, true])
+  })
+
+  it('os seis estados de conferência têm textos distintos e não vazios', () => {
+    const rotulos = CONFERENCE_STATES.map((estado) => conferenceStateLabel(estado))
+    expect(rotulos.every((r) => r.known && r.text !== '')).toBe(true)
+    expect(new Set(rotulos.map((r) => r.text)).size).toBe(CONFERENCE_STATES.length)
+    expect(conferenceStateLabel('sem-registro').text).toBe('sem registro de conferências')
+  })
+
+  it('valor fora do vocabulário volta cru e marcado, sem lançar', () => {
+    for (const rotular of [linkOriginLabel, conferenceStateLabel]) {
+      expect(rotular('xyz')).toEqual({ text: 'xyz', known: false, raw: 'xyz' })
+      expect(() => rotular('')).not.toThrow()
+    }
   })
 })

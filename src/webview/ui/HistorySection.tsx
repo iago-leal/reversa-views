@@ -20,14 +20,21 @@
  * of truncation says why the two differ. The sentence that counts them is
  * added beside the bar, because RN-10 forbids the bar from being the only
  * carrier of the number.
+ *
+ * Feature 010 puts the conferences BESIDE the situation, and beside is the
+ * word (RN-07): "N de M conferências registradas" never changes the situation,
+ * and is a count in text, clickable to the `onboarding.md`, never a bar. Every
+ * other state of the register is named by a sentence, and an older host that
+ * sent nothing is "conferências não lidas", never a blank.
  * @module webview/ui/HistorySection
  */
 
 import type { ReactNode } from 'react'
-import type { HistoryEntry, ProjectHistory } from '../../domain/types.ts'
+import type { ConferenceRecord, DeliveryLinkState, HistoryEntry, ProjectHistory } from '../../domain/types.ts'
 import { brasiliaInstant } from '../domain/instants.ts'
-import { markLabel, situationLabel } from '../domain/labels.ts'
+import { conferenceStateLabel, markLabel, situationLabel } from '../domain/labels.ts'
 import { CollapsibleSection } from './CollapsibleSection.tsx'
+import { OpenFile } from './OpenFile.tsx'
 import { ProgressBar } from './ProgressBar.tsx'
 
 /** What the section draws. */
@@ -37,6 +44,61 @@ export interface HistorySectionProps {
   collapsed: boolean
   onToggle: () => void
   onOpenFile: (path: string) => void
+}
+
+/**
+ * The conferences of one delivery, beside its situation (RF-07, RN-06).
+ * @param props - the register, absent for an older host, and the open port.
+ * @returns the inline element.
+ */
+function Conferences(props: { c: ConferenceRecord | undefined; onOpenFile: (path: string) => void }): ReactNode {
+  const { c, onOpenFile } = props
+  if (c === undefined) {
+    return (
+      <span data-part="feature-conferences" data-state="nao-lidas" className="muted">
+        conferências não lidas
+      </span>
+    )
+  }
+
+  const counted = c.estado === 'lido' || c.estado === 'truncado'
+  const label = conferenceStateLabel(c.estado)
+  const text = counted
+    ? `${c.registradas} de ${c.total} conferências registradas${c.estado === 'truncado' ? `, lista cortada no teto de ${c.linhas.length} linhas` : ''}`
+    : label.known
+      ? label.text
+      : `${label.raw} (não reconhecido)`
+
+  return (
+    <span data-part="feature-conferences" data-state={c.estado} className="conferences">
+      {counted && c.arquivo !== null ? <OpenFile path={c.arquivo} onOpenFile={onOpenFile}>{text}</OpenFile> : text}
+    </span>
+  )
+}
+
+/**
+ * What the link of the delivery says when it says something worth a line: a
+ * file without any impact table, or one present and not read. Absent, read
+ * with tables, or an older host: nothing, because nothing is wrong.
+ */
+function LinkNote(props: { v: DeliveryLinkState | undefined }): ReactNode {
+  const { v } = props
+  if (v === undefined) return null
+  if (v.estado === 'nao-lido') {
+    return (
+      <div data-part="feature-link" data-state="nao-lido" className="notice">
+        vínculo declarado não lido: o legacy-impact.md está acima do teto de bytes
+      </div>
+    )
+  }
+  if (v.estado === 'lido' && v.tabelas === 0) {
+    return (
+      <div data-part="feature-link" data-state="sem-tabela" className="muted">
+        nenhuma tabela de impacto reconhecida no legacy-impact.md
+      </div>
+    )
+  }
+  return null
 }
 
 /**
@@ -63,10 +125,20 @@ function Entry(props: { entry: HistoryEntry; onOpenFile: (path: string) => void 
             {mark.text}
           </span>
         </>
-      )}
+      )}{' '}
+      <Conferences c={entry.conferencias} onOpenFile={onOpenFile} />
       <div data-part="feature-actions" className="muted">
-        {entry.acoes.fechadas} de {entry.acoes.total} ações fechadas
+        {entry.situacao === 'acoes-nao-lidas' ? (
+          // The tally is zero because nothing was read, not because nothing
+          // was done (bug nº 11): the line says which, instead of "0 de 0".
+          'ações não lidas: actions.md acima do teto de bytes ou ilegível'
+        ) : (
+          <>
+            {entry.acoes.fechadas} de {entry.acoes.total} ações fechadas
+          </>
+        )}
       </div>
+      <LinkNote v={entry.vinculo} />
       <div data-part="feature-summary">{entry.resumo ?? 'sem resumo registrado'}</div>
       <div
         data-part="feature-instant"

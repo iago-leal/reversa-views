@@ -1,17 +1,15 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/009-greenfield-e-features-do-prd",
-  "feature-id": "009",
-  "short-name": "greenfield-e-features-do-prd",
-  "started-at": "2026-09-11T18:20:58Z",
-  "current-stage": "sync",
+  "feature-dir": "_reversa_forward/010-vinculo-spec-e-conferencias",
+  "feature-id": "010",
+  "short-name": "vinculo-spec-e-conferencias",
+  "started-at": "2026-09-19T18:45:54Z",
+  "current-stage": "to-do",
   "stages-completed": [
     "requirements",
     "clarify",
     "plan",
-    "to-do",
-    "coding",
-    "sync"
+    "to-do"
   ],
   "paused-features": [
     {

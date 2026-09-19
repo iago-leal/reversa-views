@@ -1,0 +1,19 @@
+--- a/src/webview/domain/labels.ts
++++ b/src/webview/domain/labels.ts
+@@ -39,7 +39,7 @@
+ }
+ 
+ /**
+- * The four situations of a feature in the history, as words.
++ * The five situations of a feature in the history, as words.
+  *
+  * They are NOT stages, and they are not spelled like one on purpose (D-19):
+  * the stage of the active feature goes on coming from the inherited contract,
+@@ -51,6 +51,7 @@
+   'entregue-sem-adendo': 'entregue, sem adendo',
+   'em-aberto': 'em aberto',
+   'sem-acoes': 'sem ações',
++  'acoes-nao-lidas': 'ações não lidas',
+ }
+ 
+ /** The three marks the pointer of REVERSA gives a feature folder. */

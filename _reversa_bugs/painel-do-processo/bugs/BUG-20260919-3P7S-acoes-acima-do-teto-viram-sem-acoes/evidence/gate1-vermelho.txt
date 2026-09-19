@@ -1,0 +1,12 @@
+# Gate 1, 2026-09-19: testes aplicados, nenhuma linha de correção
+# npx vitest run tests/domain-history.spec.ts tests/domain-greenfield-panorama.spec.ts tests/webview-progress-cards.spec.tsx
+   × a projeção da situação (RN-06, D-08) > pasta em acoes-nao-lidas faz componente em-andamento
+   × a projeção da situação (RN-06, D-08) > uma pasta de ações não lidas nunca vence uma pasta lida (bug nº 11)
+   × arquivo da pasta presente e não lido (bug nº 11, EC-06) > reprodução: `actions.md` acima do teto sai `acoes-nao-lidas`, com a anomalia que nomeia o arquivo
+   × arquivo da pasta presente e não lido (bug nº 11, EC-06) > `acoes-nao-lidas` vale para qualquer `actions.md` que a sonda marcou como não lido
+   × arquivo da pasta presente e não lido (bug nº 11, EC-06) > `requirements.md` e `progress.jsonl` não lidos viram anomalia, sem mudar a situação de ações lidas
+   × arquivo da pasta presente e não lido (bug nº 11, EC-06) > as perdas da pasta vêm na ordem dos arquivos, antes das do vínculo e das conferências
+   × a pasta cujas ações não foram lidas (bug nº 11) > tem rótulo conhecido e não afirma "0 de 0 ações fechadas"
+ Test Files  3 failed (3)
+      Tests  7 failed | 90 passed (97)
+# O caso do critério 4 ("seguem `sem-acoes`, sem anomalia") passa já no vermelho: é guarda do comportamento atual.

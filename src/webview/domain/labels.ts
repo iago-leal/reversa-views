@@ -39,7 +39,7 @@ const PHASE_LABELS: Record<string, string> = {
 }
 
 /**
- * The four situations of a feature in the history, as words.
+ * The five situations of a feature in the history, as words.
  *
  * They are NOT stages, and they are not spelled like one on purpose (D-19):
  * the stage of the active feature goes on coming from the inherited contract,
@@ -51,6 +51,7 @@ const SITUATION_LABELS: Record<string, string> = {
   'entregue-sem-adendo': 'entregue, sem adendo',
   'em-aberto': 'em aberto',
   'sem-acoes': 'sem ações',
+  'acoes-nao-lidas': 'ações não lidas',
 }
 
 /** The three marks the pointer of REVERSA gives a feature folder. */
@@ -489,4 +490,43 @@ export function stepStatusLabel(status: string): Label {
 /** The readable name of a step of the origin; never throws. */
 export function originStepLabel(etapa: string): Label {
   return lookUp(etapa, ORIGIN_STEP_LABELS)
+}
+
+/* ------------------------------------------------------------ feature 010 */
+
+/**
+ * Why a folder is linked to a component, in the reader's words (RF-13, D-15).
+ * The origin is TEXT beside the folder, never only a colour.
+ */
+const LINK_ORIGIN_LABELS: Record<string, string> = {
+  nome: 'pelo nome',
+  declarada: 'declarada',
+}
+
+/**
+ * The six states of the conference register (D-11, RN-06).
+ *
+ * `lido` has a word of its own for the suites and the summary, but the card
+ * draws it as the count "N de M conferências registradas", which says more.
+ * `nao-lido` is a file present and not read, and must not be confused with
+ * the absent field of an older host, which the card calls "conferências não
+ * lidas".
+ */
+const CONFERENCE_STATE_LABELS: Record<string, string> = {
+  'sem-registro': 'sem registro de conferências',
+  vazio: 'registro de conferências vazio',
+  lido: 'conferências registradas',
+  'nao-reconhecido': 'registro de conferências não reconhecido',
+  'nao-lido': 'onboarding não lido: conferências parciais',
+  truncado: 'registro de conferências cortado no teto de linhas',
+}
+
+/** The origin of a link between a spec and a folder, as a word; never throws. */
+export function linkOriginLabel(origem: string): Label {
+  return lookUp(origem, LINK_ORIGIN_LABELS)
+}
+
+/** The state of the conference register of a folder, as words; never throws. */
+export function conferenceStateLabel(estado: string): Label {
+  return lookUp(estado, CONFERENCE_STATE_LABELS)
 }

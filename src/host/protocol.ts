@@ -71,7 +71,17 @@ export interface SetProcessData {
    * actions" are different statements, and only one of them is a defect.
    */
   decomposition: ActiveDecomposition
-  /** Every feature folder of the project, newest first (feature 006). */
+  /**
+   * Every feature folder of the project, newest first (feature 006).
+   *
+   * Feature 010 grows the payload WITHOUT a field of its own at this level: the
+   * link a delivery declares and the conferences a person registered belong to
+   * the history and to the panorama, so they enter as optional fields at the
+   * END of four existing structures -- `HistoryEntry.vinculo` and
+   * `.conferencias`, `ProjectHistory.anomalias`, `PlannedComponent.ligacoes`,
+   * `ProductPanorama.semSpec` and `.vinculoParcial`. The top of this payload
+   * keeps its ten required fields, and the protocol suite counts them.
+   */
   history: ProjectHistory
   /**
    * The version of this build, derived and never written by hand (RF-17).

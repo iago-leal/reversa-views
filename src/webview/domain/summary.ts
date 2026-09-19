@@ -19,11 +19,17 @@
  * @module webview/domain/summary
  */
 
-import type { GreenfieldAxis, HistoryEntry, PlannedComponent } from '../../domain/types.ts'
+import type {
+  GreenfieldAxis,
+  HistoryEntry,
+  PlannedComponent,
+  UnspecifiedComponent,
+} from '../../domain/types.ts'
 import type { SetProcessData } from '../../host/protocol.ts'
 import { brasiliaInstant } from './instants.ts'
 import {
   componentSituationLabel,
+  conferenceStateLabel,
   greenfieldStageLabel,
   markLabel,
   situationLabel,
@@ -93,6 +99,19 @@ function panoramaLines(axis: GreenfieldAxis | undefined): string[] {
     lines.push(`${vista.convergidos} de ${vista.total} componentes planejados convergidos.`)
     for (const g of vista.grupos) for (const c of g.componentes) lines.push(componentLine(c))
   }
+  // Feature 010: the components delivered without a spec, AFTER the planned
+  // ones and in the order the same pure function decided (D-17).
+  lines.push('')
+  if (vista.semSpec === null) lines.push('Vínculo declarado não lido por esta leitura.')
+  else {
+    if (vista.vinculoParcial) lines.push('Vínculo declarado parcial: algum legacy-impact.md não foi lido.')
+    const n = vista.semSpec.length
+    if (n === 0) lines.push('Nenhum componente entregue sem spec.')
+    else {
+      lines.push(`${n} ${n === 1 ? 'componente entregue' : 'componentes entregues'} sem spec.`)
+      for (const c of vista.semSpec) lines.push(unspecifiedLine(c))
+    }
+  }
   lines.push('', `Fora do plano: ${p.foraDoPlano.length} pastas sem spec.`)
   for (const f of p.foraDoPlano) {
     lines.push(`- ${f.id ?? ''}-${f.nomeCurto ?? f.pasta} — ${situationLabel(f.situacao).text}`)
@@ -111,6 +130,18 @@ function componentLine(c: PlannedComponent): string {
   const parts = [c.nome, componentSituationLabel(c.situacao).text, markLabel(c.marca).text]
   if (c.acoes !== null) parts.push(`${c.acoes.fechadas} de ${c.acoes.total} ações`)
   return `- ${parts.filter(Boolean).join(' — ')}`
+}
+
+/** One component delivered without a spec, in one line, with the folders that declare it. */
+function unspecifiedLine(c: UnspecifiedComponent): string {
+  const parts = [c.nome, componentSituationLabel(c.situacao).text, markLabel(c.marca).text]
+  parts.push(`declarado por ${c.pastas.map(folderName).join(', ')}`)
+  return `- ${parts.filter(Boolean).join(' — ')}`
+}
+
+/** The bare name of a folder, which is what the reader recognises. */
+function folderName(pasta: string): string {
+  return pasta.split('/').pop() ?? pasta
 }
 
 /**
@@ -155,6 +186,33 @@ function historyLines(payload: SetProcessData): string[] {
   const lines = history.entradas.map(entryLine)
   if (history.truncado) {
     lines.push(`Lista truncada: ${history.total} pastas de feature no projeto.`)
+  }
+  lines.push('', ...conferenceLines(history.entradas))
+  return lines
+}
+
+/**
+ * The conferences of each delivery, as a block of its own AFTER the lines that
+ * were here, so that none of them moves or changes (feature 010, RF-12, D-17).
+ * @param entradas - the entries, in history order.
+ * @returns the lines, never empty and never a dangling label.
+ */
+function conferenceLines(entradas: HistoryEntry[]): string[] {
+  if (entradas.every((entry) => entry.conferencias === undefined)) {
+    return ['Conferências não lidas por esta leitura.']
+  }
+
+  const lines = ['Conferências por entrega, do registro do onboarding.']
+  for (const entry of entradas) {
+    const name = entry.id === null ? (entry.nomeCurto ?? entry.pasta) : `${entry.id}-${entry.nomeCurto}`
+    const c = entry.conferencias
+    const text =
+      c === undefined
+        ? 'conferências não lidas'
+        : c.estado === 'lido' || c.estado === 'truncado'
+          ? `${c.registradas} de ${c.total} conferências registradas`
+          : conferenceStateLabel(c.estado).text
+    lines.push(`- ${name} — ${text}`)
   }
   return lines
 }

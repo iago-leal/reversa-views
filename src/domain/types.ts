@@ -68,9 +68,13 @@ export const FEATURE_SITUATIONS = [
   'entregue-sem-adendo',
   'em-aberto',
   'sem-acoes',
+  // The `actions.md` is present and was not read (bug nº 11, EC-06): none of
+  // the four above can be verified, and `sem-acoes` would state a fact the
+  // panel never checked.
+  'acoes-nao-lidas',
 ] as const
 
-/** One of the four situations. */
+/** One of the five situations. */
 export type FeatureSituation = (typeof FEATURE_SITUATIONS)[number]
 
 /** What the pointer REVERSA keeps says about one feature folder. */
@@ -103,6 +107,21 @@ export interface HistoryEntry {
   resumo: string | null
   /** The most recent instant of the trail, absolute, converted only on screen. */
   ultimoEvento: string | null
+  /**
+   * Whether the `legacy-impact.md` of the folder was read (feature 010, D-05).
+   *
+   * APPENDED and optional: ABSENT is a host older than feature 010, which did
+   * not read the link at all, and the screen says so by a sentence. Only the
+   * state and the path travel; the cells are input of the crossing and stay in
+   * the host.
+   */
+  vinculo?: DeliveryLinkState
+  /**
+   * The conference register of the `onboarding.md` of the folder (feature 010,
+   * RN-05, RN-07). A second axis beside the situation, which it never changes.
+   * ABSENT is a host older than feature 010: conferences not read.
+   */
+  conferencias?: ConferenceRecord
 }
 
 /** Every feature folder of the project, newest first (D-16). */
@@ -112,6 +131,12 @@ export interface ProjectHistory {
   truncado: boolean
   /** How many folders exist, even when not all of them were read. */
   total: number
+  /**
+   * The losses of the folder reading and of the delivery axis, in the common
+   * shape (feature 010, D-12; bug nº 11).
+   * APPENDED and optional: ABSENT is a host older than feature 010.
+   */
+  anomalias?: DeliveryAnomaly[]
 }
 
 /** The history of a project whose forward folder was not read at all. */
@@ -471,6 +496,12 @@ export interface PlannedComponent {
   adendo: string | null
   /** The tally of the most advanced folder; null when no folder matched, declared by name. */
   acoes: { total: number; fechadas: number; abertas: number; emendas: number } | null
+  /**
+   * One link per folder in `pastas`, in the same order, saying WHY the folder
+   * is there: by name or declared (feature 010, D-06, RF-13). APPENDED and
+   * optional: ABSENT is a host older than feature 010.
+   */
+  ligacoes?: ComponentLink[]
 }
 
 /** A feature folder the plan did not foresee (RN-05). */
@@ -522,6 +553,15 @@ export interface ProductPanorama {
   truncado: boolean
   /** The N of "N de M componentes planejados convergidos" (RN-07). */
   convergidos: number
+  /**
+   * The components a delivery declared and no spec names (feature 010, RN-04,
+   * D-08). Outside `convergidos` and outside the denominator. APPENDED and
+   * optional: ABSENT is a host older than feature 010, which the screen names
+   * as "vínculo declarado não lido" rather than drawing an empty block.
+   */
+  semSpec?: UnspecifiedComponent[]
+  /** True when some folder has its `legacy-impact.md` present and not read (feature 010). */
+  vinculoParcial?: boolean
 }
 
 /** The panorama of a project with no spec and no scope at all. */
@@ -600,4 +640,136 @@ export const EMPTY_GREENFIELD: GreenfieldAxis = {
   panorama: EMPTY_PANORAMA,
   anomalias: [],
   truncados: [],
+}
+
+/* ------------------------------------------ the link and the conferences */
+
+/**
+ * The vocabulary of feature 010: the link a delivery DECLARES between itself
+ * and the specs, and the conferences a person REGISTERS against it (RN-01 to
+ * RN-07, D-05 to D-13).
+ *
+ * Every field that carries it into the payload is optional and appended at
+ * the end of an existing structure, and absent means the reading did not
+ * happen, never that it happened and found nothing. A host that read and
+ * found nothing sends the named state -- `ausente`, `sem-registro`, an empty
+ * list -- and never omits the field.
+ */
+
+/** How the `legacy-impact.md` of one folder was read. */
+export const DELIVERY_LINK_STATES = ['lido', 'ausente', 'nao-lido'] as const
+
+/** One of the three. */
+export type DeliveryLinkReading = (typeof DELIVERY_LINK_STATES)[number]
+
+/** The reading of the link of one folder, as it travels in the history. */
+export interface DeliveryLinkState {
+  /** `nao-lido` is a file present and above the byte cap: the link is partial. */
+  estado: DeliveryLinkReading
+  /** The `legacy-impact.md`, relative to the root, for `openFile`; null when absent. */
+  arquivo: string | null
+  /** Impact tables recognised; zero with `lido` is a file without any. */
+  tabelas: number
+}
+
+/**
+ * The six states of the conference register of one folder (D-11).
+ *
+ * `sem-registro` is NOT a loss: the register section is a practice of the
+ * agent and not a step of the process, and a project without it is the rule.
+ */
+export const CONFERENCE_STATES = [
+  'sem-registro',
+  'vazio',
+  'lido',
+  'nao-reconhecido',
+  'nao-lido',
+  'truncado',
+] as const
+
+/** One of the six. */
+export type ConferenceState = (typeof CONFERENCE_STATES)[number]
+
+/** One row of the register, each cell as written, null when the column is absent. */
+export interface ConferenceLine {
+  data: string | null
+  marco: string | null
+  item: string | null
+  /** Exposed as written: the panel never classifies the result of a test (D-10). */
+  resultado: string | null
+  observacao: string | null
+  /** Date and result both carry something other than a lone dash. */
+  registrada: boolean
+}
+
+/** The conference register of one folder. */
+export interface ConferenceRecord {
+  estado: ConferenceState
+  /** The `onboarding.md`, relative to the root; null when absent. */
+  arquivo: string | null
+  /** The heading of the register section as written; null without the section. */
+  secao: string | null
+  /** The rows read, at most `CONFERENCE_ROW_CAP`. */
+  linhas: ConferenceLine[]
+  registradas: number
+  /** The rows that exist, even above the ceiling. */
+  total: number
+}
+
+/** Why a folder is linked to a component. */
+export const LINK_ORIGINS = ['nome', 'declarada'] as const
+
+/** One of the two. */
+export type LinkOrigin = (typeof LINK_ORIGINS)[number]
+
+/** One folder linked to a planned component, and why. */
+export interface ComponentLink {
+  pasta: string
+  origem: LinkOrigin
+  /** The `legacy-impact.md` of the folder, so that a declared link is clickable. */
+  impacto: string | null
+}
+
+/**
+ * A component a delivery declared and no spec names (RN-04, D-08).
+ *
+ * Its situation is the one of the most advanced folder that declares it, by
+ * the projection and the rule of advance of the planned components.
+ */
+export interface UnspecifiedComponent {
+  nome: string
+  situacao: ComponentSituation
+  marca: FeatureMark
+  pastas: string[]
+  /** The `legacy-impact.md` of each folder, in the order of `pastas`. */
+  impactos: string[]
+}
+
+/**
+ * Why a piece of the delivery axis could not be read as expected (D-12).
+ *
+ * A LOCAL union, by the precedent of `BugAnomalyCode` and
+ * `GreenfieldAnomalyCode`. `tabela-nao-reconhecida` repeats the name of the
+ * inherited code on purpose, because it names the same defect.
+ *
+ * What is NOT here is as deliberate: an absent onboarding, an onboarding
+ * without the register section, an absent `legacy-impact.md`, one without any
+ * impact table and a cell naming no spec are all named states of the reading,
+ * never anomalies.
+ */
+export type DeliveryAnomalyCode =
+  /** A register section with no table carrying `Data` and `Resultado`; detail: section and header found. */
+  | 'tabela-nao-reconhecida'
+  /**
+   * A file of the folder present and not read: `actions.md`, `requirements.md`
+   * or `progress.jsonl` (bug nº 11), `legacy-impact.md` or `onboarding.md`
+   * (feature 010); detail: which reading is partial.
+   */
+  | 'artefato-da-entrega-nao-lido'
+
+/** One degradation of the delivery reading, in the common shape. */
+export interface DeliveryAnomaly {
+  file: string
+  code: DeliveryAnomalyCode
+  detail?: string
 }

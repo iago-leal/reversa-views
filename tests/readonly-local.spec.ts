@@ -30,6 +30,8 @@ import * as frontMatter from '../src/domain/front-matter.ts'
 import * as greenfieldProbe from '../src/probe/greenfield.ts'
 import * as greenfield from '../src/domain/greenfield.ts'
 import * as prdScope from '../src/domain/prd-scope.ts'
+import * as deliveryLink from '../src/domain/delivery-link.ts'
+import * as conferences from '../src/domain/conferences.ts'
 
 /** As duas pastas do código local que esta feature acrescenta. */
 const PASTAS = ['src/probe', 'src/domain']
@@ -71,6 +73,14 @@ describe('a suíte tem o que varrer', () => {
       'src/domain/bugs.ts',
       'src/domain/front-matter.ts',
     ]) {
+      expect(caminhos, `${modulo} fora da varredura`).toContain(modulo)
+    }
+  })
+
+  /** Os dois da feature 010, que julgam o vínculo e as conferências. */
+  it('alcança os módulos que a feature 010 acrescentou', () => {
+    const caminhos = locais().map((fonte) => fonte.caminho)
+    for (const modulo of ['src/domain/delivery-link.ts', 'src/domain/conferences.ts']) {
       expect(caminhos, `${modulo} fora da varredura`).toContain(modulo)
     }
   })
@@ -117,6 +127,9 @@ describe('módulo de plataforma só onde a leitura acontece (D-06)', () => {
       'src/domain/front-matter.ts',
       'src/domain/greenfield.ts',
       'src/domain/prd-scope.ts',
+      'src/domain/history.ts',
+      'src/domain/delivery-link.ts',
+      'src/domain/conferences.ts',
     ]) {
       const texto = readFileSync(julgamento, 'utf8')
       expect(texto, julgamento).not.toMatch(/reversa-probe/)
@@ -169,6 +182,8 @@ describe('nenhuma via de escrita, de execução ou de rede', () => {
       greenfieldProbe,
       greenfield,
       prdScope,
+      deliveryLink,
+      conferences,
     ]) {
       for (const nome of Object.keys(modulo)) {
         expect(nome, `${nome} parece mutador`).not.toMatch(proibido)

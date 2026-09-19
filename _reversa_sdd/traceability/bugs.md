@@ -1,4 +1,4 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-19T18:40:02.945Z a partir de 10 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-19T21:00:26.232Z a partir de 11 bugs -->
 # Bugs por artefato de spec
 
 Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec muda só por adendo.
@@ -23,6 +23,8 @@ Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec mud
 
 - BUG-20260909-FJBD (resolved/fixed, P2): Cabeçalho declara leitura degradada por anomalia cenario-ambiguo na nota de impacto greenfield
   - seção `#impacto-por-artefato-da-extracao` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260909-FJBD-anomalia-cenario-ambiguo`
+- BUG-20260919-3P7S (active, P2): Pasta com actions.md acima do teto de bytes aparece como sem ações, e a perda não é declarada
+  - seção `#impacto-por-artefato-da-extracao` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260919-3P7S-acoes-acima-do-teto-viram-sem-acoes`
 
 ## `_reversa_sdd/addenda/007-atualizacao-e-progresso.md`
 
@@ -36,6 +38,11 @@ Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec mud
   - seção `#impacto-por-artefato-da-extracao` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260910-WIBK-faixa-anuncia-comando-que-so-confere`
 - BUG-20260911-FI3O (resolved/fixed, P1): O comando que a faixa anuncia não existe fora do clone, e falha como erro do npm
   - seção `#` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260911-FI3O-comando-de-atualizacao-nao-existe-fora-do-clone`
+
+## `_reversa_sdd/addenda/010-vinculo-spec-e-conferencias.md`
+
+- BUG-20260919-3P7S (active, P2): Pasta com actions.md acima do teto de bytes aparece como sem ações, e a perda não é declarada
+  - seção `#achado-da-leitura-real-rf-09-nao-se-cumpre-no-financas-ali` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260919-3P7S-acoes-acima-do-teto-viram-sem-acoes`
 
 ## `_reversa_sdd/prd.md`
 
@@ -74,6 +81,8 @@ Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec mud
   - seção `#6-requisitos-funcionais` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260914-DTLI-notacao-markdown-vira-valor-desconhecido`
 - BUG-20260914-DTLI (resolved/fixed, P1): A notação que o próprio Reversa escreve na tabela vira tipo desconhecido e tabela não reconhecida
   - seção `#15-decisões-tomadas-decision-log` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260914-DTLI-notacao-markdown-vira-valor-desconhecido`
+- BUG-20260919-3P7S (active, P2): Pasta com actions.md acima do teto de bytes aparece como sem ações, e a perda não é declarada
+  - seção `#11-edge-cases-e-tratamento-de-erros` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260919-3P7S-acoes-acima-do-teto-viram-sem-acoes`
 
 ## `_reversa_sdd/sdd/painel-do-processo.md`
 

@@ -20,7 +20,7 @@
  */
 
 import { listNames, readText, resolveInside } from '../heranca/reversa-probe/src/index.ts'
-import { FEATURE_FOLDER_CAP } from '../domain/limits.ts'
+import { FEATURE_FOLDER_CAP, LEGACY_IMPACT_FILE, ONBOARDING_FILE } from '../domain/limits.ts'
 
 /** The three files of a feature folder this reading cares about. */
 const FILES = ['actions.md', 'requirements.md', 'progress.jsonl'] as const
@@ -42,6 +42,19 @@ export interface FeatureFolderRead {
   actionsMd: string | null
   requirementsMd: string | null
   progressJsonl: string | null
+  /** The impact file of the delivery, which declares its link to the specs (feature 010). */
+  legacyImpactMd: string | null
+  /** The onboarding of the delivery, whose register the conferences come from (feature 010). */
+  onboardingMd: string | null
+  /**
+   * The files the listing SHOWED and whose text came back null: above the
+   * byte cap, or unreadable (feature 010, D-01, RN-09).
+   *
+   * `readText` answers null for absent and for too big alike, and only the
+   * listing tells the two apart. Absent is a state to name; present and not
+   * read is a partial reading, and the judgement declares it.
+   */
+  naoLidos: string[]
 }
 
 /** Every folder read, and the probe's own account of the reading. */
@@ -87,18 +100,35 @@ export function readFeatureFolders(input: FeatureFoldersInput): FeatureFoldersRe
     const abs = resolveInside(input.root, relative)
     // A name that is not a directory is not a feature: `listNames` answers
     // null for anything that is not one, which is the directory test this
-    // module has without reaching for a platform module of its own.
-    if (abs === null || listNames(abs) === null) continue
+    // module has without reaching for a platform module of its own. The
+    // listing is KEPT (feature 010, D-01): it is what separates an absent file
+    // from one present and not read, at no extra cost.
+    const listed = abs === null ? null : listNames(abs)
+    if (listed === null) continue
 
     total += 1
     if (folders.length >= FEATURE_FOLDER_CAP) continue
 
+    const present = new Set(listed)
+    const naoLidos: string[] = []
+    const read = (file: string): string | null => {
+      if (!present.has(file)) return null
+      const text = fileOf(input.root, relative, file)
+      if (text === null) naoLidos.push(file)
+      return text
+    }
+
     folders.push({
       pasta: relative,
       nome: name,
-      actionsMd: fileOf(input.root, relative, FILES[0]),
-      requirementsMd: fileOf(input.root, relative, FILES[1]),
-      progressJsonl: fileOf(input.root, relative, FILES[2]),
+      actionsMd: read(FILES[0]),
+      requirementsMd: read(FILES[1]),
+      progressJsonl: read(FILES[2]),
+      // Two files more per folder, opened only when the listing shows them:
+      // with fifty folders, at most a hundred new reads (RF-01).
+      legacyImpactMd: read(LEGACY_IMPACT_FILE),
+      onboardingMd: read(ONBOARDING_FILE),
+      naoLidos,
     })
   }
 

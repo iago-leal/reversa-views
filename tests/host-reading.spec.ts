@@ -11,6 +11,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { EMPTY_SNAPSHOT, readReversa } from '../src/heranca/reversa-domain/src/index.ts'
 import type { ReversaSnapshot } from '../src/heranca/reversa-domain/src/index.ts'
 import type { ProbeResult } from '../src/heranca/reversa-probe/src/snapshot.ts'
+import { readDeliveryLinks } from '../src/domain/delivery-link.ts'
 import { readWorkspace } from '../src/host/reading.ts'
 import type { LogPort } from '../src/host/ports.ts'
 
@@ -369,5 +370,131 @@ describe('eixo greenfield na leitura', () => {
     expect(resultado.entry).toBe('no-reversa')
     expect(resultado.greenfield).toBeDefined()
     expect(resultado.greenfield.cenario).toBe('legado')
+  })
+})
+
+/**
+ * O vínculo e as conferências na carga (feature 010, RF-10, RF-11, D-05).
+ *
+ * A camada de leitura chama `readDeliveryLinks()` uma vez, dentro do mesmo
+ * `try`, e passa o resultado ao histórico e ao eixo greenfield. Nenhum nome de
+ * artefato do Reversa é escrito aqui: a sonda o conhece, e o domínio o julga.
+ */
+describe('vínculo e conferências na leitura (feature 010)', () => {
+  const INFRA = '_reversa_forward/002-infra-remota-auth-assistente'
+  const IMPACTO = [
+    '| Arquivo afetado | Componente | Tipo | Severidade | Justificativa |',
+    '|---|---|---|---|---|',
+    '| `pages/ajustes.tsx` | ajustes | componente-novo | MEDIUM | x |',
+    '| `pages/api/assistente.ts` | assistente | componente-novo | HIGH | x |',
+  ].join('\n')
+  const ONBOARDING = [
+    '## 9. Registro de conferências',
+    '',
+    '| Data | Marco | Item | Resultado | Observação |',
+    '|---|---|---|---|---|',
+    '| 2026-09-19 | M2 | 1 | confere | |',
+    '| | M3 | 2 | | |',
+  ].join('\n')
+
+  const PASTAS = {
+    pastas: [
+      {
+        pasta: INFRA,
+        nome: '002-infra-remota-auth-assistente',
+        actionsMd: '| ID | Status |\n|---|---|\n| T1 | `[X]` |\n',
+        requirementsMd: null,
+        progressJsonl: null,
+        legacyImpactMd: IMPACTO,
+        onboardingMd: ONBOARDING,
+        naoLidos: [],
+      },
+    ],
+    truncado: false,
+    total: 1,
+  }
+  const SAIDA = {
+    pasta: true,
+    brief: true,
+    briefMd: null,
+    ideacao: true,
+    personas: true,
+    prd: true,
+    prdMd: null,
+    arquitetura: false,
+    dominio: false,
+    specs: ['ajustes.md', 'metas.md'],
+    totalDeSpecs: 2,
+    truncados: [],
+  }
+
+  function ler(overrides: Partial<Parameters<typeof readWorkspace>[1]> = {}) {
+    return readWorkspace('/w', {
+      log: logSpy().port,
+      readSnapshot: () => probeResult(INSTALLED),
+      readProcess: readReversa,
+      readFolders: () => PASTAS,
+      readBugsFolders: () => ({ presente: false, contextos: [], pastas: [], total: 0, truncado: false }),
+      readGreenfieldFolder: () => SAIDA,
+      ...overrides,
+    })
+  }
+
+  it('o vínculo e a conferência chegam na carga, em cada entrada do histórico', () => {
+    const resultado = ler()
+    if (resultado.kind !== 'loaded') throw new Error('esperava leitura bem-sucedida')
+    const entrada = resultado.history.entradas[0]
+    expect(entrada?.vinculo).toEqual({ estado: 'lido', arquivo: `${INFRA}/legacy-impact.md`, tabelas: 1 })
+    expect(entrada?.conferencias?.estado).toBe('lido')
+    expect(entrada?.conferencias?.registradas).toBe(1)
+    expect(entrada?.conferencias?.total).toBe(2)
+    expect(resultado.history.anomalias).toEqual([])
+  })
+
+  it('a ligação declarada chega ao panorama, e o componente sem spec também', () => {
+    const resultado = ler()
+    if (resultado.kind !== 'loaded') throw new Error('esperava leitura bem-sucedida')
+    const { panorama } = resultado.greenfield
+    const ajustes = panorama.componentes.find((c) => c.nome === 'ajustes')
+    expect(ajustes?.ligacoes).toEqual([{ pasta: INFRA, origem: 'declarada', impacto: `${INFRA}/legacy-impact.md` }])
+    expect(panorama.componentes.find((c) => c.nome === 'metas')?.situacao).toBe('planejada')
+    expect(panorama.semSpec?.map((c) => c.nome)).toEqual(['assistente'])
+    expect(panorama.foraDoPlano).toEqual([])
+    expect(panorama.vinculoParcial).toBe(false)
+  })
+
+  it('o vínculo é extraído uma vez e o mesmo resultado serve aos dois julgamentos', () => {
+    const extrair = vi.fn(readDeliveryLinks)
+    const resultado = ler({ readLinks: extrair })
+    expect(extrair).toHaveBeenCalledTimes(1)
+    expect(extrair).toHaveBeenCalledWith(PASTAS.pastas)
+    if (resultado.kind !== 'loaded') throw new Error('esperava leitura bem-sucedida')
+    expect(resultado.greenfield.panorama.semSpec?.map((c) => c.nome)).toEqual(['assistente'])
+  })
+
+  it('uma exceção na leitura nova vira o estado de erro nomeado, e não exceção no editor', () => {
+    const log = logSpy()
+    const resultado = ler({
+      log: log.port,
+      readLinks: () => {
+        throw new Error('vínculo recusou')
+      },
+    })
+    expect(resultado.kind).toBe('error')
+    if (resultado.kind !== 'error') return
+    expect(resultado.message).toContain('vínculo recusou')
+    expect(log.lines[0]).toContain('reading ·')
+  })
+
+  it('o arquivo presente e não lido vira anomalia do histórico', () => {
+    const resultado = ler({
+      readFolders: () => ({
+        ...PASTAS,
+        pastas: [{ ...PASTAS.pastas[0]!, legacyImpactMd: null, naoLidos: ['legacy-impact.md'] }],
+      }),
+    })
+    if (resultado.kind !== 'loaded') throw new Error('esperava leitura bem-sucedida')
+    expect(resultado.history.anomalias?.map((a) => a.code)).toEqual(['artefato-da-entrega-nao-lido'])
+    expect(resultado.greenfield.panorama.vinculoParcial).toBe(true)
   })
 })

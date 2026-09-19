@@ -1,0 +1,116 @@
+--- a/src/domain/history.ts
++++ b/src/domain/history.ts
+@@ -48,6 +48,23 @@
+ /** A folder named the way the framework names them: a prefix, then a short name. */
+ const FRAMEWORK_NAME = /^(\d+)-(.+)$/
+ 
++/** The file whose tally decides the situation. */
++const ACTIONS_FILE = 'actions.md'
++
++/** How the detail of a file present and not read begins, the same words for every file. */
++const UNREAD = 'presente e não lido, acima do teto de bytes da sonda ou ilegível:'
++
++/**
++ * The three files of the folder whose loss the history declares itself, in the
++ * order the probe reads them, each with what goes unjudged without it (bug
++ * nº 11, EC-06). The two files of the delivery declare theirs in `deliveryOf`.
++ */
++const FOLDER_FILES: ReadonlyArray<readonly [file: string, unjudged: string]> = [
++  [ACTIONS_FILE, 'a situação e a contagem de ações da pasta não foram julgadas'],
++  ['requirements.md', 'o resumo executivo do requirements.md não foi lido'],
++  ['progress.jsonl', 'o último evento da trilha não foi lido'],
++]
++
+ /** The heading under which both an addendum and a `requirements.md` put their summary. */
+ const SUMMARY_HEADING = /\bresumo\b/
+ 
+@@ -92,7 +109,10 @@
+   const judged = input.pastas
+     .map((folder) => {
+       const { entry, anomalias } = deliveryOf(folder, vinculos)
+-      return { entry: { ...entryOf(folder, input, active, paused), ...entry }, anomalias }
++      return {
++        entry: { ...entryOf(folder, input, active, paused), ...entry },
++        anomalias: [...lossesOf(folder), ...anomalias],
++      }
+     })
+     .sort((a, b) => (a.entry.pasta < b.entry.pasta ? 1 : a.entry.pasta > b.entry.pasta ? -1 : 0))
+ 
+@@ -100,9 +120,29 @@
+     entradas: judged.map(({ entry }) => entry),
+     truncado: input.truncado,
+     total: input.total,
+-    // The losses of the delivery axis, in the order of the entries (D-12).
++    // The losses of each folder and of the delivery axis, in the order of the
++    // entries (D-12).
+     anomalias: judged.flatMap(({ anomalias }) => anomalias),
+   }
++}
++
++/**
++ * The files of the folder the probe listed and could not read (bug nº 11,
++ * EC-06).
++ *
++ * Present and not read is not absent: the text is null in both cases, and only
++ * the listing the probe kept tells them apart. Each loss is said, naming the
++ * file, by the code the delivery axis already uses for the same fact.
++ * @param folder - the folder as the probe read it.
++ * @returns one anomaly per file not read, in the order of `FOLDER_FILES`.
++ */
++function lossesOf(folder: FeatureFolderRead): DeliveryAnomaly[] {
++  const naoLidos = folder.naoLidos ?? []
++  return FOLDER_FILES.filter(([file]) => naoLidos.includes(file)).map(([file, unjudged]) => ({
++    file: `${folder.pasta}/${file}`,
++    code: 'artefato-da-entrega-nao-lido',
++    detail: `${UNREAD} ${unjudged}`,
++  }))
+ }
+ 
+ /**
+@@ -131,7 +171,7 @@
+     anomalias.push({
+       file: vinculo.arquivo,
+       code: 'artefato-da-entrega-nao-lido',
+-      detail: 'presente e não lido, acima do teto de bytes da sonda ou ilegível: o vínculo declarado é parcial',
++      detail: `${UNREAD} o vínculo declarado é parcial`,
+     })
+   }
+ 
+@@ -176,7 +216,12 @@
+     pasta: folder.pasta,
+     id,
+     nomeCurto,
+-    situacao: situationOf(folder.actionsMd, scan, addendum !== null),
++    situacao: situationOf(
++      folder.actionsMd,
++      (folder.naoLidos ?? []).includes(ACTIONS_FILE),
++      scan,
++      addendum !== null,
++    ),
+     marca: markOf(path, active, paused),
+     acoes,
+     adendo: addendum === null ? null : `${input.outputFolder}/addenda/${addendum.name}`,
+@@ -187,16 +232,21 @@
+ 
+ /**
+  * Where the folder stands, by its own artifacts.
+- * @param actionsMd - the file, or null when the folder has none.
++ * @param actionsMd - the file, or null when the folder has none or it was not read.
++ * @param unread - whether the file is present and was not read.
+  * @param scan - the inherited tally of that file.
+  * @param hasAddendum - whether an addendum in force was found.
+- * @returns one of the four situations.
++ * @returns one of the five situations.
+  */
+ function situationOf(
+   actionsMd: string | null,
++  unread: boolean,
+   scan: ReturnType<typeof scanActions>,
+   hasAddendum: boolean,
+ ): FeatureSituation {
++  // Unread comes first (bug nº 11, EC-06): without the actions none of the
++  // other four is verifiable, and a null text is not an absent file.
++  if (unread) return 'acoes-nao-lidas'
+   if (actionsMd === null || scan.total === 0) return 'sem-acoes'
+   // An open amendment reopens the feature, with no treatment of its own
+   // (RN-05): the inherited scan already counts it in.

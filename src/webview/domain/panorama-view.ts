@@ -14,7 +14,12 @@
  * @module webview/domain/panorama-view
  */
 
-import type { ComponentSituation, PlannedComponent, ProductPanorama } from '../../domain/types.ts'
+import type {
+  ComponentSituation,
+  PlannedComponent,
+  ProductPanorama,
+  UnspecifiedComponent,
+} from '../../domain/types.ts'
 
 /** One group of the card: a situation and the components in it, ordered. */
 export interface PanoramaGroup {
@@ -33,6 +38,14 @@ export interface PanoramaView {
   truncado: boolean
   /** The two numbers, when the count and the list disagree; null when they agree. */
   divergencia: { contados: number; listados: number } | null
+  /**
+   * The components delivered without a spec, by name (feature 010, D-16).
+   * NULL when the host did not send the field, which the card names by a
+   * sentence; an empty list is a reading that found none.
+   */
+  semSpec: UnspecifiedComponent[] | null
+  /** True when some `legacy-impact.md` was present and not read; false when the field is absent. */
+  vinculoParcial: boolean
 }
 
 /**
@@ -80,6 +93,13 @@ export function panoramaView(panorama: ProductPanorama): PanoramaView {
       })
   }
 
+  // The components without a spec are ordered in the same pass, by name only:
+  // they have no group, and the order is decided here and nowhere else (D-16).
+  const semSpec =
+    panorama.semSpec === undefined
+      ? null
+      : [...panorama.semSpec].sort((a, b) => (a.nome < b.nome ? -1 : a.nome > b.nome ? 1 : 0))
+
   const listados = byStatus.get('convergida')?.length ?? 0
   return {
     grupos,
@@ -88,5 +108,7 @@ export function panoramaView(panorama: ProductPanorama): PanoramaView {
     truncado: panorama.truncado,
     divergencia:
       listados === panorama.convergidos ? null : { contados: panorama.convergidos, listados },
+    semSpec,
+    vinculoParcial: panorama.vinculoParcial === true,
   }
 }

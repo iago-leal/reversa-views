@@ -40,7 +40,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { readBugs } from '../src/domain/bugs.ts'
 import { readGreenfield } from '../src/domain/greenfield.ts'
 import { readHistory } from '../src/domain/history.ts'
-import { BUG_CAP, SPEC_CAP } from '../src/domain/limits.ts'
+import { readDeliveryLinks } from '../src/domain/delivery-link.ts'
+import { BUG_CAP, FEATURE_FOLDER_CAP, SPEC_CAP } from '../src/domain/limits.ts'
 import { readReversa } from '../src/heranca/reversa-domain/src/index.ts'
 import { readReversaSnapshot } from '../src/heranca/reversa-probe/src/index.ts'
 import { readBugFolders } from '../src/probe/bugs.ts'
@@ -382,5 +383,121 @@ describe('o eixo greenfield no workspace de referência', () => {
       decorrido,
       `a pintura dos dois cartões levou ${decorrido.toFixed(1)} ms, acima do teto de ${TETO_DA_PINTURA_MS} ms`,
     ).toBeLessThan(TETO_DA_PINTURA_MS)
+  })
+})
+
+/**
+ * O vínculo e as conferências na referência (feature 010, RNF de desempenho).
+ *
+ * As pastas de feature no teto de `FEATURE_FOLDER_CAP` (49 aqui, mais a da
+ * referência), cada uma com um `legacy-impact.md` de seis tabelas de impacto
+ * e um `onboarding.md` com a seção de registro, ambos perto do tamanho alvo:
+ * quase cem arquivos a mais numa passada. A medida cobre a leitura das pastas,
+ * a extração do vínculo, o histórico e o cruzamento do panorama, como o host
+ * os faz.
+ *
+ * A primeira versão desta medida pegou um custo evitável: o panorama
+ * compilava a expressão de `declaresSpec` para cada par de spec e célula, e
+ * o julgamento sozinho levava cerca de 30 ms. Com a expressão compilada uma
+ * vez por spec (`declarerOf`), caiu para cerca de 2 ms.
+ *
+ * Na entrega da feature 010, em 2026-09-19, esta leitura levou cerca de
+ * 50 ms isolada contra o teto de 200. Sob a suíte inteira em paralelo, uma
+ * medida única chegou a 203 ms, daí o menor de três, que ficou entre 130 e
+ * 155 ms em três rodadas. A leitura real deste
+ * repositório, com as dez pastas, levou cerca de 52 ms, empacotada fora da
+ * suíte.
+ */
+describe('o vínculo e as conferências no workspace de referência (feature 010)', () => {
+  /** As pastas de feature no teto, com os dois arquivos da entrega em cada uma. */
+  function instalarEntregas(): void {
+    const tabela = (componente: string) =>
+      [
+        '| Arquivo afetado | Componente | Tipo | Severidade | Justificativa |',
+        '|---|---|---|---|---|',
+        ...Array.from({ length: 20 }, (_, i) => `| \`src/a${i}.ts\` | ${componente} | componente-novo | LOW | linha ${i} |`),
+      ].join('\n')
+    const registro = [
+      '## 9. Registro de conferências',
+      '',
+      '| Data | Marco | Item | Resultado | Observação |',
+      '|---|---|---|---|---|',
+      ...Array.from({ length: 20 }, (_, i) => (i < 2 ? `| 2026-09-19 | M${i} | ${i} | confere | |` : `| | M${i} | ${i} | | |`)),
+      '',
+    ].join('\n')
+    for (let i = 0; i < FEATURE_FOLDER_CAP; i++) {
+      const pasta = `_reversa_forward/${String(i + 100).padStart(3, '0')}-entrega-${i}`
+      escrever(`${pasta}/actions.md`, '| ID | Status |\n|---|---|\n| T1 | `[X]` |\n')
+      escrever(
+        `${pasta}/legacy-impact.md`,
+        encher(
+          `# Impacto\n\n${['componente-001', 'componente-002', 'assistente', 'acesso', 'fundacao', 'telas'].map((c) => `### ${c}\n\n${tabela(c)}\n`).join('\n')}\n## Diff conceitual\n\n`,
+          (j) => `Parágrafo ${j} do diff conceitual, sem efeito sobre o vínculo.\n\n`,
+        ),
+      )
+      escrever(
+        `${pasta}/onboarding.md`,
+        encher(`# Onboarding\n\n${registro}\n## Roteiro\n\n`, (j) => `Passo ${j} do roteiro de referência.\n\n`),
+      )
+    }
+  }
+
+  /** Do disco ao panorama, pelo mesmo caminho do host. */
+  function lerEntregas() {
+    const { snapshot } = readReversaSnapshot(root)
+    const processo = readReversa(snapshot)
+    const pastas = readFeatureFolders({ root, forwardFolder: processo.discovery.forwardFolder })
+    const vinculos = readDeliveryLinks(pastas.pastas)
+    const history = readHistory({
+      pastas: pastas.pastas,
+      truncado: pastas.truncado,
+      total: pastas.total,
+      activeFeatureDir: processo.forward.featureDir,
+      pausedFeatureDirs: [],
+      addendaFiles: snapshot.addendaFiles,
+      addendaBodies: snapshot.addendaBodies,
+      outputFolder: processo.discovery.outputFolder,
+      vinculos,
+    })
+    const eixo = readGreenfield({
+      lido: readGreenfieldArtifacts({ root, outputFolder: processo.discovery.outputFolder }),
+      stateJson: snapshot.stateJson,
+      history,
+      outputFolder: processo.discovery.outputFolder,
+      vinculos,
+    })
+    return { pastas, history, eixo }
+  }
+
+  it(`lê os dois arquivos a mais por pasta e julga tudo em menos de ${TETO_MS} ms`, () => {
+    instalarEntregas()
+    lerEntregas()
+
+    // O menor de três tempos: são quase 6 MB de disco, e a disputa com os
+    // outros arquivos da suíte, que rodam em paralelo, pesa aqui mais que em
+    // qualquer outro caso. Um custo real aparece nas três medidas.
+    let decorrido = Number.POSITIVE_INFINITY
+    let lido = lerEntregas()
+    for (let rodada = 0; rodada < 3; rodada++) {
+      const inicio = performance.now()
+      lido = lerEntregas()
+      decorrido = Math.min(decorrido, performance.now() - inicio)
+    }
+    const { pastas, history, eixo } = lido
+
+    // Sanidade: as pastas no teto, cada uma com os dois arquivos lidos.
+    const entregas = pastas.pastas.filter((p) => p.legacyImpactMd !== null && p.onboardingMd !== null)
+    expect(entregas.length).toBeGreaterThan(0)
+    expect(pastas.pastas.length).toBeLessThanOrEqual(FEATURE_FOLDER_CAP)
+    expect(entregas.every((p) => p.naoLidos.length === 0)).toBe(true)
+    expect(history.entradas.filter((e) => e.conferencias?.estado === 'lido').length).toBe(entregas.length)
+    expect(eixo.panorama.componentes.filter((c) => c.ligacoes?.some((l) => l.origem === 'declarada'))).toHaveLength(2)
+    expect(eixo.panorama.semSpec?.map((c) => c.nome)).toEqual(['assistente', 'acesso', 'fundacao', 'telas'])
+
+    expect(
+      decorrido,
+      `leitura e julgamento do vínculo e das conferências levaram ${decorrido.toFixed(1)} ms, acima do teto de ${TETO_MS} ms`,
+    ).toBeLessThan(TETO_MS)
+    process.stdout.write(`[feature 010] vínculo e conferências: ${decorrido.toFixed(1)} ms com ${entregas.length} pastas\n`)
   })
 })

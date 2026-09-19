@@ -21,7 +21,18 @@
 
 import { ProgressContract, scanActions, splitSections } from '../heranca/reversa-domain/src/index.ts'
 import type { FeatureFolderRead } from '../probe/features.ts'
-import type { FeatureMark, FeatureSituation, HistoryEntry, ProjectHistory } from './types.ts'
+import { readConferences } from './conferences.ts'
+import { readDeliveryLinks } from './delivery-link.ts'
+import type { DeliveryLinks } from './delivery-link.ts'
+import { ONBOARDING_FILE } from './limits.ts'
+import type {
+  DeliveryAnomaly,
+  DeliveryLinkState,
+  FeatureMark,
+  FeatureSituation,
+  HistoryEntry,
+  ProjectHistory,
+} from './types.ts'
 
 /**
  * The line `/reversa` appends to an addendum once a re-extraction supersedes
@@ -36,6 +47,23 @@ const SUPERSEDED = /^\s*Superado pela re-extração de\s/im
 
 /** A folder named the way the framework names them: a prefix, then a short name. */
 const FRAMEWORK_NAME = /^(\d+)-(.+)$/
+
+/** The file whose tally decides the situation. */
+const ACTIONS_FILE = 'actions.md'
+
+/** How the detail of a file present and not read begins, the same words for every file. */
+const UNREAD = 'presente e não lido, acima do teto de bytes da sonda ou ilegível:'
+
+/**
+ * The three files of the folder whose loss the history declares itself, in the
+ * order the probe reads them, each with what goes unjudged without it (bug
+ * nº 11, EC-06). The two files of the delivery declare theirs in `deliveryOf`.
+ */
+const FOLDER_FILES: ReadonlyArray<readonly [file: string, unjudged: string]> = [
+  [ACTIONS_FILE, 'a situação e a contagem de ações da pasta não foram julgadas'],
+  ['requirements.md', 'o resumo executivo do requirements.md não foi lido'],
+  ['progress.jsonl', 'o último evento da trilha não foi lido'],
+]
 
 /** The heading under which both an addendum and a `requirements.md` put their summary. */
 const SUMMARY_HEADING = /\bresumo\b/
@@ -58,6 +86,13 @@ export interface HistoryInput {
   addendaBodies: Record<string, string>
   /** The output folder, for the path of an addendum the panel may open. */
   outputFolder: string
+  /**
+   * The link of every folder, as the reading layer extracted it ONCE for the
+   * history and the panorama alike (feature 010, D-05). Absent, it is
+   * extracted here from the same folders, which is what a caller without the
+   * reading layer gets.
+   */
+  vinculos?: DeliveryLinks
 }
 
 /**
@@ -69,11 +104,83 @@ export function readHistory(input: HistoryInput): ProjectHistory {
   const active = normalize(input.activeFeatureDir)
   const paused = new Set(input.pausedFeatureDirs.map(normalize).filter((path) => path !== ''))
 
-  const entradas = input.pastas
-    .map((folder) => entryOf(folder, input, active, paused))
-    .sort((a, b) => (a.pasta < b.pasta ? 1 : a.pasta > b.pasta ? -1 : 0))
+  const vinculos = input.vinculos ?? readDeliveryLinks(input.pastas)
 
-  return { entradas, truncado: input.truncado, total: input.total }
+  const judged = input.pastas
+    .map((folder) => {
+      const { entry, anomalias } = deliveryOf(folder, vinculos)
+      return {
+        entry: { ...entryOf(folder, input, active, paused), ...entry },
+        anomalias: [...lossesOf(folder), ...anomalias],
+      }
+    })
+    .sort((a, b) => (a.entry.pasta < b.entry.pasta ? 1 : a.entry.pasta > b.entry.pasta ? -1 : 0))
+
+  return {
+    entradas: judged.map(({ entry }) => entry),
+    truncado: input.truncado,
+    total: input.total,
+    // The losses of each folder and of the delivery axis, in the order of the
+    // entries (D-12).
+    anomalias: judged.flatMap(({ anomalias }) => anomalias),
+  }
+}
+
+/**
+ * The files of the folder the probe listed and could not read (bug nº 11,
+ * EC-06).
+ *
+ * Present and not read is not absent: the text is null in both cases, and only
+ * the listing the probe kept tells them apart. Each loss is said, naming the
+ * file, by the code the delivery axis already uses for the same fact.
+ * @param folder - the folder as the probe read it.
+ * @returns one anomaly per file not read, in the order of `FOLDER_FILES`.
+ */
+function lossesOf(folder: FeatureFolderRead): DeliveryAnomaly[] {
+  const naoLidos = folder.naoLidos ?? []
+  return FOLDER_FILES.filter(([file]) => naoLidos.includes(file)).map(([file, unjudged]) => ({
+    file: `${folder.pasta}/${file}`,
+    code: 'artefato-da-entrega-nao-lido',
+    detail: `${UNREAD} ${unjudged}`,
+  }))
+}
+
+/**
+ * The two fields feature 010 appends to an entry, and what was lost reading
+ * them (D-05, D-12, RN-07).
+ *
+ * Neither touches the situation: the conference is an axis BESIDE it, and a
+ * converged folder with pending rows stays converged. Of the link, only the
+ * state and the path travel; the cells are input of the panorama.
+ * @param folder - the folder as the probe read it.
+ * @param vinculos - the links already extracted.
+ * @returns the two fields, and the anomalies of the folder.
+ */
+function deliveryOf(
+  folder: FeatureFolderRead,
+  vinculos: DeliveryLinks,
+): { entry: Pick<HistoryEntry, 'vinculo' | 'conferencias'>; anomalias: DeliveryAnomaly[] } {
+  const anomalias: DeliveryAnomaly[] = []
+
+  const link = vinculos.get(folder.pasta)
+  const vinculo: DeliveryLinkState =
+    link === undefined
+      ? { estado: 'ausente', arquivo: null, tabelas: 0 }
+      : { estado: link.estado, arquivo: link.arquivo, tabelas: link.tabelas }
+  if (vinculo.estado === 'nao-lido' && vinculo.arquivo !== null) {
+    anomalias.push({
+      file: vinculo.arquivo,
+      code: 'artefato-da-entrega-nao-lido',
+      detail: `${UNREAD} o vínculo declarado é parcial`,
+    })
+  }
+
+  const onboardingMd = folder.onboardingMd ?? null
+  const present = onboardingMd !== null || (folder.naoLidos ?? []).includes(ONBOARDING_FILE)
+  const conferencias = readConferences(onboardingMd, present ? `${folder.pasta}/${ONBOARDING_FILE}` : null)
+  anomalias.push(...conferencias.anomalias)
+
+  return { entry: { vinculo, conferencias: conferencias.registro }, anomalias }
 }
 
 /**
@@ -109,7 +216,12 @@ function entryOf(
     pasta: folder.pasta,
     id,
     nomeCurto,
-    situacao: situationOf(folder.actionsMd, scan, addendum !== null),
+    situacao: situationOf(
+      folder.actionsMd,
+      (folder.naoLidos ?? []).includes(ACTIONS_FILE),
+      scan,
+      addendum !== null,
+    ),
     marca: markOf(path, active, paused),
     acoes,
     adendo: addendum === null ? null : `${input.outputFolder}/addenda/${addendum.name}`,
@@ -120,16 +232,21 @@ function entryOf(
 
 /**
  * Where the folder stands, by its own artifacts.
- * @param actionsMd - the file, or null when the folder has none.
+ * @param actionsMd - the file, or null when the folder has none or it was not read.
+ * @param unread - whether the file is present and was not read.
  * @param scan - the inherited tally of that file.
  * @param hasAddendum - whether an addendum in force was found.
- * @returns one of the four situations.
+ * @returns one of the five situations.
  */
 function situationOf(
   actionsMd: string | null,
+  unread: boolean,
   scan: ReturnType<typeof scanActions>,
   hasAddendum: boolean,
 ): FeatureSituation {
+  // Unread comes first (bug nº 11, EC-06): without the actions none of the
+  // other four is verifiable, and a null text is not an absent file.
+  if (unread) return 'acoes-nao-lidas'
   if (actionsMd === null || scan.total === 0) return 'sem-acoes'
   // An open amendment reopens the feature, with no treatment of its own
   // (RN-05): the inherited scan already counts it in.

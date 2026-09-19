@@ -487,3 +487,53 @@ pre {
   margin: 0.375rem 0 0;
   color: var(--fgColor-muted);
 }
+
+/* The links of a component to its folders (feature 010, RF-13, D-15). One per
+   line, the folder and then the origin in words: "pelo nome" or "declarada".
+   The origin is set apart by weight and by its own words, never by colour
+   alone (RNF de acessibilidade), and a declared one is a link button that
+   already reads as one. */
+.links {
+  list-style: none;
+  margin: 0.125rem 0 0;
+  padding: 0;
+}
+
+.link-row {
+  color: var(--fgColor-muted);
+}
+
+.link-origin {
+  font-style: italic;
+}
+
+.link-origin::before {
+  content: '— ';
+  font-style: normal;
+}
+
+/* The mark "sem spec" of a component delivered without one (RN-04): a word
+   in a bordered box, which reads as a tag in either theme and without colour. */
+.tag {
+  border: 0.0625rem solid var(--borderColor-default);
+  border-radius: 0.25rem;
+  padding: 0 0.25rem;
+  font-size: 0.9em;
+  color: var(--fgColor-muted);
+}
+
+/* The count of conferences beside the situation of a delivery (RF-07). It is
+   text, one word apart from the situation, and it never becomes a bar. */
+.conferences {
+  color: var(--fgColor-muted);
+}
+
+/* Below 300 px a long folder name breaks instead of pushing the card
+   sideways, by the same rule the identifiers of the bug rows follow. */
+@media (max-width: 300px) {
+  .link-row,
+  .conferences,
+  [data-part='unspecified-name'] {
+    overflow-wrap: anywhere;
+  }
+}

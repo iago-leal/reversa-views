@@ -20,6 +20,8 @@ import { readReversaSnapshot } from '../heranca/reversa-probe/src/index.ts'
 import type { ProbeReport, ProbeResult } from '../heranca/reversa-probe/src/snapshot.ts'
 import { readBugs } from '../domain/bugs.ts'
 import { readDecomposition } from '../domain/decomposition.ts'
+import { readDeliveryLinks } from '../domain/delivery-link.ts'
+import type { DeliveryLinks } from '../domain/delivery-link.ts'
 import { readGreenfield } from '../domain/greenfield.ts'
 import { readHistory } from '../domain/history.ts'
 import type {
@@ -31,7 +33,7 @@ import type {
 import { readBugFolders } from '../probe/bugs.ts'
 import type { BugsRead } from '../probe/bugs.ts'
 import { readFeatureFolders } from '../probe/features.ts'
-import type { FeatureFoldersRead } from '../probe/features.ts'
+import type { FeatureFolderRead, FeatureFoldersRead } from '../probe/features.ts'
 import { readGreenfieldArtifacts } from '../probe/greenfield.ts'
 import type { GreenfieldRead } from '../probe/greenfield.ts'
 import { logLine } from './ports.ts'
@@ -53,6 +55,8 @@ export interface ReadingDeps {
   readBugsFolders?: (root: string) => BugsRead
   /** The local probe of feature 009, which looks at the artifacts of the output folder. */
   readGreenfieldFolder?: (root: string, outputFolder: string) => GreenfieldRead
+  /** The judgement of feature 010, which extracts the link each folder declares. */
+  readLinks?: (pastas: FeatureFolderRead[]) => DeliveryLinks
   /** Where the moment of the reading comes from. */
   clock?: () => Date
 }
@@ -93,6 +97,7 @@ export function readWorkspace(root: string, deps: ReadingDeps): ReadingResult {
   const readGreenfieldFolder =
     deps.readGreenfieldFolder ??
     ((where: string, outputFolder: string) => readGreenfieldArtifacts({ root: where, outputFolder }))
+  const readLinks = deps.readLinks ?? readDeliveryLinks
   const clock = deps.clock ?? (() => new Date())
 
   try {
@@ -104,6 +109,12 @@ export function readWorkspace(root: string, deps: ReadingDeps): ReadingResult {
     // of REVERSA is written here (RF-14). It sits INSIDE the same try, because
     // a walk of the disk that throws must still become the named error state.
     const folders = readFolders(root, process.discovery.forwardFolder)
+    // The link each folder declares is extracted ONCE, and the same result
+    // serves the history (its state) and the panorama (its cells): two
+    // extractions would be two authorities over one fact (feature 010, D-05).
+    // Which file holds it is the probe's business, and nothing of the layout
+    // is written here. Same try, same reason as every other branch.
+    const vinculos = readLinks(folders.pastas)
     const history = readHistory({
       pastas: folders.pastas,
       truncado: folders.truncado,
@@ -115,6 +126,7 @@ export function readWorkspace(root: string, deps: ReadingDeps): ReadingResult {
       addendaFiles: snapshot.addendaFiles,
       addendaBodies: snapshot.addendaBodies,
       outputFolder: process.discovery.outputFolder,
+      vinculos,
     })
 
     // The registry branch runs beside the other two and knows as little as they
@@ -135,6 +147,7 @@ export function readWorkspace(root: string, deps: ReadingDeps): ReadingResult {
       stateJson: snapshot.stateJson,
       history,
       outputFolder: process.discovery.outputFolder,
+      vinculos,
     })
 
     return {

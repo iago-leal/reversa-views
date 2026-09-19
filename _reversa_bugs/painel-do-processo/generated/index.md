@@ -1,4 +1,4 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-19T18:40:02.945Z a partir de 10 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-19T21:00:26.232Z a partir de 11 bugs -->
 # Índice de bugs · painel-do-processo
 
 ## Resumo
@@ -6,17 +6,19 @@
 | Status | Bugs |
 |---|---|
 | resolved | 9 |
+| active | 1 |
 | open | 1 |
 
 | Phase | Bugs |
 |---|---|
-| delivering | 9 |
+| delivering | 10 |
 | triaging | 1 |
 
 ## Abertos e ativos
 
 | # | ID | Prioridade | Severidade | area/module/feature | Título | Caminho | Bloqueado |
 |---|---|---|---|---|---|---|---|
+| 11 | BUG-20260919-3P7S | P2 | medium | leitura/leitura-do-processo/historico | Pasta com actions.md acima do teto de bytes aparece como sem ações, e a perda não é declarada | `_reversa_bugs/painel-do-processo/bugs/BUG-20260919-3P7S-acoes-acima-do-teto-viram-sem-acoes` | não |
 | 10 | BUG-20260919-BQBJ | P2 | medium | heranca/heranca-e-sincronia/004-heranca-e-sincronia | Adaptações declaradas com trecho indentado não são literais no YAML, e a ressincronização para em A4 | `_reversa_bugs/painel-do-processo/bugs/BUG-20260919-BQBJ-adaptacao-indentada-nao-e-literal` | não |
 
 ## Resolvidos

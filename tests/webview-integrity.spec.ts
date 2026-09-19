@@ -11,7 +11,14 @@
 
 import { describe, expect, it } from 'vitest'
 import { readingIntegrity } from '../src/webview/domain/integrity.ts'
-import { greenfieldFixture, payloadFixture } from './helpers/reversa-fixtures.ts'
+import { effectiveCollapsed } from '../src/webview/domain/sections.ts'
+import { EMPTY_PREFERENCES } from '../src/webview/domain/types.ts'
+import {
+  greenfieldFixture,
+  historyFixture,
+  linkedHistoryFixture,
+  payloadFixture,
+} from './helpers/reversa-fixtures.ts'
 
 describe('as anomalias do eixo greenfield na integridade', () => {
   it('uma anomalia do eixo degrada a leitura, sozinha', () => {
@@ -47,5 +54,41 @@ describe('as anomalias do eixo greenfield na integridade', () => {
     delete (semEixo as { greenfield?: unknown }).greenfield
     expect(() => readingIntegrity(semEixo)).not.toThrow()
     expect(readingIntegrity(semEixo).anomalies).toBe(0)
+  })
+})
+
+/**
+ * As anomalias do histórico, que a feature 010 acrescenta, somam pela mesma
+ * regra (D-12, RF-11): contadas e não fundidas, e nada de um host anterior.
+ */
+describe('as anomalias do histórico na integridade (feature 010)', () => {
+  const perdas = linkedHistoryFixture([
+    {
+      file: '_reversa_forward/002-x/onboarding.md',
+      code: 'tabela-nao-reconhecida',
+      detail: '9. Registro de conferências: Marco | Item | Resultado',
+    },
+    { file: '_reversa_forward/003-y/legacy-impact.md', code: 'artefato-da-entrega-nao-lido', detail: 'vínculo parcial' },
+  ])
+
+  it('somam às do processo, do registro e do eixo greenfield', () => {
+    const eixo = greenfieldFixture({ anomalias: [{ file: '_reversa_sdd/prd.md', code: 'escopo-do-prd-nao-encontrado' }] })
+    const carga = payloadFixture({ history: perdas, greenfield: eixo })
+    const integridade = readingIntegrity(carga)
+    expect(integridade.anomalies).toBe(carga.process.anomalies.length + carga.bugs.anomalias.length + 1 + 2)
+    expect(integridade.degraded).toBe(true)
+  })
+
+  it('abrem a seção de anomalias pelo mesmo caminho das outras', () => {
+    const colapsadas = effectiveCollapsed(EMPTY_PREFERENCES, readingIntegrity(payloadFixture({ history: perdas })))
+    const limpas = effectiveCollapsed(EMPTY_PREFERENCES, readingIntegrity(payloadFixture({ history: linkedHistoryFixture() })))
+    expect(colapsadas).not.toContain('anomalies')
+    expect(limpas).toContain('anomalies')
+  })
+
+  it('o campo ausente, como o de um host anterior, contribui com nada', () => {
+    const integridade = readingIntegrity(payloadFixture({ history: historyFixture() }))
+    expect(integridade.anomalies).toBe(0)
+    expect(integridade.degraded).toBe(false)
   })
 })

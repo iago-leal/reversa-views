@@ -19,13 +19,22 @@ import type {
   BugContext,
   BugEntry,
   BugRegistry,
+  ComponentLink,
+  ConferenceLine,
+  ConferenceRecord,
+  ConferenceState,
+  DeliveryAnomaly,
+  DeliveryLinkReading,
+  DeliveryLinkState,
   GreenfieldAxis,
   HistoryEntry,
+  LinkOrigin,
   PlannedComponent,
   ProductPanorama,
   ProjectHistory,
   ScopeItem,
   UnplannedFeature,
+  UnspecifiedComponent,
 } from '../../src/domain/types.ts'
 import { EMPTY_BUG_COUNTS, EMPTY_PANORAMA } from '../../src/domain/types.ts'
 import type { SetProcessData } from '../../src/host/protocol.ts'
@@ -583,4 +592,135 @@ export function undecomposedGreenfieldFixture(): GreenfieldAxis {
     },
     panorama: panoramaFixture([], { foraDoPlano: [...UNPLANNED] }),
   })
+}
+
+/* ------------------------------------------------------------ feature 010 */
+
+/*
+ * The builders of feature 010. Every fixture ABOVE stays without the new
+ * fields, on purpose: it is what a host older than feature 010 sends, and the
+ * suites that draw it are the proof that the screen names the absence instead
+ * of drawing an empty block. The builders below are how a case asks for the
+ * fields, explicitly.
+ */
+
+/** The reading of the `legacy-impact.md` of one folder, in one of the three states. */
+export function deliveryLinkFixture(
+  estado: DeliveryLinkReading = 'lido',
+  pasta = '_reversa_forward/001-leitura-do-processo',
+  tabelas = estado === 'lido' ? 1 : 0,
+): DeliveryLinkState {
+  return { estado, arquivo: estado === 'ausente' ? null : `${pasta}/legacy-impact.md`, tabelas }
+}
+
+/** One row of the register; registered when date and result are both written. */
+export function conferenceLineFixture(partes: Partial<ConferenceLine> = {}): ConferenceLine {
+  const line = { data: null, marco: null, item: null, resultado: null, observacao: null, ...partes }
+  return { ...line, registrada: line.data !== null && line.resultado !== null, ...partes }
+}
+
+/**
+ * The register of one folder, in any of the six states, coherent with it.
+ *
+ * `lido` is the shape measured in the 002 of `financas-ali` on 2026-09-19:
+ * twenty rows, two registered, one of them "não executável". The others are
+ * the smallest record their state allows.
+ */
+export function conferenceFixture(
+  estado: ConferenceState = 'lido',
+  pasta = '_reversa_forward/002-ponte-e-host',
+  overrides: Partial<ConferenceRecord> = {},
+): ConferenceRecord {
+  const arquivo = estado === 'sem-registro' ? null : `${pasta}/onboarding.md`
+  const secao = estado === 'sem-registro' || estado === 'nao-lido' ? null : '9. Registro de conferências'
+  const linhas: ConferenceLine[] =
+    estado === 'lido' || estado === 'truncado'
+      ? [
+          conferenceLineFixture({ data: '2026-09-19', marco: 'M2', item: '1 a 11', resultado: '11 conferem' }),
+          ...Array.from({ length: 18 }, (_, i) => conferenceLineFixture({ marco: `M${i % 6}`, item: `passo ${i + 1}` })),
+          conferenceLineFixture({ data: '2026-09-19', marco: 'Segredos', resultado: 'não executável' }),
+        ]
+      : []
+  const registradas = linhas.filter((line) => line.registrada).length
+  const total = estado === 'truncado' ? 120 : linhas.length
+  return { estado, arquivo, secao, linhas, registradas, total, ...overrides }
+}
+
+/** One entry of the history, carrying the two fields of feature 010. */
+export function linkedEntryFixture(
+  entry: HistoryEntry,
+  vinculo: DeliveryLinkState = deliveryLinkFixture('lido', entry.pasta),
+  conferencias: ConferenceRecord = conferenceFixture('sem-registro', entry.pasta),
+): HistoryEntry {
+  return { ...entry, vinculo, conferencias }
+}
+
+/**
+ * The history as a host of feature 010 sends it: every entry with the link and
+ * the register, the losses of the axis in their own list.
+ */
+export function linkedHistoryFixture(
+  anomalias: DeliveryAnomaly[] = [],
+  entradas: HistoryEntry[] = HISTORY_ENTRIES.map((entry) => linkedEntryFixture(entry)),
+): ProjectHistory {
+  return { ...historyFixture(entradas), anomalias }
+}
+
+/** One link of a component to a folder, with the impact file the folder would have. */
+export function componentLinkFixture(pasta: string, origem: LinkOrigin = 'nome'): ComponentLink {
+  return { pasta, origem, impacto: `${pasta}/legacy-impact.md` }
+}
+
+/** A planned component with its links, one per folder, all of the same origin. */
+export function linkedComponentFixture(
+  partes: Partial<PlannedComponent> & { nome: string },
+  origem: LinkOrigin = 'nome',
+): PlannedComponent {
+  const c = componentFixture(partes)
+  return { ...c, ligacoes: c.pastas.map((pasta) => componentLinkFixture(pasta, origem)), ...partes }
+}
+
+/** A component delivered without a spec, declared by one folder unless told otherwise. */
+export function unspecifiedFixture(
+  partes: Partial<UnspecifiedComponent> & { nome: string },
+): UnspecifiedComponent {
+  const pastas = partes.pastas ?? ['_reversa_forward/002-infra-remota-auth-assistente']
+  return {
+    situacao: 'convergida',
+    marca: 'nenhuma',
+    pastas,
+    impactos: pastas.map((pasta) => `${pasta}/legacy-impact.md`),
+    ...partes,
+  }
+}
+
+/** The three components the 002 of `financas-ali` delivered without a spec, out of name order. */
+export const UNSPECIFIED: readonly UnspecifiedComponent[] = [
+  unspecifiedFixture({ nome: 'operacao-de-producao' }),
+  unspecifiedFixture({ nome: 'assistente' }),
+  unspecifiedFixture({ nome: 'acesso-e-identidade' }),
+]
+
+/**
+ * The panorama as a host of feature 010 sends it: the five components of this
+ * project linked by name, and the list of components without a spec, empty
+ * unless the caller brings one.
+ */
+export function linkedPanoramaFixture(
+  semSpec: UnspecifiedComponent[] = [],
+  overrides: Partial<ProductPanorama> = {},
+): ProductPanorama {
+  const componentes = COMPONENTS.map((c) => ({
+    ...c,
+    ligacoes: c.pastas.map((pasta) => componentLinkFixture(pasta, 'nome')),
+  }))
+  return { ...panoramaFixture(componentes), semSpec, vinculoParcial: false, ...overrides }
+}
+
+/** The greenfield axis with the panorama of feature 010. */
+export function linkedGreenfieldFixture(
+  semSpec: UnspecifiedComponent[] = [],
+  overrides: Partial<ProductPanorama> = {},
+): GreenfieldAxis {
+  return greenfieldFixture({ panorama: linkedPanoramaFixture(semSpec, overrides) })
 }

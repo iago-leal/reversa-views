@@ -1,4 +1,4 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-19T18:40:02.945Z a partir de 10 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-19T21:00:26.232Z a partir de 11 bugs -->
 # Grafo de bugs · painel-do-processo
 
 ```mermaid
@@ -12,6 +12,7 @@ graph LR
   BUG_20260912_PIPE["nº 7 · BUG-20260912-PIPE<br/>O divisor de célula parte na barra escapada, e perde a linha inteira em silêncio<br/>resolved · high"]
   BUG_20260914_5UH7["nº 9 · BUG-20260914-5UH7<br/>O vigia de regressão só procura a tabela antes do primeiro título, e sai vazio sem dizer nada<br/>resolved · low"]
   BUG_20260914_DTLI["nº 8 · BUG-20260914-DTLI<br/>A notação que o próprio Reversa escreve na tabela vira tipo desconhecido e tabela não reconhecida<br/>resolved · high"]
+  BUG_20260919_3P7S["nº 11 · BUG-20260919-3P7S<br/>Pasta com actions.md acima do teto de bytes aparece como sem ações, e a perda não é declarada<br/>active · medium"]
   BUG_20260919_BQBJ["nº 10 · BUG-20260919-BQBJ<br/>Adaptações declaradas com trecho indentado não são literais no YAML, e a ressincronização para em A4<br/>open · medium"]
   BUG_20260909_VHII -. related-to (proposed) .-> BUG_20260909_FJBD
   BUG_20260910_74UL -. related-to (proposed) .-> BUG_20260909_FJBD
@@ -21,22 +22,25 @@ graph LR
   BUG_20260911_FI3O -. related-to (proposed) .-> BUG_20260910_SVZU
   BUG_20260914_5UH7 -- related-to --> BUG_20260914_DTLI
   BUG_20260914_DTLI -- related-to --> BUG_20260912_PIPE
+  BUG_20260919_3P7S -. related-to (proposed) .-> BUG_20260914_5UH7
   BUG_20260919_BQBJ -- related-to --> BUG_20260909_FJBD
   BUG_20260919_BQBJ -- related-to --> BUG_20260914_DTLI
 ```
 
 ## Clusters
 
-- `leitura-do-processo`: 5 bug(s): BUG-20260909-FJBD, BUG-20260910-74UL, BUG-20260912-PIPE, BUG-20260914-5UH7, BUG-20260914-DTLI
+- `leitura-do-processo`: 6 bug(s): BUG-20260909-FJBD, BUG-20260910-74UL, BUG-20260912-PIPE, BUG-20260914-5UH7, BUG-20260914-DTLI, BUG-20260919-3P7S
 - `empacotamento-e-verificacao`: 2 bug(s): BUG-20260909-VHII, BUG-20260910-SVZU
 - `painel-do-processo`: 2 bug(s): BUG-20260910-WIBK, BUG-20260911-FI3O
+- `heranca-e-sincronia`: 1 bug(s): BUG-20260919-BQBJ
 
-Nenhum cluster por causa estrutural: nenhuma aresta `supported` ou `confirmed` liga dois bugs abertos ou ativos deste contexto.
+Nenhum cluster por causa estrutural: não há aresta `supported` ou `confirmed` entre os bugs deste contexto.
 
 ## Impact score (heurística de triagem; não substitui priority/severity)
 
 | Bug | Score |
 |---|---|
+| BUG-20260919-3P7S | 0 |
 | BUG-20260919-BQBJ | 2 |
 
 Fórmula: causados×3 + bloqueados×2 + regressões×4 + relacionados×1 (máx. 3), só sobre arestas `supported`/`confirmed`.

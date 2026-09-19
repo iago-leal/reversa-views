@@ -20,6 +20,8 @@
 import { asRecord, asString, asStringList, parseJsonSafe } from '../heranca/reversa-domain/src/index.ts'
 import { splitSections } from '../heranca/reversa-domain/src/index.ts'
 import type { GreenfieldRead } from '../probe/greenfield.ts'
+import { declarerOf, foldCell, soleComponent } from './delivery-link.ts'
+import type { DeliveryLinks } from './delivery-link.ts'
 import {
   IDEATION_FILE,
   NEWPROJECT_BRIEF_FILE,
@@ -29,6 +31,7 @@ import {
 } from './limits.ts'
 import { readPrdScope } from './prd-scope.ts'
 import type {
+  ComponentLink,
   ComponentSituation,
   FeatureMark,
   FeatureSituation,
@@ -44,6 +47,7 @@ import type {
   ProjectHistory,
   ProjectScenario,
   UnplannedFeature,
+  UnspecifiedComponent,
 } from './types.ts'
 import { EMPTY_GREENFIELD, GREENFIELD_STAGES } from './types.ts'
 
@@ -57,6 +61,12 @@ export interface GreenfieldInput {
   history: ProjectHistory
   /** The output folder as `state.json` declares it, relative to the root. */
   outputFolder: string
+  /**
+   * The link every folder declares, extracted once by the reading layer
+   * (feature 010, D-05). Absent, no folder declares anything: only the name
+   * links, as in feature 009.
+   */
+  vinculos?: DeliveryLinks
 }
 
 /** The file the pipeline metadata lives in, as the anomaly names it. */
@@ -93,6 +103,9 @@ const ADVANCE: Record<FeatureSituation, number> = {
   'entregue-sem-adendo': 2,
   'em-aberto': 1,
   'sem-acoes': 1,
+  // Unknown, not behind: a folder whose actions were not read never stands for
+  // the component over one that was (bug nº 11).
+  'acoes-nao-lidas': 0,
 }
 
 /** The projection of RN-06: a situation of the history onto one of the component. */
@@ -101,6 +114,7 @@ const PROJECTION: Record<FeatureSituation, ComponentSituation> = {
   'entregue-sem-adendo': 'entregue',
   'em-aberto': 'em-andamento',
   'sem-acoes': 'em-andamento',
+  'acoes-nao-lidas': 'em-andamento',
 }
 
 /**
@@ -157,7 +171,7 @@ export function readGreenfield(input: GreenfieldInput): GreenfieldAxis {
     caminhos,
     metadado,
     resumo: summaryOf(lido.briefMd, metadado),
-    panorama: panoramaOf(lido, input.history, path, anomalias),
+    panorama: panoramaOf(lido, input.history, input.vinculos ?? new Map(), path, anomalias),
     anomalias,
     truncados: [...lido.truncados],
   }
@@ -287,11 +301,20 @@ function comparable(name: string): string {
 
 /**
  * The crossing of the specs with the folders of the history (RF-09, RN-05,
- * RN-06, RN-07, RN-10, RN-14).
+ * RN-06, RN-07, RN-10, RN-14), in two passes since feature 010 (D-06 to D-08).
+ *
+ * The FIRST pass is the one of feature 009, by name, and it has precedence:
+ * a spec with a folder of its name links to that folder and to no other. The
+ * SECOND links each spec WITHOUT such a folder to the folders whose impact
+ * table declares it. That is what keeps this repository, where every spec has
+ * its folder, identical to feature 009, and what lets a project whose specs
+ * are named by component and whose folders are named by delivery show what
+ * was delivered.
  */
 function panoramaOf(
   lido: GreenfieldRead,
   history: ProjectHistory,
+  vinculos: DeliveryLinks,
   path: (file: string) => string,
   anomalias: GreenfieldAnomaly[],
 ): ProductPanorama {
@@ -301,6 +324,11 @@ function panoramaOf(
     const key = comparable(entry.nomeCurto)
     byName.set(key, [...(byName.get(key) ?? []), entry])
   }
+
+  const cellsOf = (entry: HistoryEntry): string[] => vinculos.get(entry.pasta)?.celulas ?? []
+  // Folded once per folder: every spec is tried against every cell (RNF of performance).
+  const foldedCells = new Map(history.entradas.map((entry) => [entry, cellsOf(entry).map(foldCell)]))
+  const impactOf = (entry: HistoryEntry): string | null => vinculos.get(entry.pasta)?.arquivo ?? null
 
   const seen = new Set<string>()
   const matched = new Set<HistoryEntry>()
@@ -319,11 +347,21 @@ function panoramaOf(
     }
     seen.add(key)
 
-    const folders = byName.get(key) ?? []
+    const byItsName = byName.get(key) ?? []
+    const origem: ComponentLink['origem'] = byItsName.length > 0 ? 'nome' : 'declarada'
+    const folders =
+      byItsName.length > 0
+        ? byItsName
+        : declaredBy(declarerOf(nome), history.entradas, foldedCells)
+
     for (const entry of folders) matched.add(entry)
-    componentes.push(componentOf(nome, path(`${SDD_FOLDER}/${file}`), folders))
+    componentes.push({
+      ...componentOf(nome, path(`${SDD_FOLDER}/${file}`), folders),
+      ligacoes: folders.map((entry) => ({ pasta: entry.pasta, origem, impacto: impactOf(entry) })),
+    })
   }
 
+  // RN-03: out of the plan is the folder no link reaches, by either path.
   const foraDoPlano: UnplannedFeature[] = history.entradas
     .filter((entry) => !matched.has(entry))
     .map((entry) => ({
@@ -358,7 +396,59 @@ function panoramaOf(
     totalDeSpecs: lido.totalDeSpecs,
     truncado: lido.totalDeSpecs > lido.specs.length,
     convergidos: componentes.filter((c) => c.situacao === 'convergida').length,
+    semSpec: unspecifiedOf(history, seen, cellsOf, impactOf),
+    vinculoParcial: [...vinculos.values()].some((link) => link.estado === 'nao-lido'),
   }
+}
+
+/**
+ * The folders whose impact tables declare a spec, in history order.
+ * @param declares - the test of the spec, built once.
+ * @param entries - the judged entries.
+ * @param foldedCells - the folded cells of each entry.
+ * @returns the entries with at least one declaring cell.
+ */
+function declaredBy(
+  declares: (foldedCell: string) => boolean,
+  entries: HistoryEntry[],
+  foldedCells: ReadonlyMap<HistoryEntry, string[]>,
+): HistoryEntry[] {
+  return entries.filter((entry) => (foldedCells.get(entry) ?? []).some(declares))
+}
+
+/**
+ * The components delivered without a spec (RN-04, D-08): the names a cell of
+ * an impact table carries alone, in kebab form, that no spec of `sdd/` has.
+ *
+ * They stand outside `convergidos` and outside the denominator, and each one
+ * takes its situation from the most advanced folder that declares it, by the
+ * same projection and the same rule of advance as a planned component.
+ * @param history - the judged entries, newest first.
+ * @param specs - the comparable names of the specs read.
+ * @param cellsOf - the cells of a folder's impact tables.
+ * @param impactOf - the impact file of a folder.
+ * @returns the components, in the order they were first found.
+ */
+function unspecifiedOf(
+  history: ProjectHistory,
+  specs: ReadonlySet<string>,
+  cellsOf: (entry: HistoryEntry) => string[],
+  impactOf: (entry: HistoryEntry) => string | null,
+): UnspecifiedComponent[] {
+  const byComponent = new Map<string, HistoryEntry[]>()
+  for (const entry of history.entradas) {
+    for (const cell of cellsOf(entry)) {
+      const nome = soleComponent(cell)
+      if (nome === null || specs.has(comparable(nome))) continue
+      const folders = byComponent.get(nome) ?? []
+      if (!folders.includes(entry)) byComponent.set(nome, [...folders, entry])
+    }
+  }
+
+  return [...byComponent].map(([nome, folders]) => {
+    const { situacao, marca, pastas } = projectionOf(folders)
+    return { nome, situacao, marca, pastas, impactos: folders.map((entry) => impactOf(entry) ?? '') }
+  })
 }
 
 /**
@@ -372,17 +462,29 @@ function componentOf(nome: string, spec: string, folders: HistoryEntry[]): Plann
     return { nome, spec, situacao: 'planejada', marca: 'nenhuma', pastas: [], adendo: null, acoes: null }
   }
 
+  const { situacao, marca, pastas, best } = projectionOf(folders)
+  return { nome, spec, situacao, marca, pastas, adendo: best.adendo, acoes: { ...best.acoes } }
+}
+
+/**
+ * What a non-empty set of folders says about the thing they deliver: the
+ * situation of the most advanced, first in history order among equals, the
+ * mark of all of them, and the folders themselves. One rule for the planned
+ * components and for the ones without a spec (feature 010, D-08).
+ */
+function projectionOf(folders: HistoryEntry[]): {
+  situacao: ComponentSituation
+  marca: FeatureMark
+  pastas: string[]
+  best: HistoryEntry
+} {
   let best = folders[0] as HistoryEntry
   for (const entry of folders) if (ADVANCE[entry.situacao] > ADVANCE[best.situacao]) best = entry
-
   return {
-    nome,
-    spec,
     situacao: PROJECTION[best.situacao],
     marca: markOf(folders),
     pastas: folders.map((entry) => entry.pasta),
-    adendo: best.adendo,
-    acoes: { ...best.acoes },
+    best,
   }
 }
 

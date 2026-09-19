@@ -1,0 +1,19 @@
+--- a/src/webview/ui/HistorySection.tsx
++++ b/src/webview/ui/HistorySection.tsx
+@@ -128,7 +128,15 @@
+       )}{' '}
+       <Conferences c={entry.conferencias} onOpenFile={onOpenFile} />
+       <div data-part="feature-actions" className="muted">
+-        {entry.acoes.fechadas} de {entry.acoes.total} ações fechadas
++        {entry.situacao === 'acoes-nao-lidas' ? (
++          // The tally is zero because nothing was read, not because nothing
++          // was done (bug nº 11): the line says which, instead of "0 de 0".
++          'ações não lidas: actions.md acima do teto de bytes ou ilegível'
++        ) : (
++          <>
++            {entry.acoes.fechadas} de {entry.acoes.total} ações fechadas
++          </>
++        )}
+       </div>
+       <LinkNote v={entry.vinculo} />
+       <div data-part="feature-summary">{entry.resumo ?? 'sem resumo registrado'}</div>

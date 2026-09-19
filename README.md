@@ -292,6 +292,11 @@ consulta à origem. Cada um se alcança por um comando:
 | PRD sem decomposição em specs | `node scripts/preview.js --workspace="$(node scripts/estragar-greenfield.js --caso=sdd-vazio)"` |
 | PRD sem seção de escopo | `node scripts/preview.js --workspace="$(node scripts/estragar-greenfield.js --caso=sem-escopo)"` |
 | Com leitura de specs no teto | `node scripts/preview.js --workspace="$(node scripts/estragar-greenfield.js --caso=teto)"` |
+| Specs sem pasta homônima, ligadas às entregas com a origem "declarada" | `node scripts/preview.js --workspace="$(node scripts/estragar-vinculo.js --caso=declarada)"` |
+| Componente entregue sem spec, no bloco "Entregues sem spec" com a pasta que o declara | `node scripts/preview.js --workspace="$(node scripts/estragar-vinculo.js --caso=sem-spec)"` |
+| "2 de 20 conferências registradas" numa entrega que continua convergida, sem razão nova na faixa | `node scripts/preview.js --workspace="$(node scripts/estragar-vinculo.js --caso=conferencias)"` |
+| Registro de conferências sem coluna `Data`: anomalia com a seção e o cabeçalho no detalhe | `node scripts/preview.js --workspace="$(node scripts/estragar-vinculo.js --caso=conferencias-sem-tabela)"` |
+| `legacy-impact.md` acima do teto: vínculo declarado parcial, com a anomalia do arquivo não lido | `node scripts/preview.js --workspace="$(node scripts/estragar-vinculo.js --caso=impacto-grande)"` |
 
 | Desfecho da consulta | Comando |
 |---|---|

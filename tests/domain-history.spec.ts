@@ -14,8 +14,14 @@
  * @module tests/domain-history
  */
 
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { readDeliveryLinks } from '../src/domain/delivery-link.ts'
 import { readHistory } from '../src/domain/history.ts'
+import { REVERSA_FILE_CAP } from '../src/heranca/reversa-probe/src/index.ts'
+import { readFeatureFolders } from '../src/probe/features.ts'
 import type { FeatureFolderRead } from '../src/probe/features.ts'
 
 const SAIDA = '_reversa_sdd'
@@ -326,6 +332,186 @@ describe('truncamento e contagem', () => {
   })
 
   it('projeto sem pasta alguma devolve histórico vazio, sem lançar', () => {
-    expect(historico([])).toEqual({ entradas: [], truncado: false, total: 0 })
+    // A lista de anomalias do eixo da 010 vem sempre, vazia quando nada se
+    // perdeu: um host novo nunca omite o campo (contrato, seção 3).
+    expect(historico([])).toEqual({ entradas: [], truncado: false, total: 0, anomalias: [] })
+  })
+})
+
+describe('o vínculo e as conferências de cada entrada (feature 010, RN-07, RF-06, RF-07)', () => {
+  const fixture = (nome: string): string => readFileSync(`tests/fixtures/vinculo/${nome}.md`, 'utf8')
+  const ADENDO = ['002-b-adendo.md']
+  const CORPO = { '002-b-adendo.md': '## Resumo\n\nFeito.\n' }
+
+  it('cada entrada traz o estado do vínculo e o registro de conferências', () => {
+    const lido = historico([
+      pasta('001-a'),
+      pasta('002-b', {
+        legacyImpactMd: fixture('impacto-seis-tabelas'),
+        onboardingMd: fixture('onboarding-vinte-linhas'),
+        naoLidos: [],
+      }),
+    ])
+    const [b, a] = lido.entradas
+    expect(b?.vinculo).toEqual({ estado: 'lido', arquivo: `${FORWARD}/002-b/legacy-impact.md`, tabelas: 6 })
+    expect(b?.conferencias?.estado).toBe('lido')
+    expect(b?.conferencias?.arquivo).toBe(`${FORWARD}/002-b/onboarding.md`)
+    expect(b?.conferencias?.registradas).toBe(2)
+    expect(b?.conferencias?.total).toBe(20)
+
+    expect(a?.vinculo).toEqual({ estado: 'ausente', arquivo: null, tabelas: 0 })
+    expect(a?.conferencias?.estado).toBe('sem-registro')
+    expect(lido.anomalias).toEqual([])
+  })
+
+  it('usa o vínculo que a camada de leitura já extraiu, quando o recebe', () => {
+    const pastas = [pasta('002-b', { legacyImpactMd: fixture('impacto-nome-nu'), naoLidos: [] })]
+    const lido = readHistory({
+      pastas,
+      truncado: false,
+      total: 1,
+      activeFeatureDir: null,
+      pausedFeatureDirs: [],
+      addendaFiles: [],
+      addendaBodies: {},
+      outputFolder: SAIDA,
+      vinculos: readDeliveryLinks(pastas),
+    })
+    expect(lido.entradas[0]?.vinculo?.tabelas).toBe(1)
+  })
+
+  it('reúne as anomalias do eixo em `anomalias`, na ordem das entradas', () => {
+    const lido = historico([
+      pasta('001-a', { onboardingMd: fixture('onboarding-sem-data'), naoLidos: [] }),
+      pasta('002-b', { naoLidos: ['legacy-impact.md', 'onboarding.md'] }),
+    ])
+    expect(lido.anomalias?.map((anomalia) => [anomalia.file, anomalia.code])).toEqual([
+      [`${FORWARD}/002-b/legacy-impact.md`, 'artefato-da-entrega-nao-lido'],
+      [`${FORWARD}/002-b/onboarding.md`, 'artefato-da-entrega-nao-lido'],
+      [`${FORWARD}/001-a/onboarding.md`, 'tabela-nao-reconhecida'],
+    ])
+    expect(lido.anomalias?.[0]?.detail).toContain('vínculo')
+    expect(lido.entradas[0]?.vinculo?.estado).toBe('nao-lido')
+    expect(lido.entradas[0]?.conferencias?.estado).toBe('nao-lido')
+  })
+
+  it('onboarding sem a seção e legacy-impact sem tabela não são anomalia', () => {
+    const lido = historico([
+      pasta('001-a', {
+        onboardingMd: fixture('onboarding-sem-secao'),
+        legacyImpactMd: fixture('impacto-sem-tabela'),
+        naoLidos: [],
+      }),
+    ])
+    expect(lido.anomalias).toEqual([])
+    expect(lido.entradas[0]?.vinculo).toEqual({ estado: 'lido', arquivo: `${FORWARD}/001-a/legacy-impact.md`, tabelas: 0 })
+  })
+
+  it('pasta convergida com linhas pendentes continua `convergida` (RN-07)', () => {
+    const lido = historico(
+      [pasta('002-b', { actionsMd: acoesMd(3, 0), onboardingMd: fixture('onboarding-vinte-linhas'), naoLidos: [] })],
+      { addendaFiles: ADENDO, addendaBodies: CORPO },
+    )
+    expect(lido.entradas[0]?.situacao).toBe('convergida')
+    expect(lido.entradas[0]?.conferencias?.registradas).toBe(2)
+    expect(lido.entradas[0]?.conferencias?.total).toBe(20)
+  })
+
+  /**
+   * A feature nascida da extração greenfield não ganha regra própria (RN-08,
+   * RF-09): sem adendo, a 001 é entrega à espera de convergência, como
+   * qualquer outra, e nada no código distingue a primeira pasta.
+   */
+  it('a 001 greenfield sem adendo é `entregue-sem-adendo`, como qualquer outra', () => {
+    const lido = historico([
+      pasta('001-fechamento-mensal-mvp', {
+        actionsMd: acoesMd(5, 0),
+        legacyImpactMd: fixture('impacto-crases-varias'),
+        onboardingMd: fixture('onboarding-sem-secao'),
+        naoLidos: [],
+      }),
+    ])
+    expect(lido.entradas[0]?.situacao).toBe('entregue-sem-adendo')
+    expect(lido.entradas[0]?.conferencias?.estado).toBe('sem-registro')
+  })
+
+  it('tolera a pasta de uma sonda anterior, sem os campos novos', () => {
+    const lido = historico([pasta('001-a')])
+    expect(lido.entradas[0]?.vinculo?.estado).toBe('ausente')
+    expect(lido.entradas[0]?.conferencias?.estado).toBe('sem-registro')
+  })
+})
+
+/**
+ * Arquivo presente e não lido não é arquivo ausente (bug nº 11,
+ * BUG-20260919-3P7S, EC-06). A sonda local já distingue os dois pela listagem;
+ * o julgamento tem de dizer a perda, e a situação não pode afirmar "sem ações"
+ * de um arquivo que ela não leu.
+ */
+describe('arquivo da pasta presente e não lido (bug nº 11, EC-06)', () => {
+  it('reprodução: `actions.md` acima do teto sai `acoes-nao-lidas`, com a anomalia que nomeia o arquivo', () => {
+    const raiz = mkdtempSync(join(tmpdir(), 'reversa-bug11-'))
+    try {
+      const dir = join(raiz, FORWARD, '001-grande')
+      mkdirSync(dir, { recursive: true })
+      const linha = `| T1 | ${'x'.repeat(200)} | \`[X]\` |\n`
+      const linhas = linha.repeat(Math.ceil(REVERSA_FILE_CAP / linha.length) + 1)
+      writeFileSync(join(dir, 'actions.md'), `# Actions\n\n| ID | Descrição | Status |\n|--|--|--|\n${linhas}`)
+
+      const lido = historico(readFeatureFolders({ root: raiz, forwardFolder: FORWARD }).pastas)
+
+      expect(lido.entradas[0]?.situacao).toBe('acoes-nao-lidas')
+      expect(lido.anomalias).toEqual([
+        expect.objectContaining({ file: `${FORWARD}/001-grande/actions.md`, code: 'artefato-da-entrega-nao-lido' }),
+      ])
+      expect(lido.anomalias?.[0]?.detail).toContain('ações')
+    } finally {
+      rmSync(raiz, { recursive: true, force: true })
+    }
+  })
+
+  it('`acoes-nao-lidas` vale para qualquer `actions.md` que a sonda marcou como não lido', () => {
+    const lido = historico([pasta('001-a', { naoLidos: ['actions.md'] })], {
+      addendaFiles: ['001-a.md'],
+      addendaBodies: { '001-a.md': 'vigente' },
+    })
+    expect(lido.entradas[0]?.situacao).toBe('acoes-nao-lidas')
+  })
+
+  it('`requirements.md` e `progress.jsonl` não lidos viram anomalia, sem mudar a situação de ações lidas', () => {
+    const lido = historico([
+      pasta('002-b', { actionsMd: acoesMd(3, 0), naoLidos: ['requirements.md', 'progress.jsonl'] }),
+    ])
+    expect(lido.entradas[0]?.situacao).toBe('entregue-sem-adendo')
+    expect(lido.anomalias?.map((anomalia) => [anomalia.file, anomalia.code])).toEqual([
+      [`${FORWARD}/002-b/requirements.md`, 'artefato-da-entrega-nao-lido'],
+      [`${FORWARD}/002-b/progress.jsonl`, 'artefato-da-entrega-nao-lido'],
+    ])
+    expect(lido.anomalias?.[0]?.detail).toContain('resumo')
+    expect(lido.anomalias?.[1]?.detail).toContain('último evento')
+  })
+
+  it('as perdas da pasta vêm na ordem dos arquivos, antes das do vínculo e das conferências', () => {
+    const lido = historico([
+      pasta('002-b', {
+        naoLidos: ['onboarding.md', 'progress.jsonl', 'legacy-impact.md', 'requirements.md', 'actions.md'],
+      }),
+    ])
+    expect(lido.anomalias?.map((anomalia) => anomalia.file)).toEqual([
+      `${FORWARD}/002-b/actions.md`,
+      `${FORWARD}/002-b/requirements.md`,
+      `${FORWARD}/002-b/progress.jsonl`,
+      `${FORWARD}/002-b/legacy-impact.md`,
+      `${FORWARD}/002-b/onboarding.md`,
+    ])
+  })
+
+  it('pasta sem `actions.md` e arquivo sem linha de ação seguem `sem-acoes`, sem anomalia', () => {
+    const lido = historico([
+      pasta('006-a', { naoLidos: [] }),
+      pasta('007-b', { actionsMd: '# Actions\n\nsó prosa\n', naoLidos: [] }),
+    ])
+    expect(lido.entradas.map((entrada) => entrada.situacao)).toEqual(['sem-acoes', 'sem-acoes'])
+    expect(lido.anomalias).toEqual([])
   })
 })

@@ -1,0 +1,25 @@
+# Gate 2, 2026-09-19: change set CHG-001 a CHG-005 aplicado
+# npx tsc --noEmit -p .
+exit 0
+# três arquivos do bug
+ Test Files  3 passed (3)
+      Tests  97 passed (97)
+# suíte inteira
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/preview-vinculo.spec.ts > os cinco casos (RF-14) > `conferencias`: "2 de 20" numa pasta convergida, que continua convergida, sem razão nova
+ FAIL  tests/preview-vinculo.spec.ts > os cinco casos (RF-14) > `conferencias-sem-tabela`: anomalia com a seção e o cabeçalho no detalhe
+ FAIL  tests/versao.spec.ts > sobre o repositório real > deriva um número, e o faz sem recuo, porque este clone tem adendos e histórico
+ Test Files  2 failed | 100 passed (102)
+      Tests  3 failed | 1687 passed (1690)
+# As três falhas acima são anteriores à correção: falham igual na árvore sem CHG-001..005 (preview-vinculo, casos conferencias e conferencias-sem-tabela; versao, sobre o repositório real).
+
+# Leitura real do financas-ali (somente leitura), com a correção
+_reversa_forward/002-infra-remota-auth-assistente convergida {"total":183,"fechadas":183,"abertas":0,"emendas":0}
+_reversa_forward/001-fechamento-mensal-mvp acoes-nao-lidas {"total":0,"fechadas":0,"abertas":0,"emendas":0}
+[
+ {
+  "file": "_reversa_forward/001-fechamento-mensal-mvp/actions.md",
+  "code": "artefato-da-entrega-nao-lido",
+  "detail": "presente e não lido, acima do teto de bytes da sonda ou ilegível: a situação e a contagem de ações da pasta não foram julgadas"
+ }
+]

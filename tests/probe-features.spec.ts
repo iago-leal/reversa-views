@@ -15,9 +15,29 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { afterEach, describe, expect, it } from 'vitest'
-import { FEATURE_FOLDER_CAP } from '../src/domain/limits.ts'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { FEATURE_FOLDER_CAP, LEGACY_IMPACT_FILE, ONBOARDING_FILE } from '../src/domain/limits.ts'
+import { REVERSA_FILE_CAP } from '../src/heranca/reversa-probe/src/index.ts'
 import { readFeatureFolders } from '../src/probe/features.ts'
+
+/**
+ * Os arquivos que a sonda abriu, contados por nome (feature 010, RF-01).
+ *
+ * A leitura herdada é embrulhada e não trocada: cada chamada passa adiante,
+ * e o que a suíte ganha é só o número de aberturas, que é o que o critério do
+ * RF-01 mede.
+ */
+const abertos = vi.hoisted(() => ({ nomes: [] as string[] }))
+vi.mock('../src/heranca/reversa-probe/src/index.ts', async (original) => {
+  const real = await original<typeof import('../src/heranca/reversa-probe/src/index.ts')>()
+  return {
+    ...real,
+    readText: (abs: string) => {
+      abertos.nomes.push(abs.split(/[\\/]/).pop() ?? '')
+      return real.readText(abs)
+    },
+  }
+})
 
 const FORWARD = '_reversa_forward'
 const criadas: string[] = []
@@ -145,5 +165,58 @@ describe('ausência e contenção', () => {
   it('não lança diante de pasta declarada em branco', () => {
     const raiz = raizCom({ '001-a': {} })
     expect(() => readFeatureFolders({ root: raiz, forwardFolder: '' })).not.toThrow()
+  })
+})
+
+describe('os dois arquivos da entrega (feature 010, D-01, RF-01, RN-09)', () => {
+  it('lê o `legacy-impact.md` e o `onboarding.md` de cada pasta, quando existem', () => {
+    const raiz = raizCom({
+      '001-a': { [LEGACY_IMPACT_FILE]: '# impacto', [ONBOARDING_FILE]: '# roteiro' },
+      '002-b': {},
+    })
+    const lido = readFeatureFolders({ root: raiz, forwardFolder: FORWARD })
+
+    expect(lido.pastas[0]?.legacyImpactMd).toBe('# impacto')
+    expect(lido.pastas[0]?.onboardingMd).toBe('# roteiro')
+    expect(lido.pastas[0]?.naoLidos).toEqual([])
+    expect(lido.pastas[1]?.legacyImpactMd).toBeNull()
+    expect(lido.pastas[1]?.onboardingMd).toBeNull()
+    expect(lido.pastas[1]?.naoLidos).toEqual([])
+  })
+
+  it('distingue o ausente do presente e acima do teto, que vai para `naoLidos`', () => {
+    const grande = 'x'.repeat(REVERSA_FILE_CAP + 1024)
+    const raiz = raizCom({
+      '001-a': { [LEGACY_IMPACT_FILE]: grande, [ONBOARDING_FILE]: grande, 'actions.md': grande },
+      '002-b': { [ONBOARDING_FILE]: '# roteiro' },
+    })
+    const lido = readFeatureFolders({ root: raiz, forwardFolder: FORWARD })
+
+    expect(lido.pastas[0]?.legacyImpactMd).toBeNull()
+    expect(lido.pastas[0]?.onboardingMd).toBeNull()
+    // Os três já lidos antes da 010 entram na mesma declaração.
+    expect(new Set(lido.pastas[0]?.naoLidos)).toEqual(new Set(['actions.md', LEGACY_IMPACT_FILE, ONBOARDING_FILE]))
+    expect(lido.pastas[1]?.naoLidos).toEqual([])
+  })
+
+  it('com cinquenta pastas, abre no máximo cem arquivos novos', () => {
+    const pastas: Record<string, Record<string, string>> = {}
+    for (let i = 0; i < FEATURE_FOLDER_CAP; i += 1) {
+      pastas[`${String(i).padStart(3, '0')}-p`] = { [LEGACY_IMPACT_FILE]: 'i', [ONBOARDING_FILE]: 'o' }
+    }
+    const raiz = raizCom(pastas)
+    abertos.nomes.length = 0
+    readFeatureFolders({ root: raiz, forwardFolder: FORWARD })
+
+    const novos = abertos.nomes.filter((nome) => nome === LEGACY_IMPACT_FILE || nome === ONBOARDING_FILE)
+    expect(novos.length).toBeLessThanOrEqual(2 * FEATURE_FOLDER_CAP)
+    expect(novos.length).toBe(100)
+  })
+
+  it('não abre o arquivo que a listagem não mostrou', () => {
+    const raiz = raizCom({ '001-a': {} })
+    abertos.nomes.length = 0
+    readFeatureFolders({ root: raiz, forwardFolder: FORWARD })
+    expect(abertos.nomes.filter((nome) => nome === LEGACY_IMPACT_FILE || nome === ONBOARDING_FILE)).toEqual([])
   })
 })

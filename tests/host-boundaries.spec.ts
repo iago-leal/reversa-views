@@ -277,6 +277,18 @@ describe('nada de layout do Reversa no host (RF-14)', () => {
     }
   })
 
+  /**
+   * Os dois artefatos da entrega que a feature 010 lê. Os nomes vivem em
+   * `src/domain/limits.ts`, e o host só passa adiante o que a sonda e o
+   * julgamento produziram: um host que os escrevesse saberia onde a entrega
+   * guarda o vínculo e as conferências.
+   */
+  it('nenhum nome de artefato da entrega', () => {
+    for (const fonte of decisores()) {
+      expect(fonte.texto, fonte.nome).not.toMatch(/legacy-impact\.md|onboarding\.md/)
+    }
+  })
+
   it('nenhum cálculo de estágio nem de fase', () => {
     for (const fonte of decisores()) {
       expect(fonte.texto, fonte.nome).not.toMatch(
