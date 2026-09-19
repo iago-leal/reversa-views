@@ -96,6 +96,10 @@ change_set:
   - id: CHG-005
     kind: specification
     artifact: _reversa_sdd/addenda/bug-BUG-20260914-DTLI-v001.md
+  - id: CHG-006
+    kind: configuration
+    artifact: src/heranca/adaptacoes.yml
+    diff: fix/CHG-006.diff
 
 closure:
   policy: package
@@ -211,6 +215,14 @@ e os três leitores a usam, pela razão que o próprio módulo declara.
 | CHG-003 | code | `src/heranca/reversa-domain/src/watch.ts` | A12 e A13: tipo de verificação por `canonicalOf` |
 | CHG-004 | configuration | `adaptacoes.yml`, `manifesto.yml`, `PROCEDENCIA.md` | Declaração de A8 a A13, resumos e carimbos |
 | CHG-005 | specification | `_reversa_sdd/addenda/bug-BUG-20260914-DTLI-v001.md` | O veredito `spec-gap` |
+| CHG-006 | configuration | `src/heranca/adaptacoes.yml` | Indicador de indentação `\|2` em A10 e A13, para que o trecho seja literal |
+
+CHG-006 corrige um erro do próprio CHG-004, achado no ensaio do `BUG-20260914-5UH7`: o `yaml`
+deduz a indentação do bloco literal pela primeira linha, e o trecho de A10 e de A13, que começa
+indentado, perdia a indentação ao ser lido; a ressincronização pararia em `ausente`. A falha seria
+segura, sem escrita, mas quebraria a ressincronização. Com o indicador, a ressincronização simulada
+reproduz o arquivo exatamente. O mesmo defeito existe em A4 e A5, anteriores a este bug, e foi
+registrado à parte.
 
 ### O núcleo da correção
 

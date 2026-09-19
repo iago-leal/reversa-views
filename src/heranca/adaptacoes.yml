@@ -254,12 +254,12 @@ adaptacoes:
       BUG-20260914-DTLI. Tipo e severidade passam por canonicalOf (A8): o valor canônico escrito com
       marca conta na chave canônica, e o que está fora do vocabulário segue cru, na anomalia e na
       contagem, como a origem já fazia.
-    original: |
+    original: |2
             const [arquivo = '', componente = '', tipo = '', severidade = '', justificativa = ''] = row
             if (!(IMPACT_TYPES as readonly string[]).includes(tipo)) log.add(FILE, 'tipo-de-impacto-desconhecido', tipo)
             if (!(SEVERITIES as readonly string[]).includes(severidade)) log.add(FILE, 'severidade-desconhecida', severidade)
             files.push({ arquivo, componente, tipo, severidade, justificativa })
-    adaptado: |
+    adaptado: |2
             const [arquivo = '', componente = '', tipoCell = '', severidadeCell = '', justificativa = ''] = row
             // A10 (BUG-20260914-DTLI): a canonical value in backticks or bold counts
             // as itself; anything else is kept as written, and flagged.
@@ -311,13 +311,13 @@ adaptacoes:
     arquivo: src/heranca/reversa-domain/src/watch.ts
     motivo: |
       BUG-20260914-DTLI. O tipo de verificação passa por canonicalOf (A8), como tipo e severidade em A10.
-    original: |
+    original: |2
           const [id = '', origem = '', regra = '', tipo = '', sinal = ''] = row
           if (!(VERIFICATION_TYPES as readonly string[]).includes(tipo)) {
             log.add(FILE, 'tipo-de-verificacao-desconhecido', tipo)
           }
           out.push({ id, origem, regra, tipo, sinal })
-    adaptado: |
+    adaptado: |2
           const [id = '', origem = '', regra = '', tipoCell = '', sinal = ''] = row
           // A13 (BUG-20260914-DTLI): the verification type is read through notation.
           const tipo = canonicalOf(tipoCell, VERIFICATION_TYPES)
