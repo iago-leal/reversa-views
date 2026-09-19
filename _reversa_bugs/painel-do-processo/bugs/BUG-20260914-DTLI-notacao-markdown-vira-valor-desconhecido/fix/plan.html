@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plano de correção, bug nº 8</title>
+<style>body{margin:0;background:#0d1117;color:#e6edf3;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;padding:24px;max-width:1100px}h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 8px;border-bottom:1px solid #30363d;padding-bottom:4px}.meta{color:#8b949e;font-size:12px}.cards{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0}.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px 16px;min-width:140px}.card b{display:block;font-size:20px}.card span{color:#8b949e;font-size:12px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border:1px solid #30363d;padding:6px 8px;text-align:left;vertical-align:top}th{background:#161b22}a{color:#58a6ff}code{background:#161b22;border:1px solid #30363d;border-radius:4px;padding:0 4px;font-size:12px}pre{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;overflow-x:auto;font-size:12px}.svgwrap{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:8px;overflow-x:auto}.ok{color:#3fb950}.warn{color:#d29922}.bad{color:#f85149}ul{margin:4px 0 4px 20px;padding:0}</style></head><body>
+
+<h1>Plano de correção: bug nº 8, BUG-20260914-DTLI</h1>
+<div class="meta">Contexto <code>painel-do-processo</code> · 2026-09-19 · base <code>94edec9</code> · closure policy <code>package</code></div>
+
+<div class="cards">
+<div class="card"><b class="bad">high</b><span>severidade</span></div>
+<div class="card"><b class="bad">P1</b><span>prioridade</span></div>
+<div class="card"><b class="ok">confirmed</b><span>causa raiz</span></div>
+<div class="card"><b class="warn">baixa</b><span>risco da mudança</span></div>
+<div class="card"><b>14/14</b><span>features do afla afetadas</span></div>
+</div>
+
+<h2>O defeito</h2>
+<p>O <code>/reversa-coding</code> grafa a taxonomia entre crases, como o próprio <code>SKILL.md</code> faz, e às vezes a severidade em negrito. O leitor compara a célula crua com o vocabulário: <code>`componente-novo`</code> não é <code>componente-novo</code>. No <code>afla</code>, hoje com catorze features, a contagem canônica sai zerada nas doze cujas tabelas são reconhecidas (207 linhas, todas anômalas), e nas features 003 e 004 a tabela inteira é recusada porque o cabeçalho anota <code>Componente (`architecture.md`)</code>.</p>
+
+<h2>Causa raiz <span class="ok">(confirmed)</span></h2>
+<table>
+<tr><th>Onde</th><th>O que acontece</th></tr>
+<tr><td><code>impact.ts:105-106</code></td><td>Tipo e severidade comparados crus com <code>IMPACT_TYPES</code> e <code>SEVERITIES</code>.</td></tr>
+<tr><td><code>watch.ts:83</code></td><td>O mesmo para o tipo de verificação.</td></tr>
+<tr><td><code>table.ts:74</code></td><td><code>findTable</code> exige igualdade do cabeçalho normalizado; a anotação vira <code>componente architecture md</code>, e o artigo de <code>Regra esperada após a mudança</code> vira palavra a mais.</td></tr>
+<tr><td><code>impact.ts:125-133</code></td><td><code>hasHeader</code> repete a comparação com divisor próprio, que nem sequer honra o escape de A6.</td></tr>
+</table>
+<p>Evidência: <a href="../evidence/reproduction.md">evidence/reproduction.md</a> e <a href="../evidence/impacto-afla-2026-09-19-antes.txt">impacto-afla-2026-09-19-antes.txt</a>. Não há hipótese concorrente: cada valor fora do vocabulário é um valor canônico com marca em volta.</p>
+
+<h2>Estratégia: correção direta</h2>
+<p>Não há hipóteses concorrentes nem divergência entre código e spec, e o debate não acrescentaria nada. A regra nasce uma vez, em <code>table.ts</code>, que existe justamente para que os leitores não divirjam, e os três leitores passam a usá-la.</p>
+<ul>
+<li><b>Valor:</b> <code>canonicalOf(célula, vocabulário)</code> retira só marcas que envolvem o valor inteiro, crases (<code>`x`</code>) e negrito (<code>**x**</code>), inclusive aninhadas (<code>**`x`**</code>), e devolve o membro do vocabulário ou <code>null</code>. Nada de caixa, de semelhança ou de valor mais próximo (§15, NG-05).</li>
+<li><b>Onde o valor vai:</b> reconhecido, entra pela chave canônica em <code>files</code>, <code>byType</code> e <code>bySeverity</code>; não reconhecido, segue cru na anomalia e na chave desconhecida, exatamente como está no arquivo.</li>
+<li><b>Cabeçalho:</b> <code>matchesHeader(células, cabeçalho)</code> aceita, por coluna, igualdade normalizada, ou igualdade depois de retirar <b>da célula encontrada</b> uma anotação final entre parênteses. Artigos definidos isolados (<code>a</code>, <code>o</code>, <code>as</code>, <code>os</code>) não contam. O cabeçalho esperado nunca é encurtado: <code>Origem</code> sozinho continua não casando <code>Origem (arquivo, seção)</code>.</li>
+<li><code>hasHeader</code> passa a usar <code>cellsOf</code> e <code>matchesHeader</code>: uma regra, um lugar.</li>
+</ul>
+
+<h2>Correction Change Set proposto</h2>
+<table>
+<tr><th>CHG</th><th>Tipo</th><th>Artefato</th><th>Propósito</th></tr>
+<tr><td>CHG-001</td><td>code</td><td><code>src/heranca/reversa-domain/src/table.ts</code></td><td>A8: <code>canonicalOf</code> e <code>matchesHeader</code>, exportadas; <code>findTable</code> usa <code>matchesHeader</code></td></tr>
+<tr><td>CHG-002</td><td>code</td><td><code>src/heranca/reversa-domain/src/impact.ts</code></td><td>A9 importação, A10 tipo e severidade por <code>canonicalOf</code>, A11 <code>hasHeader</code> pela regra única</td></tr>
+<tr><td>CHG-003</td><td>code</td><td><code>src/heranca/reversa-domain/src/watch.ts</code></td><td>A12 importação, A13 tipo de verificação por <code>canonicalOf</code></td></tr>
+<tr><td>CHG-004</td><td>configuration</td><td><code>src/heranca/adaptacoes.yml</code>, <code>manifesto.yml</code>, <code>PROCEDENCIA.md</code></td><td>Declarar A8 a A13 com trecho original e adaptado literais, carimbos e resumos</td></tr>
+</table>
+<p>O índice do pacote não muda: as funções novas só são usadas dentro da camada herdada. Sem reparo de dados: a extensão só lê, e o <code>afla</code> não é tocado.</p>
+
+<h2>Testes planejados</h2>
+<p>Suíte local <code>tests/leitura-notacao-markdown.spec.ts</code>, pelo mesmo motivo registrado para A6: um caso na suíte herdada seria mais uma adaptação a reaplicar.</p>
+<table>
+<tr><th>Caso</th><th>Natureza</th><th>O que prova</th></tr>
+<tr><td>Linha com <code>`componente-novo`</code> e <code>**HIGH**</code> conta na chave canônica, sem anomalia</td><td>reprodução</td><td>Critério 1 (o defeito relatado)</td></tr>
+<tr><td>Tabela com <code>Componente (`architecture.md`)</code> é lida, sem <code>tabela-nao-reconhecida</code></td><td>reprodução</td><td>Critério 3 (features 003 e 004)</td></tr>
+<tr><td>Vigia com <code>`ausência`</code> e cabeçalho <code>Regra esperada após a mudança</code> é lido</td><td>reprodução</td><td>Critério 1 no vigia; parte comum com o nº 9</td></tr>
+<tr><td><code>—</code>, <code>**não tocado**</code>, <code>`teste-alterado`</code> e <code>`componente-novo` / `regra-alterada`</code> seguem anomalia com o texto cru</td><td>regressão</td><td>Critério 2 e §15: notação não é tolerância</td></tr>
+<tr><td>Crase só de um lado, negrito parcial e caixa trocada (<code>high</code>) não são reconhecidos</td><td>regressão</td><td>A remoção é estrita</td></tr>
+<tr><td>Tabela de outro cabeçalho segue <code>tabela-nao-reconhecida</code>; <code>Origem</code> não casa <code>Origem (arquivo, seção)</code></td><td>regressão</td><td>Critério 5: o casamento não afrouxa além do caso medido</td></tr>
+</table>
+<p>O critério 4 (o <code>afla</code> real) fica como conferência depois do verde, com a mesma medição de <code>reproduction.md</code>, porque a suíte não pode depender de outro repositório.</p>
+
+<h2>Riscos</h2>
+<p><b>change_risk: baixa.</b> Leitura pura, reversível, sem dados, sem contrato externo: <code>ImpactState</code> e <code>WatchState</code> mantêm a forma. O ponto de atenção é o cabeçalho, que é o de maior risco apontado em Agent Notes; a tolerância fica restrita a dois casos concretos (anotação final entre parênteses, 2 arquivos; artigo, 12 arquivos), e a tabela precisa casar nas cinco colunas.</p>
+<p><b>Fora da correção:</b> a busca da tabela do vigia fora do preâmbulo, as seções de nome estendido e a anomalia de vigia vazio, que são o nº 9; as tabelas de observação com colunas próprias; e qualquer tolerância a caixa ou a sinônimo.</p>
+
+<h2>Mini-grafo do bug</h2>
+<div class="svgwrap"><svg width="640" height="170" viewBox="0 0 640 170" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif" font-size="12">
+<line x1="320" y1="85" x2="120" y2="85" stroke="#8b949e"/><line x1="320" y1="85" x2="520" y2="85" stroke="#8b949e" stroke-dasharray="4 3"/>
+<text x="200" y="76" fill="#3fb950" text-anchor="middle">related-to · supported</text>
+<text x="440" y="76" fill="#d29922" text-anchor="middle">related-to · proposed</text>
+<a href="../../BUG-20260912-PIPE-divisor-de-celula-ignora-barra-escapada/bug.md"><rect x="30" y="100" width="180" height="46" rx="8" fill="#161b22" stroke="#3fb950"/><text x="120" y="120" fill="#e6edf3" text-anchor="middle">nº 7 · BUG-20260912-PIPE</text><text x="120" y="137" fill="#8b949e" text-anchor="middle">resolved · travado</text></a>
+<a href="../bug.md"><rect x="230" y="62" width="180" height="46" rx="8" fill="#161b22" stroke="#f85149" stroke-width="2"/><text x="320" y="82" fill="#e6edf3" text-anchor="middle">nº 8 · BUG-20260914-DTLI</text><text x="320" y="99" fill="#8b949e" text-anchor="middle">active · P1</text></a>
+<a href="../../BUG-20260914-5UH7-vigia-le-so-o-preambulo-e-cala/bug.md"><rect x="430" y="100" width="180" height="46" rx="8" fill="#161b22" stroke="#d29922"/><text x="520" y="120" fill="#e6edf3" text-anchor="middle">nº 9 · BUG-20260914-5UH7</text><text x="520" y="137" fill="#8b949e" text-anchor="middle">open · P3</text></a>
+</svg></div>
+
+<h2>Matriz de relações</h2>
+<table>
+<tr><th>Origem</th><th>Tipo</th><th>Destino</th><th>Estado</th></tr>
+<tr><td><a href="../bug.md">BUG-20260914-DTLI</a></td><td>related-to</td><td><a href="../../BUG-20260912-PIPE-divisor-de-celula-ignora-barra-escapada/bug.md">BUG-20260912-PIPE</a></td><td class="ok">supported</td></tr>
+<tr><td><a href="../../BUG-20260914-5UH7-vigia-le-so-o-preambulo-e-cala/bug.md">BUG-20260914-5UH7</a></td><td>related-to</td><td><a href="../bug.md">BUG-20260914-DTLI</a></td><td class="warn">proposed</td></tr>
+</table>
+
+<h2>Ordem sugerida</h2>
+<p>Primeiro o nº 8, que corrige a regra de cabeçalho e de valor em <code>table.ts</code>; depois o nº 9, que depende dela para ler o vigia do <code>afla</code> sob título próprio. Os dois podem ir no mesmo pacote, mas cada um fecha com seu commit e sua prova.</p>
+</body></html>

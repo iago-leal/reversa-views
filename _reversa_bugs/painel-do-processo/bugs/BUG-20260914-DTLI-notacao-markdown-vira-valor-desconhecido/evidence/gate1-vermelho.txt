@@ -1,0 +1,139 @@
+
+ RUN  v3.2.7 /Users/iagoleal/dev/reversa-views
+
+ ❯ tests/leitura-notacao-markdown.spec.ts (10 tests | 5 failed) 10ms
+   × BUG-20260914-DTLI: valor canônico escrito com notação > conta o tipo entre crases e a severidade em negrito na chave canônica, sem anomalia 6ms
+     → expected [ …(5) ] to deeply equal []
+   × BUG-20260914-DTLI: valor canônico escrito com notação > lê o tipo de verificação entre crases no vigia, sem anomalia 1ms
+     → expected [ '`presença`', '**ausência**' ] to deeply equal [ 'presença', 'ausência' ]
+   × BUG-20260914-DTLI: cabeçalho que anota a coluna ou escreve um artigo > reconhece a tabela de impacto cujo cabeçalho anota a coluna 2ms
+     → expected [ 'tabela-nao-reconhecida' ] to not include 'tabela-nao-reconhecida'
+   × BUG-20260914-DTLI: cabeçalho que anota a coluna ou escreve um artigo > não acusa tabela ausente quando o cabeçalho anotado existe sem linhas 0ms
+     → expected [ 'tabela-nao-reconhecida' ] to not include 'tabela-nao-reconhecida'
+   × BUG-20260914-DTLI: cabeçalho que anota a coluna ou escreve um artigo > reconhece o vigia que escreve "Regra esperada após a mudança" 0ms
+     → expected [] to have a length of 1 but got +0
+   ✓ BUG-20260914-DTLI: notação não é tolerância > mantém anomalia para valor fora do vocabulário, com o texto como está no arquivo 0ms
+   ✓ BUG-20260914-DTLI: notação não é tolerância > não reconhece marca parcial nem caixa trocada 0ms
+   ✓ BUG-20260914-DTLI: notação não é tolerância > continua acusando a tabela que de fato não existe 0ms
+   ✓ BUG-20260914-DTLI: notação não é tolerância > não encurta o cabeçalho esperado: "Origem" sozinho não casa "Origem (arquivo, seção)" 0ms
+   ✓ BUG-20260914-DTLI: notação não é tolerância > não aceita anotação no meio do nome, nem palavra a mais que não seja artigo 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/leitura-notacao-markdown.spec.ts > BUG-20260914-DTLI: valor canônico escrito com notação > conta o tipo entre crases e a severidade em negrito na chave canônica, sem anomalia
+AssertionError: expected [ …(5) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "code": "tipo-de-impacto-desconhecido",
++     "detail": "`componente-novo`",
++     "file": "legacy-impact.md",
++   },
++   {
++     "code": "severidade-desconhecida",
++     "detail": "**HIGH**",
++     "file": "legacy-impact.md",
++   },
++   {
++     "code": "tipo-de-impacto-desconhecido",
++     "detail": "`regra-alterada`",
++     "file": "legacy-impact.md",
++   },
++   {
++     "code": "tipo-de-impacto-desconhecido",
++     "detail": "**`delta-de-dados`**",
++     "file": "legacy-impact.md",
++   },
++   {
++     "code": "severidade-desconhecida",
++     "detail": "**CRITICAL**",
++     "file": "legacy-impact.md",
++   },
++ ]
+
+ ❯ tests/leitura-notacao-markdown.spec.ts:49:28
+     47|       '| `etl.py` | ETL | **`delta-de-dados`** | **CRITICAL** | coluna…
+     48|     ]))
+     49|     expect(lido.anomalies).toEqual([])
+       |                            ^
+     50|     expect(contagem(lido.byType, 'componente-novo')).toBe(1)
+     51|     expect(contagem(lido.byType, 'regra-alterada')).toBe(1)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/leitura-notacao-markdown.spec.ts > BUG-20260914-DTLI: valor canônico escrito com notação > lê o tipo de verificação entre crases no vigia, sem anomalia
+AssertionError: expected [ '`presença`', '**ausência**' ] to deeply equal [ 'presença', 'ausência' ]
+
+- Expected
++ Received
+
+  [
+-   "presença",
+-   "ausência",
++   "`presença`",
++   "**ausência**",
+  ]
+
+ ❯ tests/leitura-notacao-markdown.spec.ts:65:41
+     63|     ]))
+     64|     expect(lido.items).toHaveLength(2)
+     65|     expect(lido.items.map(i => i.tipo)).toEqual(['presença', 'ausência…
+       |                                         ^
+     66|     expect(lido.anomalies).toEqual([])
+     67|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/leitura-notacao-markdown.spec.ts > BUG-20260914-DTLI: cabeçalho que anota a coluna ou escreve um artigo > reconhece a tabela de impacto cujo cabeçalho anota a coluna
+AssertionError: expected [ 'tabela-nao-reconhecida' ] to not include 'tabela-nao-reconhecida'
+ ❯ tests/leitura-notacao-markdown.spec.ts:76:41
+     74|       '| Arquivo afetado | Componente (`architecture.md`) | Tipo | Sev…
+     75|     ))
+     76|     expect(codigos(lido.anomalies)).not.toContain('tabela-nao-reconhec…
+       |                                         ^
+     77|     expect(lido.files).toHaveLength(1)
+     78|     expect(contagem(lido.byType, 'regra-nova')).toBe(1)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/leitura-notacao-markdown.spec.ts > BUG-20260914-DTLI: cabeçalho que anota a coluna ou escreve um artigo > não acusa tabela ausente quando o cabeçalho anotado existe sem linhas
+AssertionError: expected [ 'tabela-nao-reconhecida' ] to not include 'tabela-nao-reconhecida'
+ ❯ tests/leitura-notacao-markdown.spec.ts:86:41
+     84|       '| Arquivo afetado | Componente (`architecture.md`) | Tipo | Sev…
+     85|     ))
+     86|     expect(codigos(lido.anomalies)).not.toContain('tabela-nao-reconhec…
+       |                                         ^
+     87|   })
+     88| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/leitura-notacao-markdown.spec.ts > BUG-20260914-DTLI: cabeçalho que anota a coluna ou escreve um artigo > reconhece o vigia que escreve "Regra esperada após a mudança"
+AssertionError: expected [] to have a length of 1 but got +0
+
+- Expected
++ Received
+
+- 1
++ 0
+
+ ❯ tests/leitura-notacao-markdown.spec.ts:94:24
+     92|       '| ID | Origem (arquivo, seção) | Regra esperada após a mudança …
+     93|     ))
+     94|     expect(lido.items).toHaveLength(1)
+       |                        ^
+     95|   })
+     96| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 5 passed (10)
+   Start at  15:09:45
+   Duration  362ms (transform 65ms, setup 0ms, collect 89ms, tests 10ms, environment 0ms, prepare 68ms)
+

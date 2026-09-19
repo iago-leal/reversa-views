@@ -3,12 +3,12 @@ schema_version: 1
 id: BUG-20260914-DTLI
 display_number: 8
 title: A notação que o próprio Reversa escreve na tabela vira tipo desconhecido e tabela não reconhecida
-status: open
-phase: triaging
+status: active
+phase: delivering
 severity: high
 priority: P1
 created: 2026-09-14
-updated: 2026-09-14
+updated: 2026-09-19
 
 origin:
   type: manual-report
@@ -25,7 +25,7 @@ security_suspected: false
 
 reproduction:
   classification: deterministic
-  rate: "6/6"
+  rate: "14/14"
   suspected_triggers:
     - "valor canônico de célula escrito entre crases ou em negrito, como `componente-novo` ou **HIGH**"
     - "nome de coluna anotado no cabeçalho, como Componente (`architecture.md`)"
@@ -36,8 +36,10 @@ blocking: []
 relationships:
   - bug: BUG-20260912-PIPE
     type: related-to
-    state: proposed
-    evidence: []
+    state: supported
+    evidence:
+      - "mesmo módulo (table.ts) e mesma classe: notação markdown legítima que o leitor não reconhece"
+      - evidence/reproduction.md
 
 traceability:
   specs:
@@ -48,12 +50,52 @@ traceability:
     - src/heranca/reversa-domain/src/impact.ts
     - src/heranca/reversa-domain/src/table.ts
     - src/heranca/reversa-domain/src/watch.ts
-  root_cause: null
-  reproduction_tests: []
-  regression_tests: []
+  root_cause:
+    state: confirmed
+    location:
+      - src/heranca/reversa-domain/src/impact.ts:105-106
+      - src/heranca/reversa-domain/src/watch.ts:83
+      - src/heranca/reversa-domain/src/table.ts:74
+      - src/heranca/reversa-domain/src/impact.ts:125-133
+    summary: >-
+      Os valores enumerados são comparados crus com o vocabulário, sem reconhecer a marca de
+      código inline ou de negrito que envolve o valor inteiro; e o cabeçalho é comparado por
+      igualdade estrita do texto normalizado, em que a anotação entre parênteses e o artigo
+      viram palavras a mais. hasHeader repete a comparação com divisor próprio, anterior a A6.
+    evidence:
+      - evidence/reproduction.md
+      - evidence/impacto-afla-2026-09-19-antes.txt
+  reproduction_tests:
+    - tests/leitura-notacao-markdown.spec.ts#valor canônico escrito com notação
+    - tests/leitura-notacao-markdown.spec.ts#cabeçalho que anota a coluna ou escreve um artigo
+  regression_tests:
+    - tests/leitura-notacao-markdown.spec.ts#notação não é tolerância
 
-spec_verdict: null
-change_set: []
+spec_verdict:
+  verdict: spec-gap
+  decided_by: iago
+  decided_at: 2026-09-19
+  addendum: _reversa_sdd/addenda/bug-BUG-20260914-DTLI-v001.md
+change_set:
+  - id: CHG-001
+    kind: code
+    artifact: src/heranca/reversa-domain/src/table.ts
+    diff: fix/CHG-001.diff
+  - id: CHG-002
+    kind: code
+    artifact: src/heranca/reversa-domain/src/impact.ts
+    diff: fix/CHG-002.diff
+  - id: CHG-003
+    kind: code
+    artifact: src/heranca/reversa-domain/src/watch.ts
+    diff: fix/CHG-003.diff
+  - id: CHG-004
+    kind: configuration
+    artifact: src/heranca/adaptacoes.yml, src/heranca/manifesto.yml, src/heranca/PROCEDENCIA.md
+    diff: fix/CHG-004.diff
+  - id: CHG-005
+    kind: specification
+    artifact: _reversa_sdd/addenda/bug-BUG-20260914-DTLI-v001.md
 
 closure:
   policy: package
@@ -136,11 +178,74 @@ A comparação de valor enumerado em `impact.ts` e `watch.ts`, e o casamento de 
 |---|---|
 | Spec | `_reversa_sdd/sdd/leitura-do-processo.md#6-requisitos-funcionais` (RF-07), §15 (preservar valores fora do conjunto canônico) |
 | Código | `src/heranca/reversa-domain/src/impact.ts`, `src/heranca/reversa-domain/src/table.ts`, `src/heranca/reversa-domain/src/watch.ts` |
-| Teste | a definir no fix |
+| Teste | `tests/leitura-notacao-markdown.spec.ts` |
+| Adendo | `_reversa_sdd/addenda/bug-BUG-20260914-DTLI-v001.md` (RF-07.1 a RF-07.3) |
 
 ## Resolution
 
-Pendente.
+### Causa raiz, no estado final
+
+`confirmed`. Os valores enumerados eram comparados crus com o vocabulário, e o cabeçalho por
+igualdade estrita do texto normalizado. Não há hipótese concorrente: cada um dos 207 valores
+recusados no `afla` é um valor canônico com marca em volta, ou um cabeçalho com anotação ou artigo.
+`hasHeader` repetia a comparação de cabeçalho com divisor próprio, anterior a A6.
+
+### Veredito de spec
+
+`spec-gap`, decidido pelo usuário. A spec dizia o que fazer com o valor fora do conjunto canônico e
+não dizia o que ele é, nem como casar cabeçalho. O adendo aditivo especifica RF-07.1 (notação
+reconhecida), RF-07.2 (notação não é tolerância) e RF-07.3 (casamento de cabeçalho) e o caso
+EC-DTLI, sem tocar a spec original.
+
+### Estratégia
+
+Correção direta, sem debate: não havia hipóteses concorrentes. A regra nasce uma vez em `table.ts`
+e os três leitores a usam, pela razão que o próprio módulo declara.
+
+### Correction Change Set
+
+| CHG | Tipo | Artefato | Propósito |
+|---|---|---|---|
+| CHG-001 | code | `src/heranca/reversa-domain/src/table.ts` | A8: `canonicalOf` e `matchesHeader`; `findTable` usa a regra |
+| CHG-002 | code | `src/heranca/reversa-domain/src/impact.ts` | A9 a A11: tipo e severidade por `canonicalOf`; `hasHeader` pela regra única |
+| CHG-003 | code | `src/heranca/reversa-domain/src/watch.ts` | A12 e A13: tipo de verificação por `canonicalOf` |
+| CHG-004 | configuration | `adaptacoes.yml`, `manifesto.yml`, `PROCEDENCIA.md` | Declaração de A8 a A13, resumos e carimbos |
+| CHG-005 | specification | `_reversa_sdd/addenda/bug-BUG-20260914-DTLI-v001.md` | O veredito `spec-gap` |
+
+### O núcleo da correção
+
+```ts
+const WRAPPERS = [/^`([^`]+)`$/, /^\*\*(.+)\*\*$/] as const
+const ANNOTATION = /\s*\([^()]*\)\s*$/
+const ARTICLES = new Set(['a', 'o', 'as', 'os'])
+// por coluna: columnKey(cell) === want || columnKey(cell sem anotação final) === want
+```
+
+### Testes, e a prova vermelho → verde
+
+**Vermelho**, com os testes aplicados e nenhuma linha de correção: 5 de 10 falham, exatamente os
+cinco de reprodução; os cinco de regressão, que fixam o limite, já passavam
+(`evidence/gate1-vermelho.txt`).
+
+**Verde**, com o change set aplicado: 10 de 10; suíte inteira com 98 arquivos e 1542 casos;
+`typecheck` com saída zero; `check:heranca:local` sem impedimento, com o mesmo aviso informativo
+de antes (`evidence/gate2-verde.txt`).
+
+### Os cinco critérios de aceite
+
+| # | Critério | Estado |
+|---|---|---|
+| 1 | Canônico com crases ou negrito conta na chave canônica, sem anomalia | atendido |
+| 2 | Valor de fato fora do vocabulário segue anomalia, com o texto do arquivo | atendido, com caso próprio |
+| 3 | Tabela de impacto com coluna anotada é reconhecida | atendido |
+| 4 | No `afla`, a feature ativa deixa de produzir `tipo-de-impacto-desconhecido` | atendido: a 005 sai sem anomalia; no total, 207 viram 12, todas genuínas |
+| 5 | Tabela que de fato não existe segue `tabela-nao-reconhecida` | atendido |
+
+Medição antes e depois em `evidence/impacto-afla-2026-09-19-antes.txt` e `-depois.txt`.
+
+### A entrega, que é o que a closure policy `package` exige
+
+Pendente: commit, pacote e instalação.
 
 ## Agent Notes
 

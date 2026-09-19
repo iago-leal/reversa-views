@@ -1,0 +1,39 @@
+diff --git a/src/heranca/reversa-domain/src/watch.ts b/src/heranca/reversa-domain/src/watch.ts
+index 81564f7..4759fca 100644
+--- a/src/heranca/reversa-domain/src/watch.ts
++++ b/src/heranca/reversa-domain/src/watch.ts
+@@ -3,7 +3,7 @@
+  * caminho:     packages/reversa-domain/src/watch.ts
+  * revisão:     420305daa6cdd10858b720a34cb8db67d8e5c5e9 (2026-09-08)
+  * copiado em:  2026-09-09
+- * adaptações:  nenhuma
++ * adaptações:  A12, A13
+  */
+ /**
+  * The regression watch a delivery leaves behind (comp-73 R5, R6), read from
+@@ -19,7 +19,7 @@
+ 
+ import { AnomalyLog } from './anomaly.ts'
+ import type { Anomaly } from './anomaly.ts'
+-import { findTable, normalizeCell, splitSections } from './table.ts'
++import { canonicalOf, findTable, normalizeCell, splitSections } from './table.ts'
+ 
+ /** How a watch item is meant to be checked (`reversa-coding/SKILL.md:130-133`). */
+ export const VERIFICATION_TYPES = ['ausência', 'redação', 'presença', 'confidência'] as const
+@@ -81,11 +81,11 @@ function rowsOf(section: string | null, log: AnomalyLog): WatchItem[] {
+   const out: WatchItem[] = []
+   for (const row of rows) {
+     if (row.length < WATCH_HEADER.length) continue
+-    const [id = '', origem = '', regra = '', tipo = '', sinal = ''] = row
+-    if (!(VERIFICATION_TYPES as readonly string[]).includes(tipo)) {
+-      log.add(FILE, 'tipo-de-verificacao-desconhecido', tipo)
+-    }
+-    out.push({ id, origem, regra, tipo, sinal })
++    const [id = '', origem = '', regra = '', tipoCell = '', sinal = ''] = row
++    // A13 (BUG-20260914-DTLI): the verification type is read through notation.
++    const tipo = canonicalOf(tipoCell, VERIFICATION_TYPES)
++    if (tipo === null) log.add(FILE, 'tipo-de-verificacao-desconhecido', tipoCell)
++    out.push({ id, origem, regra, tipo: tipo ?? tipoCell, sinal })
+   }
+   return out
+ }

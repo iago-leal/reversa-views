@@ -1,0 +1,16 @@
+# Gate 2, verde: 2026-09-19 15:15 sobre 94edec9 + CHG-001..004
+
+$ npx vitest run tests/leitura-notacao-markdown.spec.ts
+ ✓ tests/leitura-notacao-markdown.spec.ts (10 tests) 4ms
+      Tests  10 passed (10)
+
+$ npm test
+ Test Files  98 passed (98)
+      Tests  1542 passed (1542)
+exit 0
+
+$ npm run typecheck
+exit 0
+
+$ npm run check:heranca:local
+  veredito: divergente (0 impedem, 1 apenas informam)

@@ -1,0 +1,14 @@
+== 001-parser-pdf-minerion: linhas=15 canônicas=15 fora=[] anomalias={}
+== 002-backup-restauracao-testada: linhas=20 canônicas=19 fora=[["—",1]] anomalias={"tipo-de-impacto-desconhecido":1,"severidade-desconhecida":1}
+== 003-abastecer-painel-do-bi: linhas=12 canônicas=12 fora=[] anomalias={}
+== 004-par-desconhecido-nao-para: linhas=16 canônicas=15 fora=[["`regra-alterada` + `componente-novo`",1]] anomalias={"tipo-de-impacto-desconhecido":1}
+== 005-refatorar-exibicao-dashboard: linhas=20 canônicas=20 fora=[] anomalias={}
+== 006-primeiro-acesso-alcancavel: linhas=20 canônicas=18 fora=[["**não tocado**",1],["—",1]] anomalias={"tipo-de-impacto-desconhecido":2,"severidade-desconhecida":1}
+== 007-painel-bate-com-a-planilha: linhas=27 canônicas=25 fora=[["—",2]] anomalias={"tipo-de-impacto-desconhecido":2}
+== 008-ux-painel-navegacao-celular: linhas=27 canônicas=27 fora=[] anomalias={}
+== 009-titulo-de-bloco-fixo: linhas=10 canônicas=10 fora=[] anomalias={}
+== 010-estado-desabilitado-visivel: linhas=7 canônicas=7 fora=[] anomalias={}
+== 011-extracao-producao-minerion: linhas=16 canônicas=12 fora=[["`componente-novo` / `regra-alterada`",2],["`regra-nova` / `componente-novo`",1],["`teste-alterado`",1]] anomalias={"tipo-de-impacto-desconhecido":4}
+== 012-rotulo-curto-no-catalogo: linhas=11 canônicas=11 fora=[] anomalias={}
+== 013-remover-harness: linhas=16 canônicas=16 fora=[] anomalias={}
+== 014-historico-e-graficos-do-painel: linhas=18 canônicas=17 fora=[["`componente-novo`, `regra-alterada`",1]] anomalias={"tipo-de-impacto-desconhecido":1}

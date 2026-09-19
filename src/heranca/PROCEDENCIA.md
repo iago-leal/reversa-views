@@ -74,10 +74,11 @@ O descarte tem consequência no índice da sonda, registrada como adaptação A3
 
 ## 5. Adaptações
 
-Sete. Quatro (A1 a A3 e A7) são de resolução de importação ou de exportação. Três (A4 a A6) tocam
-uma regra de leitura, ou a suíte que a fixa, e são a exceção registrada: nasceram de defeito
-encontrado no uso, `BUG-20260909-FJBD` e `BUG-20260912-PIPE`, e o caminho para aposentá-las é o
-mesmo, levar a mudança à origem e ressincronizar.
+Treze. Seis (A1 a A3, A7, A9 e A12) são de resolução de importação ou de exportação. Sete (A4 a
+A6, A8, A10, A11 e A13) tocam uma regra de leitura, ou a suíte que a fixa, e são a exceção
+registrada: nasceram de defeito encontrado no uso, `BUG-20260909-FJBD`, `BUG-20260912-PIPE` e
+`BUG-20260914-DTLI`, e o caminho para aposentá-las é o mesmo, levar a mudança à origem e
+ressincronizar.
 
 ### A1, importações de `reversa-probe/src/snapshot.ts`
 
@@ -190,6 +191,35 @@ descoberto pelo uso deste projeto, não pela origem. A5 mostra quando o caminho 
 suíte herdada fixava o comportamento que A4 mudou, e deixá-la intacta faria a suíte reprovar o
 código. Aqui nada do que a origem fixa deixou de valer, e as 1527 asserções da árvore continuam
 verdes sem tocar em caso algum.
+
+### A8 a A13, a notação markdown do próprio Reversa em `table.ts`, `impact.ts` e `watch.ts`
+
+O `/reversa-coding` grafa a taxonomia de impacto entre crases, como o próprio `SKILL.md` a grafa, e
+às vezes escreve a severidade em negrito. O leitor da origem compara a célula crua com o
+vocabulário, e `` `componente-novo` `` não é `componente-novo`: no `afla`, as 207 linhas das doze
+features com tabela reconhecida viravam anomalia, com a contagem canônica zerada em todas. O
+cabeçalho que anota uma coluna, `Componente (`architecture.md`)`, recusava a tabela inteira das
+features 003 e 004; o que escreve um artigo a mais, `Regra esperada após a mudança`, recusava 12 dos
+14 vigias. Nenhum arquivo estava errado (`BUG-20260914-DTLI`).
+
+A regra nasce uma vez, em `table.ts` (A8), que existe justamente para que os leitores não divirjam.
+`canonicalOf` retira só as marcas que envolvem o valor inteiro, crases e negrito, e devolve o membro
+do vocabulário ou nada; `matchesHeader` aceita, por coluna, a anotação final entre parênteses na
+célula encontrada e o artigo definido isolado, e nunca encurta o nome esperado. Não há caixa, nem
+semelhança, nem valor mais próximo: o que está fora do vocabulário continua anomalia, com o texto
+como está no arquivo, que é o que a spec manda preservar.
+
+Os leitores passam a usá-la: A9 e A12 importam, A10 lê tipo e severidade, A13 o tipo de
+verificação, e A11 troca a segunda comparação de cabeçalho de `impact.ts`, que tinha divisor próprio
+e nem honrava o escape de A6, pela regra única. O índice do pacote não muda, porque nada fora da
+camada herdada usa as funções novas. Os trechos original e adaptado estão em `adaptacoes.yml`,
+literais.
+
+### Onde a regressão de A8 a A13 foi fixada
+
+Em `tests/leitura-notacao-markdown.spec.ts`, suíte local, pelo motivo registrado para A6. Metade dos
+casos fixa o limite, e não o reconhecimento: valor fora do vocabulário, marca parcial, caixa
+trocada, tabela alheia e cabeçalho esperado encurtado continuam recusados.
 
 ### O que deliberadamente não foi adaptado
 

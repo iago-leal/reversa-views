@@ -130,3 +130,196 @@ adaptacoes:
       export { findTable, normalizeCell, splitSections } from './table.ts'
     adaptado: |
       export { cellsOf, findTable, normalizeCell, splitSections } from './table.ts'
+
+  - id: A8
+    arquivo: src/heranca/reversa-domain/src/table.ts
+    motivo: |
+      BUG-20260914-DTLI. O /reversa-coding grafa a taxonomia de impacto entre crases, como o próprio
+      SKILL.md faz, e às vezes a severidade em negrito. O leitor da origem compara a célula crua com o
+      vocabulário, e cada linha íntegra vira anomalia: no afla, 207 linhas em doze features, com a
+      contagem canônica zerada em todas. O cabeçalho que anota uma coluna, como Componente
+      (`architecture.md`), ou que escreve um artigo a mais, como Regra esperada após a mudança, recusa a
+      tabela inteira. A regra nasce uma vez, aqui: canonicalOf retira só as marcas que envolvem o valor
+      inteiro, crases e negrito, e matchesHeader aceita a anotação final entre parênteses e o artigo
+      definido isolado. Nada de caixa, de semelhança ou de valor mais próximo.
+    original: |
+      /** A separator row is only dashes, colons and spaces. */
+      function isSeparator(cells: readonly string[]): boolean {
+        return cells.length > 0 && cells.every(cell => /^:?-{1,}:?$/.test(cell.trim()))
+      }
+
+      /**
+       * Find the table whose header matches `header` (normalized) and return its
+       * data rows as raw cells.
+       * @param md - the artifact text, or null when the file does not exist.
+       * @param header - the expected column names, in order.
+       * @returns the data rows; empty when the file or the table is absent.
+       */
+      export function findTable(md: string | null, header: readonly string[]): string[][] {
+        if (md === null) return []
+        const want = header.map(normalizeCell).join('|')
+        const lines = md.split('\n')
+
+        for (let index = 0; index < lines.length; index += 1) {
+          const cells = cellsOf(lines[index] ?? '')
+          if (cells.length !== header.length) continue
+          if (cells.map(normalizeCell).join('|') !== want) continue
+    adaptado: |
+      /** A separator row is only dashes, colons and spaces. */
+      function isSeparator(cells: readonly string[]): boolean {
+        return cells.length > 0 && cells.every(cell => /^:?-{1,}:?$/.test(cell.trim()))
+      }
+
+      /*
+       * A8 (BUG-20260914-DTLI): REVERSA writes its own vocabulary as markdown.
+       * `/reversa-coding` spells the impact taxonomy between backticks, as its
+       * SKILL.md does, and a severity sometimes comes in bold. A canonical value
+       * wrapped in that notation is still the canonical value, and comparing the
+       * raw cell turned every sound row into an anomaly. Only marks enclosing the
+       * WHOLE value are removed, and nothing else is tolerated: no case folding,
+       * no nearest match, because a value outside the vocabulary must stay
+       * visible exactly as written.
+       *
+       * The header is read as narrowly. A column name followed by an annotation
+       * in parentheses, or carrying one more definite article, names the same
+       * column; the expected name itself is never shortened.
+       */
+      const WRAPPERS = [/^`([^`]+)`$/, /^\*\*(.+)\*\*$/] as const
+      const ANNOTATION = /\s*\([^()]*\)\s*$/
+      const ARTICLES = new Set(['a', 'o', 'as', 'os'])
+
+      /** The text a cell carries once the marks enclosing all of it are removed. */
+      function unwrap(cell: string): string {
+        let value = cell.trim()
+        for (;;) {
+          const inner = WRAPPERS.map(wrapper => wrapper.exec(value)?.[1]).find(match => match !== undefined)
+          if (inner === undefined) return value
+          value = inner.trim()
+        }
+      }
+
+      /**
+       * The vocabulary member a cell spells, through the notation enclosing it.
+       * @returns the member, or null when the value is outside the vocabulary.
+       */
+      export function canonicalOf<T extends string>(cell: string, vocabulary: readonly T[]): T | null {
+        const value = unwrap(cell)
+        return (vocabulary as readonly string[]).includes(value) ? (value as T) : null
+      }
+
+      /** A column name, normalized and without its definite articles. */
+      function columnKey(text: string): string {
+        return normalizeCell(text)
+          .split(' ')
+          .filter(word => !ARTICLES.has(word))
+          .join(' ')
+      }
+
+      /** Whether a row's cells are the header `header`, column by column. */
+      export function matchesHeader(cells: readonly string[], header: readonly string[]): boolean {
+        if (cells.length !== header.length) return false
+        return cells.every((cell, index) => {
+          const want = columnKey(header[index] ?? '')
+          return columnKey(cell) === want || columnKey(cell.replace(ANNOTATION, '')) === want
+        })
+      }
+
+      /**
+       * Find the table whose header matches `header` (normalized) and return its
+       * data rows as raw cells.
+       * @param md - the artifact text, or null when the file does not exist.
+       * @param header - the expected column names, in order.
+       * @returns the data rows; empty when the file or the table is absent.
+       */
+      export function findTable(md: string | null, header: readonly string[]): string[][] {
+        if (md === null) return []
+        const lines = md.split('\n')
+
+        for (let index = 0; index < lines.length; index += 1) {
+          const cells = cellsOf(lines[index] ?? '')
+          if (!matchesHeader(cells, header)) continue
+
+  - id: A9
+    arquivo: src/heranca/reversa-domain/src/impact.ts
+    motivo: |
+      Consequência de A8: o leitor de impacto importa a regra única de valor e de cabeçalho.
+    original: |
+      import { findTable, normalizeCell } from './table.ts'
+    adaptado: |
+      import { canonicalOf, cellsOf, findTable, matchesHeader, normalizeCell } from './table.ts'
+
+  - id: A10
+    arquivo: src/heranca/reversa-domain/src/impact.ts
+    motivo: |
+      BUG-20260914-DTLI. Tipo e severidade passam por canonicalOf (A8): o valor canônico escrito com
+      marca conta na chave canônica, e o que está fora do vocabulário segue cru, na anomalia e na
+      contagem, como a origem já fazia.
+    original: |
+            const [arquivo = '', componente = '', tipo = '', severidade = '', justificativa = ''] = row
+            if (!(IMPACT_TYPES as readonly string[]).includes(tipo)) log.add(FILE, 'tipo-de-impacto-desconhecido', tipo)
+            if (!(SEVERITIES as readonly string[]).includes(severidade)) log.add(FILE, 'severidade-desconhecida', severidade)
+            files.push({ arquivo, componente, tipo, severidade, justificativa })
+    adaptado: |
+            const [arquivo = '', componente = '', tipoCell = '', severidadeCell = '', justificativa = ''] = row
+            // A10 (BUG-20260914-DTLI): a canonical value in backticks or bold counts
+            // as itself; anything else is kept as written, and flagged.
+            const tipo = canonicalOf(tipoCell, IMPACT_TYPES)
+            const severidade = canonicalOf(severidadeCell, SEVERITIES)
+            if (tipo === null) log.add(FILE, 'tipo-de-impacto-desconhecido', tipoCell)
+            if (severidade === null) log.add(FILE, 'severidade-desconhecida', severidadeCell)
+            files.push({
+              arquivo,
+              componente,
+              tipo: tipo ?? tipoCell,
+              severidade: severidade ?? severidadeCell,
+              justificativa,
+            })
+
+  - id: A11
+    arquivo: src/heranca/reversa-domain/src/impact.ts
+    motivo: |
+      BUG-20260914-DTLI. hasHeader repetia a comparação de cabeçalho com divisor próprio, que nem
+      honrava o escape de A6. Passa a usar cellsOf e matchesHeader: sem isso, a tabela anotada vazia
+      seria dada como ausente pela segunda regra, mesmo reconhecida pela primeira.
+    original: |
+      function hasHeader(md: string): boolean {
+        const want = IMPACT_HEADER.map(normalizeCell).join('|')
+        return md.split('\n').some(line => {
+          const trimmed = line.trim()
+          if (!trimmed.startsWith('|')) return false
+          const cells = trimmed.replace(/^\|/, '').replace(/\|$/, '').split('|').map(cell => normalizeCell(cell))
+          return cells.join('|') === want
+        })
+      }
+    adaptado: |
+      function hasHeader(md: string): boolean {
+        // A11 (BUG-20260914-DTLI): the same split and the same header rule as
+        // findTable, so the two can never disagree on whether the table exists.
+        return md.split('\n').some(line => matchesHeader(cellsOf(line), IMPACT_HEADER))
+      }
+
+  - id: A12
+    arquivo: src/heranca/reversa-domain/src/watch.ts
+    motivo: |
+      Consequência de A8, no leitor do vigia.
+    original: |
+      import { findTable, normalizeCell, splitSections } from './table.ts'
+    adaptado: |
+      import { canonicalOf, findTable, normalizeCell, splitSections } from './table.ts'
+
+  - id: A13
+    arquivo: src/heranca/reversa-domain/src/watch.ts
+    motivo: |
+      BUG-20260914-DTLI. O tipo de verificação passa por canonicalOf (A8), como tipo e severidade em A10.
+    original: |
+          const [id = '', origem = '', regra = '', tipo = '', sinal = ''] = row
+          if (!(VERIFICATION_TYPES as readonly string[]).includes(tipo)) {
+            log.add(FILE, 'tipo-de-verificacao-desconhecido', tipo)
+          }
+          out.push({ id, origem, regra, tipo, sinal })
+    adaptado: |
+          const [id = '', origem = '', regra = '', tipoCell = '', sinal = ''] = row
+          // A13 (BUG-20260914-DTLI): the verification type is read through notation.
+          const tipo = canonicalOf(tipoCell, VERIFICATION_TYPES)
+          if (tipo === null) log.add(FILE, 'tipo-de-verificacao-desconhecido', tipoCell)
+          out.push({ id, origem, regra, tipo: tipo ?? tipoCell, sinal })

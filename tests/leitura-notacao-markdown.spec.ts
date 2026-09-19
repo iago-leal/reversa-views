@@ -1,0 +1,150 @@
+/**
+ * Regressão do BUG-20260914-DTLI: a notação que o próprio Reversa escreve na tabela é lida como o
+ * valor que ela carrega. O `/reversa-coding` grafa a taxonomia entre crases, e às vezes a
+ * severidade em negrito; o leitor herdado comparava a célula crua com o vocabulário, e cada linha
+ * íntegra virava anomalia. O cabeçalho que anota uma coluna, ou que escreve um artigo a mais, fazia
+ * a tabela inteira ser recusada.
+ *
+ * É o teste de reprodução (vermelho antes das adaptações A8 a A13) e o de regressão. A segunda
+ * metade fixa o limite: notação não é tolerância. Valor fora do vocabulário continua anomalia, com
+ * o texto como está no arquivo (spec §15, NG-05), e tabela alheia continua não reconhecida.
+ *
+ * As formas vêm do que `/reversa-coding` deixou no `afla`.
+ */
+import { describe, expect, it } from 'vitest'
+import { ImpactContract, WatchContract, findTable } from '../src/heranca/reversa-domain/src/index.ts'
+
+const CABECALHO_IMPACTO = '| Arquivo afetado | Componente | Tipo | Severidade | Justificativa |'
+const CABECALHO_VIGIA =
+  '| ID | Origem (arquivo, seção) | Regra esperada após mudança | Tipo de verificação | Sinal de violação |'
+const SEPARADOR = '|---|---|---|---|---|'
+
+/** Um `legacy-impact.md` com o cabeçalho e as linhas dadas. */
+function impacto(linhas: string[], cabecalho = CABECALHO_IMPACTO): string {
+  return ['# Legacy impact: fixtura', '', cabecalho, SEPARADOR, ...linhas, ''].join('\n')
+}
+
+/** Um `regression-watch.md` com a tabela no preâmbulo. */
+function vigia(linhas: string[], cabecalho = CABECALHO_VIGIA): string {
+  return [cabecalho, SEPARADOR, ...linhas, '', '## Observações', ''].join('\n')
+}
+
+/** A contagem de uma chave numa tally. */
+function contagem(tally: { key: string; count: number }[], chave: string): number | undefined {
+  return tally.find(t => t.key === chave)?.count
+}
+
+/** Os códigos de anomalia, na ordem. */
+function codigos(anomalias: { code: string }[]): string[] {
+  return anomalias.map(a => a.code)
+}
+
+describe('BUG-20260914-DTLI: valor canônico escrito com notação', () => {
+  it('conta o tipo entre crases e a severidade em negrito na chave canônica, sem anomalia', () => {
+    const lido = ImpactContract.read(impacto([
+      '| `dashboard.py` | Painel | `componente-novo` | **HIGH** | tela nova |',
+      '| `api.py` | API | `regra-alterada` | MEDIUM | filtro mudou |',
+      '| `etl.py` | ETL | **`delta-de-dados`** | **CRITICAL** | coluna nova |',
+    ]))
+    expect(lido.anomalies).toEqual([])
+    expect(contagem(lido.byType, 'componente-novo')).toBe(1)
+    expect(contagem(lido.byType, 'regra-alterada')).toBe(1)
+    expect(contagem(lido.byType, 'delta-de-dados')).toBe(1)
+    expect(contagem(lido.bySeverity, 'HIGH')).toBe(1)
+    expect(contagem(lido.bySeverity, 'CRITICAL')).toBe(1)
+    expect(lido.byType.every(t => t.canonical)).toBe(true)
+    expect(lido.files[0]).toMatchObject({ tipo: 'componente-novo', severidade: 'HIGH' })
+  })
+
+  it('lê o tipo de verificação entre crases no vigia, sem anomalia', () => {
+    const lido = WatchContract.read(vigia([
+      '| W001 | domain.md, Descontos | desconto só acima de 500 | `presença` | regra some |',
+      '| W002 | domain.md, Frete | frete grátis extinto | **ausência** | regra volta |',
+    ]))
+    expect(lido.items).toHaveLength(2)
+    expect(lido.items.map(i => i.tipo)).toEqual(['presença', 'ausência'])
+    expect(lido.anomalies).toEqual([])
+  })
+})
+
+describe('BUG-20260914-DTLI: cabeçalho que anota a coluna ou escreve um artigo', () => {
+  it('reconhece a tabela de impacto cujo cabeçalho anota a coluna', () => {
+    const lido = ImpactContract.read(impacto(
+      ['| `a.py` | Painel | `regra-nova` | LOW | ok |'],
+      '| Arquivo afetado | Componente (`architecture.md`) | Tipo | Severidade | Justificativa |',
+    ))
+    expect(codigos(lido.anomalies)).not.toContain('tabela-nao-reconhecida')
+    expect(lido.files).toHaveLength(1)
+    expect(contagem(lido.byType, 'regra-nova')).toBe(1)
+  })
+
+  it('não acusa tabela ausente quando o cabeçalho anotado existe sem linhas', () => {
+    const lido = ImpactContract.read(impacto(
+      [],
+      '| Arquivo afetado | Componente (`architecture.md`) | Tipo | Severidade | Justificativa |',
+    ))
+    expect(codigos(lido.anomalies)).not.toContain('tabela-nao-reconhecida')
+  })
+
+  it('reconhece o vigia que escreve "Regra esperada após a mudança"', () => {
+    const lido = WatchContract.read(vigia(
+      ['| W001 | domain.md, Descontos | desconto só acima de 500 | presença | regra some |'],
+      '| ID | Origem (arquivo, seção) | Regra esperada após a mudança | Tipo de verificação | Sinal de violação |',
+    ))
+    expect(lido.items).toHaveLength(1)
+  })
+})
+
+describe('BUG-20260914-DTLI: notação não é tolerância', () => {
+  it('mantém anomalia para valor fora do vocabulário, com o texto como está no arquivo', () => {
+    const lido = ImpactContract.read(impacto([
+      '| `a.py` | X | — | — | nada |',
+      '| `b.py` | X | **não tocado** | LOW | nada |',
+      '| `c.py` | X | `teste-alterado` | LOW | teste |',
+      '| `d.py` | X | `componente-novo` / `regra-alterada` | LOW | dois tipos |',
+      '| `e.py` | X | `componente-novo`, `regra-alterada` | LOW | dois tipos |',
+    ]))
+    const tipos = lido.anomalies.filter(a => a.code === 'tipo-de-impacto-desconhecido').map(a => a.detail)
+    expect(tipos).toEqual([
+      '—',
+      '**não tocado**',
+      '`teste-alterado`',
+      '`componente-novo` / `regra-alterada`',
+      '`componente-novo`, `regra-alterada`',
+    ])
+    expect(lido.anomalies.filter(a => a.code === 'severidade-desconhecida').map(a => a.detail)).toEqual(['—'])
+    expect(contagem(lido.byType, '**não tocado**')).toBe(1)
+    expect(lido.byType.filter(t => t.canonical).every(t => t.count === 0)).toBe(true)
+  })
+
+  it('não reconhece marca parcial nem caixa trocada', () => {
+    const lido = ImpactContract.read(impacto([
+      '| `a.py` | X | `componente-novo | high | crase só de um lado |',
+      '| `b.py` | X | **componente**-novo | **HIGH | negrito parcial |',
+      '| `c.py` | X | *componente-novo* | LOW | itálico não foi medido |',
+    ]))
+    expect(lido.anomalies.filter(a => a.code === 'tipo-de-impacto-desconhecido')).toHaveLength(3)
+    expect(lido.anomalies.filter(a => a.code === 'severidade-desconhecida')).toHaveLength(2)
+  })
+
+  it('continua acusando a tabela que de fato não existe', () => {
+    const lido = ImpactContract.read('# Impacto\n\n| Coisa | Outra |\n|---|---|\n| a | b |\n')
+    expect(codigos(lido.anomalies)).toContain('tabela-nao-reconhecida')
+  })
+
+  it('não encurta o cabeçalho esperado: "Origem" sozinho não casa "Origem (arquivo, seção)"', () => {
+    const md = vigia(
+      ['| W001 | domain.md | regra | presença | sinal |'],
+      '| ID | Origem | Regra esperada após mudança | Tipo de verificação | Sinal de violação |',
+    )
+    expect(findTable(md, ['ID', 'Origem (arquivo, seção)', 'Regra esperada após mudança', 'Tipo de verificação', 'Sinal de violação'])).toEqual([])
+  })
+
+  it('não aceita anotação no meio do nome, nem palavra a mais que não seja artigo', () => {
+    const cabecalho = ['Arquivo afetado', 'Componente', 'Tipo', 'Severidade', 'Justificativa']
+    const meio = '| Arquivo (x) afetado | Componente | Tipo | Severidade | Justificativa |\n|---|---|---|---|---|\n| a | b | c | d | e |\n'
+    const extra = '| Arquivo afetado | Componente novo | Tipo | Severidade | Justificativa |\n|---|---|---|---|---|\n| a | b | c | d | e |\n'
+    expect(findTable(meio, cabecalho)).toEqual([])
+    expect(findTable(extra, cabecalho)).toEqual([])
+  })
+})

@@ -3,7 +3,7 @@
  * caminho:     packages/reversa-domain/src/impact.ts
  * revisão:     420305daa6cdd10858b720a34cb8db67d8e5c5e9 (2026-09-08)
  * copiado em:  2026-09-09
- * adaptações:  A4
+ * adaptações:  A4, A9, A10, A11
  */
 /**
  * What REVERSA actually touched in the legacy code (comp-73 R1, R3, R4, R7),
@@ -26,7 +26,7 @@
 
 import { AnomalyLog } from './anomaly.ts'
 import type { Anomaly } from './anomaly.ts'
-import { findTable, normalizeCell } from './table.ts'
+import { canonicalOf, cellsOf, findTable, matchesHeader, normalizeCell } from './table.ts'
 
 /** The impact taxonomy `/reversa-coding` uses, reused verbatim by `/reversa-sync`. */
 export const IMPACT_TYPES = [
@@ -101,10 +101,20 @@ export const ImpactContract = {
         log.add(FILE, 'linha-de-impacto-incompleta', row.join(' | '))
         continue
       }
-      const [arquivo = '', componente = '', tipo = '', severidade = '', justificativa = ''] = row
-      if (!(IMPACT_TYPES as readonly string[]).includes(tipo)) log.add(FILE, 'tipo-de-impacto-desconhecido', tipo)
-      if (!(SEVERITIES as readonly string[]).includes(severidade)) log.add(FILE, 'severidade-desconhecida', severidade)
-      files.push({ arquivo, componente, tipo, severidade, justificativa })
+      const [arquivo = '', componente = '', tipoCell = '', severidadeCell = '', justificativa = ''] = row
+      // A10 (BUG-20260914-DTLI): a canonical value in backticks or bold counts
+      // as itself; anything else is kept as written, and flagged.
+      const tipo = canonicalOf(tipoCell, IMPACT_TYPES)
+      const severidade = canonicalOf(severidadeCell, SEVERITIES)
+      if (tipo === null) log.add(FILE, 'tipo-de-impacto-desconhecido', tipoCell)
+      if (severidade === null) log.add(FILE, 'severidade-desconhecida', severidadeCell)
+      files.push({
+        arquivo,
+        componente,
+        tipo: tipo ?? tipoCell,
+        severidade: severidade ?? severidadeCell,
+        justificativa,
+      })
     }
 
     // A4 (BUG-20260909-FJBD): the note is authoritative, and a shape with other
@@ -124,13 +134,9 @@ export const ImpactContract = {
 
 /** True when the impact table's header is present at all. */
 function hasHeader(md: string): boolean {
-  const want = IMPACT_HEADER.map(normalizeCell).join('|')
-  return md.split('\n').some(line => {
-    const trimmed = line.trim()
-    if (!trimmed.startsWith('|')) return false
-    const cells = trimmed.replace(/^\|/, '').replace(/\|$/, '').split('|').map(cell => normalizeCell(cell))
-    return cells.join('|') === want
-  })
+  // A11 (BUG-20260914-DTLI): the same split and the same header rule as
+  // findTable, so the two can never disagree on whether the table exists.
+  return md.split('\n').some(line => matchesHeader(cellsOf(line), IMPACT_HEADER))
 }
 
 /** The header note decides; its absence means there was a legacy. */

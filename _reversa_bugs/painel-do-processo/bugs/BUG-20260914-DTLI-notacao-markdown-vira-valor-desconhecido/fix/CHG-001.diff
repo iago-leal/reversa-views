@@ -1,0 +1,89 @@
+diff --git a/src/heranca/reversa-domain/src/table.ts b/src/heranca/reversa-domain/src/table.ts
+index 4568a70..f41d4c9 100644
+--- a/src/heranca/reversa-domain/src/table.ts
++++ b/src/heranca/reversa-domain/src/table.ts
+@@ -3,7 +3,7 @@
+  * caminho:     packages/reversa-domain/src/table.ts
+  * revisão:     420305daa6cdd10858b720a34cb8db67d8e5c5e9 (2026-09-08)
+  * copiado em:  2026-09-09
+- * adaptações:  A6
++ * adaptações:  A6, A8
+  */
+ /**
+  * Reading the markdown tables REVERSA writes (comp-73 R2).
+@@ -59,6 +59,60 @@ function isSeparator(cells: readonly string[]): boolean {
+   return cells.length > 0 && cells.every(cell => /^:?-{1,}:?$/.test(cell.trim()))
+ }
+ 
++/*
++ * A8 (BUG-20260914-DTLI): REVERSA writes its own vocabulary as markdown.
++ * `/reversa-coding` spells the impact taxonomy between backticks, as its
++ * SKILL.md does, and a severity sometimes comes in bold. A canonical value
++ * wrapped in that notation is still the canonical value, and comparing the
++ * raw cell turned every sound row into an anomaly. Only marks enclosing the
++ * WHOLE value are removed, and nothing else is tolerated: no case folding,
++ * no nearest match, because a value outside the vocabulary must stay
++ * visible exactly as written.
++ *
++ * The header is read as narrowly. A column name followed by an annotation
++ * in parentheses, or carrying one more definite article, names the same
++ * column; the expected name itself is never shortened.
++ */
++const WRAPPERS = [/^`([^`]+)`$/, /^\*\*(.+)\*\*$/] as const
++const ANNOTATION = /\s*\([^()]*\)\s*$/
++const ARTICLES = new Set(['a', 'o', 'as', 'os'])
++
++/** The text a cell carries once the marks enclosing all of it are removed. */
++function unwrap(cell: string): string {
++  let value = cell.trim()
++  for (;;) {
++    const inner = WRAPPERS.map(wrapper => wrapper.exec(value)?.[1]).find(match => match !== undefined)
++    if (inner === undefined) return value
++    value = inner.trim()
++  }
++}
++
++/**
++ * The vocabulary member a cell spells, through the notation enclosing it.
++ * @returns the member, or null when the value is outside the vocabulary.
++ */
++export function canonicalOf<T extends string>(cell: string, vocabulary: readonly T[]): T | null {
++  const value = unwrap(cell)
++  return (vocabulary as readonly string[]).includes(value) ? (value as T) : null
++}
++
++/** A column name, normalized and without its definite articles. */
++function columnKey(text: string): string {
++  return normalizeCell(text)
++    .split(' ')
++    .filter(word => !ARTICLES.has(word))
++    .join(' ')
++}
++
++/** Whether a row's cells are the header `header`, column by column. */
++export function matchesHeader(cells: readonly string[], header: readonly string[]): boolean {
++  if (cells.length !== header.length) return false
++  return cells.every((cell, index) => {
++    const want = columnKey(header[index] ?? '')
++    return columnKey(cell) === want || columnKey(cell.replace(ANNOTATION, '')) === want
++  })
++}
++
+ /**
+  * Find the table whose header matches `header` (normalized) and return its
+  * data rows as raw cells.
+@@ -68,13 +122,11 @@ function isSeparator(cells: readonly string[]): boolean {
+  */
+ export function findTable(md: string | null, header: readonly string[]): string[][] {
+   if (md === null) return []
+-  const want = header.map(normalizeCell).join('|')
+   const lines = md.split('\n')
+ 
+   for (let index = 0; index < lines.length; index += 1) {
+     const cells = cellsOf(lines[index] ?? '')
+-    if (cells.length !== header.length) continue
+-    if (cells.map(normalizeCell).join('|') !== want) continue
++    if (!matchesHeader(cells, header)) continue
+ 
+     const rows: string[][] = []
+     for (let cursor = index + 1; cursor < lines.length; cursor += 1) {
