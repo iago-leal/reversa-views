@@ -3,7 +3,7 @@ schema_version: 1
 id: BUG-20260914-5UH7
 display_number: 9
 title: O vigia de regressão só procura a tabela antes do primeiro título, e sai vazio sem dizer nada
-status: active
+status: resolved
 phase: delivering
 severity: low
 priority: P3
@@ -71,6 +71,22 @@ spec_verdict:
   decided_by: iago
   decided_at: 2026-09-19
   addendum: _reversa_sdd/addenda/bug-BUG-20260914-5UH7-v001.md
+delivery:
+  branch: master
+  commit: 9203e9f
+  pull_request: null
+  ci: null
+  merged: 2026-09-19
+  published: 2026-09-19, pacote reversa-views-0.9.11.vsix gerado e instalado por code --install-extension
+
+versions:
+  fixed_in: "0.9.11"
+  built_from: dae310f
+  affected: "0.7.0 a 0.9.4"
+  installed: "0.9.4, carimbada em ecbebb9"
+
+backports: []
+
 change_set:
   - id: CHG-001
     kind: code
@@ -86,8 +102,9 @@ change_set:
 
 closure:
   policy: package
-  satisfied: false
-resolution_kind: null
+  satisfied: true
+  satisfied_at: 2026-09-19
+resolution_kind: fixed
 ---
 
 # O vigia de regressão só procura a tabela antes do primeiro título, e sai vazio sem dizer nada
@@ -219,7 +236,21 @@ contribui com uma delas, como a nota de quem registrou previa (`evidence/vigia-a
 
 ### A entrega, que é o que a closure policy `package` exige
 
-Pendente: pacote e instalação, junto com o `BUG-20260914-DTLI`.
+| Passo | Resultado |
+|---|---|
+| Registro | commit 9203e9f em `master` |
+| Construção, suíte e empacotamento | `npm run atualizar -- --aplicar`, percurso inteiro sem parada, a partir de `dae310f` |
+| Pacote | `reversa-views-0.9.11.vsix`, 210,7 KiB sobre teto de 2048,0 KiB |
+| Instalação | `code --install-extension`, confirmada em `iagoleal-local.reversa-views@0.9.11` |
+
+A versão salta de 0.9.4 para 0.9.11 porque a série deriva da contagem de commits, e sete se somaram
+desde a construção 0.9.4: dois de registro do nº 7 e cinco da sessão que corrigiu os nº 8 e nº 9.
+Os dois foram entregues no mesmo pacote.
+
+Conferência com a construção instalada: sobre o `afla`, os itens ativos lidos passam de 0 para 76, e as 12 tabelas ou valores que o leitor não lê passam a ser declarados.
+
+A origem **não** recebeu push: o clone fica à frente de `origin/master` até que o usuário decida
+enviar.
 
 ## Agent Notes
 

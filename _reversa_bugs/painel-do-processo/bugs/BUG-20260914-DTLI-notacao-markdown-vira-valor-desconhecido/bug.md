@@ -3,7 +3,7 @@ schema_version: 1
 id: BUG-20260914-DTLI
 display_number: 8
 title: A notação que o próprio Reversa escreve na tabela vira tipo desconhecido e tabela não reconhecida
-status: active
+status: resolved
 phase: delivering
 severity: high
 priority: P1
@@ -76,6 +76,22 @@ spec_verdict:
   decided_by: iago
   decided_at: 2026-09-19
   addendum: _reversa_sdd/addenda/bug-BUG-20260914-DTLI-v001.md
+delivery:
+  branch: master
+  commit: a734b8d e 89bf5ce
+  pull_request: null
+  ci: null
+  merged: 2026-09-19
+  published: 2026-09-19, pacote reversa-views-0.9.11.vsix gerado e instalado por code --install-extension
+
+versions:
+  fixed_in: "0.9.11"
+  built_from: dae310f
+  affected: "0.7.0 a 0.9.4"
+  installed: "0.9.4, carimbada em ecbebb9"
+
+backports: []
+
 change_set:
   - id: CHG-001
     kind: code
@@ -103,8 +119,9 @@ change_set:
 
 closure:
   policy: package
-  satisfied: false
-resolution_kind: null
+  satisfied: true
+  satisfied_at: 2026-09-19
+resolution_kind: fixed
 ---
 
 # A notação que o próprio Reversa escreve na tabela vira tipo desconhecido e tabela não reconhecida
@@ -257,7 +274,21 @@ Medição antes e depois em `evidence/impacto-afla-2026-09-19-antes.txt` e `-dep
 
 ### A entrega, que é o que a closure policy `package` exige
 
-Pendente: commit, pacote e instalação.
+| Passo | Resultado |
+|---|---|
+| Registro | commit a734b8d e 89bf5ce em `master` |
+| Construção, suíte e empacotamento | `npm run atualizar -- --aplicar`, percurso inteiro sem parada, a partir de `dae310f` |
+| Pacote | `reversa-views-0.9.11.vsix`, 210,7 KiB sobre teto de 2048,0 KiB |
+| Instalação | `code --install-extension`, confirmada em `iagoleal-local.reversa-views@0.9.11` |
+
+A versão salta de 0.9.4 para 0.9.11 porque a série deriva da contagem de commits, e sete se somaram
+desde a construção 0.9.4: dois de registro do nº 7 e cinco da sessão que corrigiu os nº 8 e nº 9.
+Os dois foram entregues no mesmo pacote.
+
+Conferência com a construção instalada: sobre o `afla`, as anomalias de impacto caem de 207 para 12, todas genuínas, e a feature ativa sai limpa; no cabeçalho do painel restam 19, das quais 17 vêm do próprio `state.json` e da configuração do projeto.
+
+A origem **não** recebeu push: o clone fica à frente de `origin/master` até que o usuário decida
+enviar.
 
 ## Agent Notes
 
