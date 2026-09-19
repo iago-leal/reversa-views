@@ -1,0 +1,39 @@
+# Medição sobre /Users/iagoleal/dev/afla, 2026-09-14, com out/ da construção 0.9.4 (ecbebb9), a mesma instalada
+# Leitor: ImpactContract.read, chamado sobre cada feature de _reversa_forward/
+
+== 001-parser-pdf-minerion
+  cabeçalho no arquivo: | Arquivo afetado | Componente | Tipo | Severidade | Justificativa |
+  arquivos lidos: 15
+  contagem por tipo canônico: regra-alterada=0, regra-removida=0, regra-nova=0, componente-novo=0, componente-extinto=0, delta-de-dados=0, delta-de-contrato-externo=0
+  tipos fora do vocabulário: [["`componente-novo`",4],["`regra-nova`",2],["`regra-alterada`",5],["`delta-de-contrato-externo`",3],["`delta-de-dados`",1]]
+  anomalias: {"tipo-de-impacto-desconhecido":15,"severidade-desconhecida":2}
+== 002-backup-restauracao-testada
+  cabeçalho no arquivo: | Arquivo afetado | Componente | Tipo | Severidade | Justificativa |
+  arquivos lidos: 14
+  contagem por tipo canônico: regra-alterada=0, regra-removida=0, regra-nova=0, componente-novo=0, componente-extinto=0, delta-de-dados=0, delta-de-contrato-externo=0
+  tipos fora do vocabulário: [["`componente-novo`",11],["`delta-de-contrato-externo`",1],["—",1],["`delta-de-dados`",1]]
+  anomalias: {"tipo-de-impacto-desconhecido":14,"severidade-desconhecida":1}
+== 003-abastecer-painel-do-bi
+  cabeçalho no arquivo: | Arquivo afetado | Componente (`architecture.md`) | Tipo | Severidade | Justificativa |
+  arquivos lidos: 0
+  contagem por tipo canônico: regra-alterada=0, regra-removida=0, regra-nova=0, componente-novo=0, componente-extinto=0, delta-de-dados=0, delta-de-contrato-externo=0
+  tipos fora do vocabulário: []
+  anomalias: {"tabela-nao-reconhecida":1}
+== 004-par-desconhecido-nao-para
+  cabeçalho no arquivo: | Arquivo afetado | Componente (`architecture.md`) | Tipo | Severidade | Justificativa |
+  arquivos lidos: 0
+  contagem por tipo canônico: regra-alterada=0, regra-removida=0, regra-nova=0, componente-novo=0, componente-extinto=0, delta-de-dados=0, delta-de-contrato-externo=0
+  tipos fora do vocabulário: []
+  anomalias: {"tabela-nao-reconhecida":1}
+== 005-refatorar-exibicao-dashboard
+  cabeçalho no arquivo: | Arquivo afetado | Componente | Tipo | Severidade | Justificativa |
+  arquivos lidos: 10
+  contagem por tipo canônico: regra-alterada=0, regra-removida=0, regra-nova=0, componente-novo=0, componente-extinto=0, delta-de-dados=0, delta-de-contrato-externo=0
+  tipos fora do vocabulário: [["`componente-novo`",10]]
+  anomalias: {"tipo-de-impacto-desconhecido":10}
+== 006-primeiro-acesso-alcancavel
+  cabeçalho no arquivo: | Arquivo afetado | Componente | Tipo | Severidade | Justificativa |
+  arquivos lidos: 20
+  contagem por tipo canônico: regra-alterada=0, regra-removida=0, regra-nova=0, componente-novo=0, componente-extinto=0, delta-de-dados=0, delta-de-contrato-externo=0
+  tipos fora do vocabulário: [["`regra-alterada`",9],["`delta-de-contrato-externo`",2],["`delta-de-dados`",1],["**não tocado**",1],["`componente-novo`",4],["`regra-nova`",1],["`componente-extinto`",1],["—",1]]
+  anomalias: {"tipo-de-impacto-desconhecido":20,"severidade-desconhecida":2}

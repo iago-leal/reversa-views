@@ -1,0 +1,62 @@
+# Medição sobre /Users/iagoleal/dev/afla, 2026-09-14, com out/ da construção 0.9.4 (ecbebb9), a mesma instalada
+# Leitor: WatchContract.read, chamado sobre cada feature de _reversa_forward/
+
+== 001-parser-pdf-minerion
+    1: # Vigilância de regressão — 001-parser-pdf-minerion
+   19: ## Itens ativos
+   21: | ID | Origem (arquivo, seção) | Regra esperada após a mudança | Tipo de verificação | Sinal de violação |
+   32: ## Observações (sem peso de regressão)
+   67: ## Histórico de re-extrações
+   75: | ID | Veredito | Observação |
+   90: ## Arquivadas
+  linhas com ID W### no arquivo: 0
+  lido: items=0 observacoes=0 arquivadas=0 anomalias=0
+== 002-backup-restauracao-testada
+    1: # Regression Watch: Backup do banco com restauração testada
+   16: ## Watch items
+   18: | ID | Origem (arquivo, seção) | Regra esperada após a mudança | Tipo de verificação | Sinal de violação |
+   25: ## Observações
+   49: ## Histórico de re-extrações
+   58: ## Arquivadas
+   62: | ID | Data de arquivamento | Razão |
+  linhas com ID W### no arquivo: 0
+  lido: items=0 observacoes=0 arquivadas=0 anomalias=0
+== 003-abastecer-painel-do-bi
+    1: # Vigilância de regressão
+   10: ## Itens vigiados
+   12: | ID | Origem (arquivo, seção) | Regra esperada após mudança | Tipo de verificação | Sinal de violação |
+   23: ## Histórico de re-extrações
+   27: ## Arquivadas
+   31: ## Observações
+  linhas com ID W### no arquivo: 8
+  lido: items=0 observacoes=0 arquivadas=0 anomalias=0
+== 004-par-desconhecido-nao-para
+    1: # Vigilância de regressão
+   12: ## Itens vigiados
+   14: | ID | Origem (arquivo, seção) | Regra esperada após mudança | Tipo de verificação | Sinal de violação |
+   24: ## Histórico de re-extrações
+   28: ## Arquivadas
+   32: ## Observações
+  linhas com ID W### no arquivo: 7
+  lido: items=0 observacoes=0 arquivadas=0 anomalias=0
+== 005-refatorar-exibicao-dashboard
+    1: # Vigia de regressão — 005-refatorar-exibicao-dashboard
+    8: ## Itens de vigia
+   10: | ID | Origem (arquivo, seção) | Regra esperada após a mudança | Tipo de verificação | Sinal de violação |
+   21: ## Observações, sem peso de regressão
+   26: | ID | Origem | O que precisa continuar verdadeiro | Por que não é vigia |
+   35: ## Histórico de re-extrações
+   39: ## Arquivadas
+   44: | ID | Arquivada em | Como se cumpriu | Como se conferiu |
+  linhas com ID W### no arquivo: 8
+  lido: items=0 observacoes=0 arquivadas=0 anomalias=0
+== 006-primeiro-acesso-alcancavel
+    1: # Vigia de regressão — 006-primeiro-acesso-alcancavel
+   16: ## Itens de vigia
+   18: | ID | Origem (arquivo, seção) | Regra esperada após a mudança | Tipo de verificação | Sinal de violação |
+   29: ## Observações, sem peso de regressão
+   34: | ID | Origem | O que precisa continuar verdadeiro | Por que não é vigia |
+   49: ## Histórico de re-extrações
+   53: ## Arquivadas
+  linhas com ID W### no arquivo: 15
+  lido: items=0 observacoes=0 arquivadas=0 anomalias=0

@@ -1,0 +1,12 @@
+# Anomalias do processo lido em /Users/iagoleal/dev/afla, 2026-09-14 11:29 (Brasília)
+# readWorkspace de out/host/reading.js, construção 0.9.4 (ecbebb9), a mesma instalada
+# feature ativa: _reversa_forward/005-refatorar-exibicao-dashboard
+
+total: 21
+
+10 x .reversa/state.json :: fase-desconhecida
+    reconciliacao, contrato-insumo, decisoes-autor, reconhecimento-c2, escavacao-c2, interpretacao-c2, geracao-c2, revisao-c2, verificacao-regressao, concluido-c2
+1 x .reversa/reversa-config.json :: config-ausente
+    
+10 x legacy-impact.md :: tipo-de-impacto-desconhecido
+    `componente-novo`
