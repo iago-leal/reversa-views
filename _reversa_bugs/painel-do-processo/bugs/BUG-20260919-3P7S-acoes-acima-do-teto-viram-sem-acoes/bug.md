@@ -3,7 +3,7 @@ schema_version: 1
 id: BUG-20260919-3P7S
 display_number: 11
 title: Pasta com actions.md acima do teto de bytes aparece como sem ações, e a perda não é declarada
-status: active
+status: resolved
 phase: delivering
 severity: medium
 priority: P2
@@ -85,15 +85,17 @@ change_risk:
 
 delivery:
   branch: master
-  commit: null
+  commit: 1672d38
   pull_request: null
   ci: null
-  merged: null
-  published: null
+  merged: 2026-09-19
+  published: 2026-09-19, pacote reversa-views-0.10.0.vsix gerado e instalado por code --install-extension
 
 versions:
-  fixed_in: null
+  fixed_in: "0.10.0"
+  built_from: 1672d38
   affected: "desde a feature 006 (regra da situação)"
+  installed: "0.9.11, carimbada em dae310f"
 
 backports: []
 
@@ -124,8 +126,9 @@ change_set:
 
 closure:
   policy: package
-  satisfied: false
-resolution_kind: null
+  satisfied: true
+  satisfied_at: 2026-09-19
+resolution_kind: fixed
 ---
 
 # Pasta com actions.md acima do teto de bytes aparece como sem ações, e a perda não é declarada
@@ -263,12 +266,24 @@ ela: `preview-vinculo.spec.ts` (casos `conferencias` e `conferencias-sem-tabela`
 Sobre o `financas-ali`, somente leitura: a 001 passa de `sem-acoes` sem anomalia a `acoes-nao-lidas`
 com a anomalia que nomeia o `actions.md`.
 
-### A entrega, pendente
+### A entrega, que é o que a closure policy `package` exige
 
-A closure policy `package` exige registro, empacotamento e instalação. A correção se apoia no
-`naoLidos` da feature 010, ainda não commitada, e toca os mesmos arquivos que ela; por isso o commit
-da correção depende de a 010 ser registrada antes ou junto, decisão do usuário. Até lá o bug fica
-`active` / `delivering`, sem `DONE.md`.
+| Passo | Resultado |
+|---|---|
+| Registro | commit 1672d38 em `master`, junto com a feature 010, de cujo `naoLidos` a correção depende |
+| Construção, suíte e empacotamento | `npm run atualizar -- --aplicar`, percurso inteiro sem parada |
+| Pacote | `reversa-views-0.10.0.vsix`, 226,8 KiB sobre teto de 2048,0 KiB |
+| Instalação | `code --install-extension`, confirmada em `iagoleal-local.reversa-views@0.10.0` |
+
+Antes do commit, a suíte tinha três falhas alheias à correção. `versao.spec.ts` falhava só porque o
+adendo da 010 não estava commitado. Os dois casos de conferências de `preview-vinculo.spec.ts`
+vinham de um defeito do auxiliar `scripts/estragar-vinculo.js`, corrigido dentro da 010 por decisão
+do usuário: com a 010 convergida, ela virou a pasta-alvo, e o registro plantado ficava atrás da
+seção que o `onboarding.md` dela já tinha. O auxiliar passou a trocar a seção existente. Com o
+commit, a suíte inteira passou dentro do atualizador.
+
+Conferência com a construção instalada, somente leitura sobre o `financas-ali`: a 001 sai
+`acoes-nao-lidas`, e a anomalia `artefato-da-entrega-nao-lido` nomeia o `actions.md`.
 
 ## Agent Notes
 

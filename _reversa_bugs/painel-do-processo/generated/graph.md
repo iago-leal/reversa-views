@@ -1,4 +1,4 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-19T21:00:26.232Z a partir de 11 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-19T21:05:58.287Z a partir de 11 bugs -->
 # Grafo de bugs · painel-do-processo
 
 ```mermaid
@@ -12,7 +12,7 @@ graph LR
   BUG_20260912_PIPE["nº 7 · BUG-20260912-PIPE<br/>O divisor de célula parte na barra escapada, e perde a linha inteira em silêncio<br/>resolved · high"]
   BUG_20260914_5UH7["nº 9 · BUG-20260914-5UH7<br/>O vigia de regressão só procura a tabela antes do primeiro título, e sai vazio sem dizer nada<br/>resolved · low"]
   BUG_20260914_DTLI["nº 8 · BUG-20260914-DTLI<br/>A notação que o próprio Reversa escreve na tabela vira tipo desconhecido e tabela não reconhecida<br/>resolved · high"]
-  BUG_20260919_3P7S["nº 11 · BUG-20260919-3P7S<br/>Pasta com actions.md acima do teto de bytes aparece como sem ações, e a perda não é declarada<br/>active · medium"]
+  BUG_20260919_3P7S["nº 11 · BUG-20260919-3P7S<br/>Pasta com actions.md acima do teto de bytes aparece como sem ações, e a perda não é declarada<br/>resolved · medium"]
   BUG_20260919_BQBJ["nº 10 · BUG-20260919-BQBJ<br/>Adaptações declaradas com trecho indentado não são literais no YAML, e a ressincronização para em A4<br/>open · medium"]
   BUG_20260909_VHII -. related-to (proposed) .-> BUG_20260909_FJBD
   BUG_20260910_74UL -. related-to (proposed) .-> BUG_20260909_FJBD
@@ -40,7 +40,6 @@ Nenhum cluster por causa estrutural: não há aresta `supported` ou `confirmed` 
 
 | Bug | Score |
 |---|---|
-| BUG-20260919-3P7S | 0 |
 | BUG-20260919-BQBJ | 2 |
 
 Fórmula: causados×3 + bloqueados×2 + regressões×4 + relacionados×1 (máx. 3), só sobre arestas `supported`/`confirmed`.
