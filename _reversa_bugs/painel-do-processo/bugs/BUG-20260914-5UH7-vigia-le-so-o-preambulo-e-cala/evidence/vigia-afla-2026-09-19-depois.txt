@@ -1,0 +1,28 @@
+== 001-parser-pdf-minerion: W###=6 items=6 observacoes=0 arquivadas=0 anomalias={}
+   títulos: Itens ativos | Observações (sem peso de regressão) | Histórico de re-extrações | Arquivadas
+== 002-backup-restauracao-testada: W###=5 items=6 observacoes=0 arquivadas=0 anomalias={"tabela-nao-reconhecida":1}
+   títulos: Watch items | Observações | Histórico de re-extrações | Arquivadas
+== 003-abastecer-painel-do-bi: W###=16 items=8 observacoes=0 arquivadas=0 anomalias={"tipo-de-verificacao-desconhecido":1}
+   títulos: Itens vigiados | Histórico de re-extrações | Arquivadas | Observações
+== 004-par-desconhecido-nao-para: W###=14 items=7 observacoes=0 arquivadas=0 anomalias={}
+   títulos: Itens vigiados | Histórico de re-extrações | Arquivadas | Observações
+== 005-refatorar-exibicao-dashboard: W###=29 items=0 observacoes=0 arquivadas=0 anomalias={"tabela-nao-reconhecida":2}
+   títulos: Itens de vigia | Observações, sem peso de regressão | Histórico de re-extrações | Arquivadas
+== 006-primeiro-acesso-alcancavel: W###=30 items=8 observacoes=0 arquivadas=0 anomalias={"tabela-nao-reconhecida":1}
+   títulos: Itens de vigia | Observações, sem peso de regressão | Histórico de re-extrações | Arquivadas
+== 007-painel-bate-com-a-planilha: W###=24 items=12 observacoes=0 arquivadas=0 anomalias={}
+   títulos: Itens de vigia | Observações, sem peso de regressão | Histórico de re-extrações | Arquivadas
+== 008-ux-painel-navegacao-celular: W###=30 items=0 observacoes=0 arquivadas=0 anomalias={"tabela-nao-reconhecida":1}
+   títulos: Itens de vigia | Observações, sem peso de regressão | Histórico de re-extrações | Arquivadas
+== 009-titulo-de-bloco-fixo: W###=12 items=0 observacoes=0 arquivadas=0 anomalias={"tabela-nao-reconhecida":1}
+   títulos: Itens de vigia | Observações, sem peso de regressão | Histórico de re-extrações | Arquivadas
+== 010-estado-desabilitado-visivel: W###=14 items=0 observacoes=0 arquivadas=0 anomalias={"tabela-nao-reconhecida":1}
+   títulos: Itens de vigia | Observações, sem peso de regressão | Histórico de re-extrações | Arquivadas
+== 011-extracao-producao-minerion: W###=12 items=6 observacoes=0 arquivadas=0 anomalias={"tabela-nao-reconhecida":1}
+   títulos: Itens de vigia | Observações, sem peso de regressão | Histórico de re-extrações | Arquivadas
+== 012-rotulo-curto-no-catalogo: W###=12 items=6 observacoes=0 arquivadas=0 anomalias={"tabela-nao-reconhecida":1}
+   títulos: Itens de vigia | Observações, sem peso de regressão | Histórico de re-extrações | Arquivadas
+== 013-remover-harness: W###=10 items=5 observacoes=0 arquivadas=0 anomalias={"tabela-nao-reconhecida":1}
+   títulos: Itens de vigia | Observações, sem peso de regressão | Histórico de re-extrações | Arquivadas
+== 014-historico-e-graficos-do-painel: W###=12 items=12 observacoes=0 arquivadas=0 anomalias={"tabela-nao-reconhecida":1}
+   títulos: Itens de vigia | Observações, sem peso de regressão | Histórico de re-extrações | Arquivadas

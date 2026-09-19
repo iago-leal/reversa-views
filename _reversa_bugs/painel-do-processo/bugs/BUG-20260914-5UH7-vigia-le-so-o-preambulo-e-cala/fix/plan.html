@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plano de correção, bug nº 9</title>
+<style>body{margin:0;background:#0d1117;color:#e6edf3;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;padding:24px;max-width:1100px}h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 8px;border-bottom:1px solid #30363d;padding-bottom:4px}.meta{color:#8b949e;font-size:12px}.cards{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0}.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px 16px;min-width:140px}.card b{display:block;font-size:20px}.card span{color:#8b949e;font-size:12px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border:1px solid #30363d;padding:6px 8px;text-align:left;vertical-align:top}th{background:#161b22}a{color:#58a6ff}code{background:#161b22;border:1px solid #30363d;border-radius:4px;padding:0 4px;font-size:12px}.svgwrap{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:8px;overflow-x:auto}.ok{color:#3fb950}.warn{color:#d29922}.bad{color:#f85149}ul{margin:4px 0 4px 20px;padding:0}</style></head><body>
+
+<h1>Plano de correção: bug nº 9, BUG-20260914-5UH7</h1>
+<div class="meta">Contexto <code>painel-do-processo</code> · 2026-09-19 · base <code>a734b8d</code> (com o nº 8 aplicado) · closure policy <code>package</code></div>
+
+<div class="cards">
+<div class="card"><b>low</b><span>severidade</span></div>
+<div class="card"><b>P3</b><span>prioridade</span></div>
+<div class="card"><b class="ok">confirmed</b><span>causa raiz</span></div>
+<div class="card"><b class="ok">baixa</b><span>risco da mudança</span></div>
+<div class="card"><b>14/14</b><span>vigias do afla lidos vazios</span></div>
+</div>
+
+<h2>O defeito</h2>
+<p>O leitor do <code>regression-watch.md</code> procura a tabela ativa só no preâmbulo e reconhece as seções pelo nome exato. No <code>afla</code> a tabela mora sempre sob título próprio, e as observações se chamam quase sempre <code>Observações, sem peso de regressão</code>. Com o cabeçalho já corrigido pelo nº 8, as catorze features devolvem zero itens, zero observações e zero arquivadas, contra 226 linhas <code>W###</code>, e <b>nenhuma anomalia</b>. O defeito é latente: o eixo do vigia não é desenhado (NG-01).</p>
+
+<h2>Causa raiz <span class="ok">(confirmed)</span></h2>
+<table>
+<tr><th>Onde</th><th>O que acontece</th></tr>
+<tr><td><code>watch.ts:67-71</code></td><td>Tabela ativa lida só de <code>sections['']</code>; seções por igualdade exata do título normalizado.</td></tr>
+<tr><td><code>watch.ts:77-91</code></td><td><code>rowsOf</code> devolve lista vazia sem registrar nada quando não acha a tabela.</td></tr>
+</table>
+<p>Evidência: <a href="../evidence/reproduction.md">reproduction.md</a> e <a href="../evidence/vigia-afla-2026-09-19-antes.txt">vigia-afla-2026-09-19-antes.txt</a>.</p>
+
+<h2>Estratégia: correção direta</h2>
+<ul>
+<li><b>Seção pelo começo do título:</b> <code>observacoes…</code>, <code>arquivadas…</code>, <code>historico…</code>. Toda outra seção, preâmbulo incluído, é vigia ativo.</li>
+<li><b>O que não se lê, se diz</b>, com <code>tabela-nao-reconhecida</code>, código que já existe: a tabela de observações ou de arquivadas cujas colunas não são as do vigia (o detalhe nomeia a seção e o cabeçalho), e o arquivo sem tabela de vigia alguma.</li>
+<li><b>Colunas próprias são sinalizadas, não lidas.</b> Ler tabela arbitrária pela coluna <code>ID</code> seria desenho novo sem consumidor que o peça (NG-01), e a nota de quem registrou pede caso concreto para isso.</li>
+<li><b>O que cerca o vigia ativo não é assunto do leitor:</b> a grade de metadados sob o título (<code>| | |</code>, na 001) não vira anomalia. O ensaio a acusava na primeira versão, e a regra foi estreitada.</li>
+<li><b>Linha só de travessões não é item:</b> é como o agente escreve o vigia vazio dentro da tabela obrigatória (005, 008, 009, 010). Basta uma célula com conteúdo para a linha ser item.</li>
+</ul>
+
+<h2>Correction Change Set proposto</h2>
+<table>
+<tr><th>CHG</th><th>Tipo</th><th>Artefato</th><th>Propósito</th></tr>
+<tr><td>CHG-001</td><td>code</td><td><code>src/heranca/reversa-domain/src/watch.ts</code></td><td>A14 importação; A15 seções pelo começo do título e anomalias; A16 linha de travessões</td></tr>
+<tr><td>CHG-002</td><td>configuration</td><td><code>adaptacoes.yml</code>, <code>manifesto.yml</code>, <code>PROCEDENCIA.md</code></td><td>Declaração de A14 a A16, resumo e carimbo</td></tr>
+</table>
+<p>Pré-requisito, do nº 8: <code>CHG-006</code> corrige o indicador de indentação de A10 e A13 em <code>adaptacoes.yml</code> (ver Riscos).</p>
+
+<h2>Testes planejados</h2>
+<p><code>tests/leitura-vigia-secoes.spec.ts</code>, suíte local. Vermelho medido: 5 de 11 falham sem a correção; verde ensaiado: 11 de 11.</p>
+<table>
+<tr><th>Caso</th><th>Natureza</th></tr>
+<tr><td>Tabela ativa sob título próprio é lida</td><td>reprodução (critério 2)</td></tr>
+<tr><td>Seções reconhecidas pelo começo do título</td><td>reprodução (critério 3)</td></tr>
+<tr><td>Arquivo sem tabela de vigia gera anomalia</td><td>reprodução (critério 1)</td></tr>
+<tr><td>Observações com colunas próprias geram anomalia e não entram no vigia</td><td>reprodução (critérios 1 e 4)</td></tr>
+<tr><td>Linha só de travessões não é item</td><td>reprodução</td></tr>
+<tr><td>Preâmbulo e nomes exatos seguem lidos; histórico segue memória; grade de metadados ignorada; linha com conteúdo segue item; vigia greenfield aceito; arquivo ausente sem anomalia</td><td>regressão (6 casos)</td></tr>
+</table>
+
+<h2>Efeito medido no afla (ensaio)</h2>
+<table>
+<tr><th></th><th>Antes</th><th>Depois</th></tr>
+<tr><td>Itens ativos lidos</td><td>0</td><td>76, em 10 das 14 features; as outras 4 têm o vigia vazio declarado</td></tr>
+<tr><td>Anomalias</td><td>0</td><td>12: 9 tabelas de observações e 2 de arquivadas com colunas próprias, e 1 tipo de verificação escrito em prosa (003)</td></tr>
+</table>
+<p>As anomalias novas são verdadeiras e esperadas pela nota de quem registrou: a feature ativa ganha uma ou duas no cabeçalho do painel, e isso não deve ser silenciado.</p>
+
+<h2>Riscos</h2>
+<p><b>change_risk: baixa.</b> Leitura pura, sem consumidor na tela, <code>WatchState</code> com a mesma forma. A mudança visível é a anomalia nova no cabeçalho, que é o objetivo do critério 1.</p>
+<p class="warn"><b>Achado durante o ensaio:</b> o <code>yaml</code> deduz a indentação de um bloco literal pela primeira linha. Um trecho original que começa indentado perde essa indentação ao ser lido, e a ressincronização para em <code>ausente</code>. Isso vale para A4 e A5, anteriores a esta sessão, e para A10 e A13, do nº 8. A falha é segura (nada é escrito), mas a ressincronização com a origem está quebrada. A10 e A13 são corrigidos no nº 8 (CHG-006); A15 já nasce com o indicador. A4 e A5 pertencem a um bug travado e ficam para decisão.</p>
+
+<h2>Mini-grafo do bug</h2>
+<div class="svgwrap"><svg width="440" height="120" viewBox="0 0 440 120" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif" font-size="12">
+<line x1="120" y1="60" x2="320" y2="60" stroke="#3fb950"/><text x="220" y="50" fill="#3fb950" text-anchor="middle">related-to · confirmed</text>
+<a href="../../BUG-20260914-DTLI-notacao-markdown-vira-valor-desconhecido/bug.md"><rect x="20" y="66" width="190" height="46" rx="8" fill="#161b22" stroke="#d29922"/><text x="115" y="86" fill="#e6edf3" text-anchor="middle">nº 8 · BUG-20260914-DTLI</text><text x="115" y="103" fill="#8b949e" text-anchor="middle">active · delivering</text></a>
+<a href="../bug.md"><rect x="230" y="66" width="190" height="46" rx="8" fill="#161b22" stroke="#f85149" stroke-width="2"/><text x="325" y="86" fill="#e6edf3" text-anchor="middle">nº 9 · BUG-20260914-5UH7</text><text x="325" y="103" fill="#8b949e" text-anchor="middle">active · P3</text></a>
+</svg></div>
+
+<h2>Matriz de relações</h2>
+<table>
+<tr><th>Origem</th><th>Tipo</th><th>Destino</th><th>Estado</th></tr>
+<tr><td><a href="../bug.md">BUG-20260914-5UH7</a></td><td>related-to</td><td><a href="../../BUG-20260914-DTLI-notacao-markdown-vira-valor-desconhecido/bug.md">BUG-20260914-DTLI</a></td><td class="ok">confirmed</td></tr>
+</table>
+</body></html>

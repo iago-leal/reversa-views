@@ -1,0 +1,150 @@
+diff --git a/tests/leitura-vigia-secoes.spec.ts b/tests/leitura-vigia-secoes.spec.ts
+new file mode 100644
+index 0000000..57a07b3
+--- /dev/null
++++ b/tests/leitura-vigia-secoes.spec.ts
+@@ -0,0 +1,144 @@
++/**
++ * Regressão do BUG-20260914-5UH7: o vigia de regressão é lido onde o agente o escreve. O
++ * `/reversa-coding` prescreve "cabeçalho, tabela, histórico, arquivadas" sem proibir título sobre a
++ * tabela, e no `afla` ela mora sempre sob título próprio; as seções de observações se chamam, quase
++ * sempre, "Observações, sem peso de regressão". O leitor herdado só procurava no preâmbulo e só
++ * reconhecia o nome exato, e devolvia tudo vazio sem dizer nada.
++ *
++ * É o teste de reprodução (vermelho antes das adaptações A14 a A16) e o de regressão. A segunda
++ * metade fixa o que não muda: observação e arquivada continuam fora do vigia ativo, o histórico
++ * continua memória, e o que cerca o vigia ativo sem ser vigia não vira anomalia.
++ *
++ * As formas vêm dos catorze `regression-watch.md` do `afla`.
++ */
++import { describe, expect, it } from 'vitest'
++import { WatchContract } from '../src/heranca/reversa-domain/src/index.ts'
++
++const CABECALHO =
++  '| ID | Origem (arquivo, seção) | Regra esperada após a mudança | Tipo de verificação | Sinal de violação |'
++const SEPARADOR = '|---|---|---|---|---|'
++
++/** Uma tabela de vigia com as linhas dadas. */
++function tabela(...linhas: string[]): string {
++  return [CABECALHO, SEPARADOR, ...linhas, ''].join('\n')
++}
++
++/** Uma linha de vigia com o ID e o tipo dados. */
++function item(id: string, tipo = 'presença'): string {
++  return `| ${id} | domain.md, Descontos | desconto só acima de 500 | ${tipo} | regra some |`
++}
++
++/** Os códigos das anomalias. */
++function codigos(anomalias: { code: string }[]): string[] {
++  return anomalias.map(a => a.code)
++}
++
++const CABECALHO_DO_ARQUIVO = [
++  '# Vigia de regressão — 005-refatorar-exibicao-dashboard',
++  '',
++  '| | |',
++  '|---|---|',
++  '| **Feature** | `005-refatorar-exibicao-dashboard` |',
++  '| **Criado em** | 2026-09-14 |',
++  '',
++].join('\n')
++
++describe('BUG-20260914-5UH7: a tabela onde o agente a escreve', () => {
++  it('lê a tabela ativa posta sob título próprio', () => {
++    const md = [CABECALHO_DO_ARQUIVO, '## Itens de vigia', '', tabela(item('W001'), item('W002'))].join('\n')
++    const lido = WatchContract.read(md)
++    expect(lido.items.map(i => i.id)).toEqual(['W001', 'W002'])
++    expect(lido.anomalies).toEqual([])
++  })
++
++  it('reconhece as seções pelo começo do título', () => {
++    const md = [
++      '## Itens ativos', '', tabela(item('W001')),
++      '## Observações, sem peso de regressão', '', tabela(item('W900')),
++      '## Observações da fase 2', '', tabela(item('W901')),
++      '## Arquivadas em 2026', '', tabela(item('W000')),
++    ].join('\n')
++    const lido = WatchContract.read(md)
++    expect(lido.items.map(i => i.id)).toEqual(['W001'])
++    expect(lido.observacoes.map(i => i.id)).toEqual(['W900', 'W901'])
++    expect(lido.arquivadas.map(i => i.id)).toEqual(['W000'])
++  })
++
++  it('declara o arquivo sem tabela de vigia alguma', () => {
++    const lido = WatchContract.read('# Vigia\n\nNenhum item ainda.\n\n## Histórico de re-extrações\n\n## Arquivadas\n')
++    expect(lido.anomalies).toEqual([
++      { file: 'regression-watch.md', code: 'tabela-nao-reconhecida', detail: 'nenhuma tabela de vigia' },
++    ])
++  })
++
++  it('declara a tabela de observações com colunas próprias, sem lê-la como vigia', () => {
++    const md = [
++      '## Itens de vigia', '', tabela(item('W001')),
++      '## Observações, sem peso de regressão', '',
++      '| ID | Origem | O que precisa continuar verdadeiro | Por que não é vigia |',
++      '|---|---|---|---|',
++      '| W002 | `tests/e2e/a.ts` | o mês entra pelas rotas públicas | decisão de método |',
++      '',
++    ].join('\n')
++    const lido = WatchContract.read(md)
++    expect(lido.items.map(i => i.id)).toEqual(['W001'])
++    expect(lido.observacoes).toEqual([])
++    expect(lido.anomalies).toEqual([{
++      file: 'regression-watch.md',
++      code: 'tabela-nao-reconhecida',
++      detail: 'observacoes sem peso de regressao: ID | Origem | O que precisa continuar verdadeiro | Por que não é vigia',
++    }])
++  })
++
++  it('não conta a linha só de travessões, que é como o vigia vazio se escreve', () => {
++    const md = tabela('| — | — | — | — | — |')
++    const lido = WatchContract.read(md)
++    expect(lido.items).toEqual([])
++    expect(lido.anomalies).toEqual([])
++  })
++})
++
++describe('BUG-20260914-5UH7: o que não muda', () => {
++  it('continua lendo a tabela do preâmbulo e o nome exato das seções', () => {
++    const md = [tabela(item('W001')), '## Observações', '', tabela(item('W900')), '## Arquivadas', '', tabela(item('W000'))].join('\n')
++    const lido = WatchContract.read(md)
++    expect(lido.items.map(i => i.id)).toEqual(['W001'])
++    expect(lido.observacoes.map(i => i.id)).toEqual(['W900'])
++    expect(lido.arquivadas.map(i => i.id)).toEqual(['W000'])
++  })
++
++  it('mantém o histórico como memória: nem item, nem anomalia', () => {
++    const md = [
++      tabela(item('W001')),
++      '## Histórico de re-extrações', '',
++      '| ID | Veredito | Observação |', '|---|---|---|', '| W001 | confirmado | nada mudou |', '',
++    ].join('\n')
++    const lido = WatchContract.read(md)
++    expect(lido.items.map(i => i.id)).toEqual(['W001'])
++    expect(lido.historico).toContain('confirmado')
++    expect(lido.anomalies).toEqual([])
++  })
++
++  it('ignora a grade de metadados sob o título', () => {
++    const lido = WatchContract.read([CABECALHO_DO_ARQUIVO, tabela(item('W001'))].join('\n'))
++    expect(lido.items.map(i => i.id)).toEqual(['W001'])
++    expect(lido.anomalies).toEqual([])
++  })
++
++  it('mantém como item a linha que tem conteúdo em alguma célula', () => {
++    const lido = WatchContract.read(tabela('| W001 | — | — | — | — |'))
++    expect(lido.items.map(i => i.id)).toEqual(['W001'])
++    expect(codigos(lido.anomalies)).toEqual(['tipo-de-verificacao-desconhecido'])
++  })
++
++  it('aceita o vigia greenfield: ativo vazio, observações preenchidas', () => {
++    const lido = WatchContract.read(['# Vigia', '', '## Observações', '', tabela(item('W900'))].join('\n'))
++    expect(lido.items).toEqual([])
++    expect(lido.observacoes.map(i => i.id)).toEqual(['W900'])
++    expect(lido.anomalies).toEqual([])
++  })
++
++  it('não acusa nada quando o arquivo não existe', () => {
++    expect(WatchContract.read(null).anomalies).toEqual([])
++  })
++})

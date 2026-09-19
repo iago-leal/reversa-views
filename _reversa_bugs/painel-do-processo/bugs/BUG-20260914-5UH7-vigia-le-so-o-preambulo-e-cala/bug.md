@@ -3,12 +3,12 @@ schema_version: 1
 id: BUG-20260914-5UH7
 display_number: 9
 title: O vigia de regressão só procura a tabela antes do primeiro título, e sai vazio sem dizer nada
-status: open
-phase: triaging
+status: active
+phase: delivering
 severity: low
 priority: P3
 created: 2026-09-14
-updated: 2026-09-14
+updated: 2026-09-19
 
 origin:
   type: manual-report
@@ -26,7 +26,7 @@ security_suspected: false
 
 reproduction:
   classification: deterministic
-  rate: "6/6"
+  rate: "14/14"
   suspected_triggers:
     - "tabela ativa do regression-watch.md posta sob um título de seção, e não no preâmbulo"
     - "seção de observações ou de arquivadas com nome estendido, como 'Observações, sem peso de regressão'"
@@ -37,7 +37,7 @@ blocking: []
 relationships:
   - bug: BUG-20260914-DTLI
     type: related-to
-    state: proposed
+    state: confirmed
     evidence: []
 
 traceability:
@@ -47,12 +47,42 @@ traceability:
   affected_code:
     - src/heranca/reversa-domain/src/watch.ts
     - src/heranca/reversa-domain/src/table.ts
-  root_cause: null
-  reproduction_tests: []
-  regression_tests: []
+  root_cause:
+    state: confirmed
+    location:
+      - src/heranca/reversa-domain/src/watch.ts:67-71
+      - src/heranca/reversa-domain/src/watch.ts:77-91
+    summary: >-
+      WatchContract.read lê a tabela ativa só de sections[''], o preâmbulo, e as seções de
+      observações, arquivadas e histórico por igualdade exata do título normalizado; rowsOf devolve
+      lista vazia sem anomalia quando não acha tabela. A parte de cabeçalho em comum
+      (Regra esperada após a mudança) foi resolvida pelo BUG-20260914-DTLI, e a medição com ela
+      aplicada isola o defeito: 14/14 features vazias, contra 226 linhas W###.
+    evidence:
+      - evidence/reproduction.md
+      - evidence/vigia-afla-2026-09-19-antes.txt
+  reproduction_tests:
+    - tests/leitura-vigia-secoes.spec.ts#a tabela onde o agente a escreve
+  regression_tests:
+    - tests/leitura-vigia-secoes.spec.ts#o que não muda
 
-spec_verdict: null
-change_set: []
+spec_verdict:
+  verdict: spec-gap
+  decided_by: iago
+  decided_at: 2026-09-19
+  addendum: _reversa_sdd/addenda/bug-BUG-20260914-5UH7-v001.md
+change_set:
+  - id: CHG-001
+    kind: code
+    artifact: src/heranca/reversa-domain/src/watch.ts
+    diff: fix/CHG-001.diff
+  - id: CHG-002
+    kind: configuration
+    artifact: src/heranca/adaptacoes.yml, src/heranca/manifesto.yml, src/heranca/PROCEDENCIA.md
+    diff: fix/CHG-002.diff
+  - id: CHG-003
+    kind: specification
+    artifact: _reversa_sdd/addenda/bug-BUG-20260914-5UH7-v001.md
 
 closure:
   policy: package
@@ -128,11 +158,68 @@ preâmbulo documentada em `splitSections`, de `table.ts`.
 |---|---|
 | Spec | `_reversa_sdd/sdd/leitura-do-processo.md#6-requisitos-funcionais` (RF-07); `painel-do-processo.md` NG-01 |
 | Código | `src/heranca/reversa-domain/src/watch.ts`, `src/heranca/reversa-domain/src/table.ts` |
-| Teste | a definir no fix |
+| Teste | `tests/leitura-vigia-secoes.spec.ts` |
+| Adendo | `_reversa_sdd/addenda/bug-BUG-20260914-5UH7-v001.md` (RF-07.4, RF-07.5, EC-5UH7) |
 
 ## Resolution
 
-Pendente.
+### Causa raiz, no estado final
+
+`confirmed`. `WatchContract.read` lia a tabela ativa só do preâmbulo e as seções por igualdade
+exata do título normalizado, e `rowsOf` devolvia lista vazia sem anomalia. Com a parte de cabeçalho
+já resolvida pelo `BUG-20260914-DTLI`, a medição isolou o defeito: 14/14 features vazias, contra
+226 linhas `W###`.
+
+### Veredito de spec
+
+`spec-gap`, decidido pelo usuário. Declarar o vigia ilegível já era exigido pelo RF-07; onde
+procurar o vigia, como reconhecer as seções e o que fazer com a linha vazia nunca foram
+especificados. O adendo aditivo especifica RF-07.4, RF-07.5 e EC-5UH7.
+
+### Estratégia
+
+Correção direta. Seções pelo começo do título; toda seção sem nome especial é vigia ativo; o que
+não se lê, se diz, com o código `tabela-nao-reconhecida`, que já existia; tabelas de colunas
+próprias são sinalizadas, e não lidas. O ensaio estreitou a regra duas vezes antes do plano: a grade
+de metadados sob o título deixou de ser acusada, e a linha só de travessões deixou de ser item.
+
+### Correction Change Set
+
+| CHG | Tipo | Artefato | Propósito |
+|---|---|---|---|
+| CHG-001 | code | `src/heranca/reversa-domain/src/watch.ts` | A14 importação; A15 seções e anomalias; A16 linha de travessões |
+| CHG-002 | configuration | `adaptacoes.yml`, `manifesto.yml`, `PROCEDENCIA.md` | Declaração de A14 a A16, resumo e carimbo |
+| CHG-003 | specification | `_reversa_sdd/addenda/bug-BUG-20260914-5UH7-v001.md` | O veredito `spec-gap` |
+
+A15 foi declarada com o indicador de indentação `|2`, e a ressincronização simulada de `watch.ts`,
+com A12 a A16, reproduz o arquivo exatamente. O defeito de indentação achado no ensaio foi corrigido
+em A10 e A13 pelo `BUG-20260914-DTLI` (CHG-006) e segue aberto em A4 e A5, registrado à parte.
+
+### Testes, e a prova vermelho → verde
+
+**Vermelho**, com os testes aplicados e nenhuma linha de correção: 5 de 11 falham, exatamente os de
+reprodução (`evidence/gate1-vermelho.txt`).
+
+**Verde**, com o change set aplicado: 11 de 11; suíte inteira com 99 arquivos e 1553 casos;
+`typecheck` com saída zero; `check:heranca:local` sem impedimento (`evidence/gate2-verde.txt`).
+
+### Os quatro critérios de aceite
+
+| # | Critério | Estado |
+|---|---|---|
+| 1 | Vigia presente sem tabela reconhecível produz anomalia que nomeia o arquivo | atendido |
+| 2 | Tabela ativa sob título próprio é lida como watch principal | atendido |
+| 3 | Seções que começam por `Observações` ou `Arquivadas` são reconhecidas | atendido |
+| 4 | Observações e arquivadas continuam fora do watch principal | atendido, com caso próprio |
+
+No `afla`, os itens ativos lidos passam de 0 para 76, em dez features; as outras quatro têm o vigia
+vazio declarado. Surgem 12 anomalias verdadeiras: 9 tabelas de observações e 2 de arquivadas com
+colunas próprias, e 1 tipo de verificação escrito em prosa. No cabeçalho do painel, a feature ativa
+contribui com uma delas, como a nota de quem registrou previa (`evidence/vigia-afla-2026-09-19-depois.txt`).
+
+### A entrega, que é o que a closure policy `package` exige
+
+Pendente: pacote e instalação, junto com o `BUG-20260914-DTLI`.
 
 ## Agent Notes
 

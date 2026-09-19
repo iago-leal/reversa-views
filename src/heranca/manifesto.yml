@@ -146,9 +146,9 @@ arquivos:
     origem: scrum-harness
     caminhoNaOrigem: packages/reversa-domain/src/watch.ts
     carimbado: true
-    resumo: sha256:c90f633ca3ee0e88db6f57d86c1e15a59693f48b49bb49ec368254c1cc663a36
+    resumo: sha256:e17f04496b680fbe4689421dd0a355bc16eb2ede17f443d952297e8e172751e3
     dataDaCopia: 2026-09-09
-    adaptacoes: [A12, A13]
+    adaptacoes: [A12, A13, A14, A15, A16]
   - caminho: src/heranca/reversa-domain/tests/actions.spec.ts
     origem: scrum-harness
     caminhoNaOrigem: packages/reversa-domain/tests/actions.spec.ts

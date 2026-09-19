@@ -1,0 +1,145 @@
+
+ RUN  v3.2.7 /Users/iagoleal/dev/reversa-views
+
+ ❯ tests/leitura-vigia-secoes.spec.ts (11 tests | 5 failed) 9ms
+   × BUG-20260914-5UH7: a tabela onde o agente a escreve > lê a tabela ativa posta sob título próprio 5ms
+     → expected [] to deeply equal [ 'W001', 'W002' ]
+   × BUG-20260914-5UH7: a tabela onde o agente a escreve > reconhece as seções pelo começo do título 1ms
+     → expected [] to deeply equal [ 'W001' ]
+   × BUG-20260914-5UH7: a tabela onde o agente a escreve > declara o arquivo sem tabela de vigia alguma 1ms
+     → expected [] to deeply equal [ { …(3) } ]
+   × BUG-20260914-5UH7: a tabela onde o agente a escreve > declara a tabela de observações com colunas próprias, sem lê-la como vigia 0ms
+     → expected [] to deeply equal [ 'W001' ]
+   × BUG-20260914-5UH7: a tabela onde o agente a escreve > não conta a linha só de travessões, que é como o vigia vazio se escreve 1ms
+     → expected [ { id: '—', origem: '—', …(3) } ] to deeply equal []
+   ✓ BUG-20260914-5UH7: o que não muda > continua lendo a tabela do preâmbulo e o nome exato das seções 0ms
+   ✓ BUG-20260914-5UH7: o que não muda > mantém o histórico como memória: nem item, nem anomalia 0ms
+   ✓ BUG-20260914-5UH7: o que não muda > ignora a grade de metadados sob o título 0ms
+   ✓ BUG-20260914-5UH7: o que não muda > mantém como item a linha que tem conteúdo em alguma célula 0ms
+   ✓ BUG-20260914-5UH7: o que não muda > aceita o vigia greenfield: ativo vazio, observações preenchidas 0ms
+   ✓ BUG-20260914-5UH7: o que não muda > não acusa nada quando o arquivo não existe 0ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/leitura-vigia-secoes.spec.ts > BUG-20260914-5UH7: a tabela onde o agente a escreve > lê a tabela ativa posta sob título próprio
+AssertionError: expected [] to deeply equal [ 'W001', 'W002' ]
+
+- Expected
++ Received
+
+- [
+-   "W001",
+-   "W002",
+- ]
++ []
+
+ ❯ tests/leitura-vigia-secoes.spec.ts:50:39
+     48|     const md = [CABECALHO_DO_ARQUIVO, '## Itens de vigia', '', tabela(…
+     49|     const lido = WatchContract.read(md)
+     50|     expect(lido.items.map(i => i.id)).toEqual(['W001', 'W002'])
+       |                                       ^
+     51|     expect(lido.anomalies).toEqual([])
+     52|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  tests/leitura-vigia-secoes.spec.ts > BUG-20260914-5UH7: a tabela onde o agente a escreve > reconhece as seções pelo começo do título
+AssertionError: expected [] to deeply equal [ 'W001' ]
+
+- Expected
++ Received
+
+- [
+-   "W001",
+- ]
++ []
+
+ ❯ tests/leitura-vigia-secoes.spec.ts:62:39
+     60|     ].join('\n')
+     61|     const lido = WatchContract.read(md)
+     62|     expect(lido.items.map(i => i.id)).toEqual(['W001'])
+       |                                       ^
+     63|     expect(lido.observacoes.map(i => i.id)).toEqual(['W900', 'W901'])
+     64|     expect(lido.arquivadas.map(i => i.id)).toEqual(['W000'])
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  tests/leitura-vigia-secoes.spec.ts > BUG-20260914-5UH7: a tabela onde o agente a escreve > declara o arquivo sem tabela de vigia alguma
+AssertionError: expected [] to deeply equal [ { …(3) } ]
+
+- Expected
++ Received
+
+- [
+-   {
+-     "code": "tabela-nao-reconhecida",
+-     "detail": "nenhuma tabela de vigia",
+-     "file": "regression-watch.md",
+-   },
+- ]
++ []
+
+ ❯ tests/leitura-vigia-secoes.spec.ts:69:28
+     67|   it('declara o arquivo sem tabela de vigia alguma', () => {
+     68|     const lido = WatchContract.read('# Vigia\n\nNenhum item ainda.\n\n…
+     69|     expect(lido.anomalies).toEqual([
+       |                            ^
+     70|       { file: 'regression-watch.md', code: 'tabela-nao-reconhecida', d…
+     71|     ])
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  tests/leitura-vigia-secoes.spec.ts > BUG-20260914-5UH7: a tabela onde o agente a escreve > declara a tabela de observações com colunas próprias, sem lê-la como vigia
+AssertionError: expected [] to deeply equal [ 'W001' ]
+
+- Expected
++ Received
+
+- [
+-   "W001",
+- ]
++ []
+
+ ❯ tests/leitura-vigia-secoes.spec.ts:84:39
+     82|     ].join('\n')
+     83|     const lido = WatchContract.read(md)
+     84|     expect(lido.items.map(i => i.id)).toEqual(['W001'])
+       |                                       ^
+     85|     expect(lido.observacoes).toEqual([])
+     86|     expect(lido.anomalies).toEqual([{
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  tests/leitura-vigia-secoes.spec.ts > BUG-20260914-5UH7: a tabela onde o agente a escreve > não conta a linha só de travessões, que é como o vigia vazio se escreve
+AssertionError: expected [ { id: '—', origem: '—', …(3) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "id": "—",
++     "origem": "—",
++     "regra": "—",
++     "sinal": "—",
++     "tipo": "—",
++   },
++ ]
+
+ ❯ tests/leitura-vigia-secoes.spec.ts:96:24
+     94|     const md = tabela('| — | — | — | — | — |')
+     95|     const lido = WatchContract.read(md)
+     96|     expect(lido.items).toEqual([])
+       |                        ^
+     97|     expect(lido.anomalies).toEqual([])
+     98|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 6 passed (11)
+   Start at  15:29:37
+   Duration  375ms (transform 69ms, setup 0ms, collect 85ms, tests 9ms, environment 0ms, prepare 62ms)
+

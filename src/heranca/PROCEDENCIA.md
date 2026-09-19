@@ -74,11 +74,11 @@ O descarte tem consequência no índice da sonda, registrada como adaptação A3
 
 ## 5. Adaptações
 
-Treze. Seis (A1 a A3, A7, A9 e A12) são de resolução de importação ou de exportação. Sete (A4 a
-A6, A8, A10, A11 e A13) tocam uma regra de leitura, ou a suíte que a fixa, e são a exceção
-registrada: nasceram de defeito encontrado no uso, `BUG-20260909-FJBD`, `BUG-20260912-PIPE` e
-`BUG-20260914-DTLI`, e o caminho para aposentá-las é o mesmo, levar a mudança à origem e
-ressincronizar.
+Dezesseis. Sete (A1 a A3, A7, A9, A12 e A14) são de resolução de importação ou de exportação. Nove
+(A4 a A6, A8, A10, A11, A13, A15 e A16) tocam uma regra de leitura, ou a suíte que a fixa, e são a
+exceção registrada: nasceram de defeito encontrado no uso, `BUG-20260909-FJBD`,
+`BUG-20260912-PIPE`, `BUG-20260914-DTLI` e `BUG-20260914-5UH7`, e o caminho para aposentá-las é o
+mesmo, levar a mudança à origem e ressincronizar.
 
 ### A1, importações de `reversa-probe/src/snapshot.ts`
 
@@ -220,6 +220,32 @@ literais.
 Em `tests/leitura-notacao-markdown.spec.ts`, suíte local, pelo motivo registrado para A6. Metade dos
 casos fixa o limite, e não o reconhecimento: valor fora do vocabulário, marca parcial, caixa
 trocada, tabela alheia e cabeçalho esperado encurtado continuam recusados.
+
+### A14 a A16, o vigia onde o agente o escreve, em `reversa-domain/src/watch.ts`
+
+O leitor da origem procura a tabela ativa do `regression-watch.md` só no preâmbulo, antes do
+primeiro título, e reconhece `Observações` e `Arquivadas` pelo nome exato. O `/reversa-coding`
+prescreve "cabeçalho, tabela, histórico, arquivadas" e não proíbe título sobre a tabela; no `afla`
+ela mora sempre sob título próprio (`Itens de vigia`, `Itens ativos`, `Watch items`), e doze das
+catorze seções de observações se chamam `Observações, sem peso de regressão`. Nas catorze features
+a leitura devolvia tudo vazio, contra 226 linhas `W###`, e sem anomalia alguma
+(`BUG-20260914-5UH7`).
+
+A15 reconhece a seção pelo começo do título, e trata como vigia ativo toda seção que não é de
+observações, de arquivadas ou de histórico, o preâmbulo incluído. O que não pode ser lido passa a
+ser dito, com o código `tabela-nao-reconhecida`, que já existia no vocabulário: a tabela de
+observações ou de arquivadas cujas colunas não são as do vigia, e o arquivo sem tabela de vigia
+alguma. As tabelas de colunas próprias são sinalizadas e não lidas, porque ler tabela arbitrária
+pela coluna `ID` seria desenho novo sem consumidor que o peça (NG-01). Tabelas em torno do vigia
+ativo, como a grade de metadados sob o título, não são assunto do leitor.
+
+A16 pula a linha só de travessões, que é como o agente escreve o vigia vazio dentro da tabela
+obrigatória; lida como item, ela virava um W sem ID. A14 é a importação correspondente.
+
+### Onde a regressão de A14 a A16 foi fixada
+
+Em `tests/leitura-vigia-secoes.spec.ts`, suíte local, pelo motivo registrado para A6. A suíte
+herdada de `watch.ts` continua verde sem tocar em caso algum.
 
 ### O que deliberadamente não foi adaptado
 
