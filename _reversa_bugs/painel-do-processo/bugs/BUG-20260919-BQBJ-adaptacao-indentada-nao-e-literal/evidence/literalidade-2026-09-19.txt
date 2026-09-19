@@ -1,0 +1,33 @@
+# Medição em 2026-09-19 sobre 8101826 (master), com o leitor yaml que scripts/heranca/manifesto.js usa
+# Para cada adaptação: o adaptado, como o YAML o entrega, ocorre literalmente no arquivo declarado?
+A1   src/heranca/reversa-probe/src/snapshot.ts            literal
+A2   src/heranca/reversa-probe/tests/snapshot.spec.ts     literal
+A3   src/heranca/reversa-probe/src/index.ts               literal
+A4   src/heranca/reversa-domain/src/impact.ts             NÃO LITERAL
+A5   src/heranca/reversa-domain/tests/impact.spec.ts      NÃO LITERAL
+A6   src/heranca/reversa-domain/src/table.ts              literal
+A7   src/heranca/reversa-domain/src/index.ts              literal
+A8   src/heranca/reversa-domain/src/table.ts              literal
+A9   src/heranca/reversa-domain/src/impact.ts             literal
+A10  src/heranca/reversa-domain/src/impact.ts             literal
+A11  src/heranca/reversa-domain/src/impact.ts             literal
+A12  src/heranca/reversa-domain/src/watch.ts              NÃO LITERAL
+A13  src/heranca/reversa-domain/src/watch.ts              literal
+A14  src/heranca/reversa-domain/src/watch.ts              literal
+A15  src/heranca/reversa-domain/src/watch.ts              literal
+A16  src/heranca/reversa-domain/src/watch.ts              literal
+
+# Ressincronização simulada de impact.ts: origem reconstruída desfazendo as adaptações com o texto
+# indentado correto, e aplicar() de scripts/heranca/adaptacoes.js com as adaptações como o YAML as entrega
+como declarado: para em A4, motivo ausente
+com A4 lida com a indentação certa: reproduz o arquivo exatamente
+
+# check:heranca:local no mesmo commit
+  veredito: divergente (0 impedem, 1 apenas informam)
+
+# Ressalva sobre A12: ela aparece como "NÃO LITERAL" porque A14, declarada depois, reescreve a mesma
+# linha de importação; as adaptações se aplicam em sequência, e o adaptado de A12 não sobrevive no
+# arquivo final por desenho. A ressincronização simulada de watch.ts, com A12 a A16 em ordem,
+# reproduz o arquivo exatamente. A presença isolada de cada trecho não é, portanto, o teste certo; o
+# teste certo é a aplicação em sequência sobre a origem reconstruída. A4 e A5 são os únicos defeitos
+# reais: começam indentadas e não têm o indicador de indentação do bloco literal.
