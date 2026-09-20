@@ -435,3 +435,65 @@ A rede que resta são as **suítes herdadas**, copiadas junto com o código que
 elas testam e rodadas aqui a cada `npm test`. Elas exercitam o comportamento, e
 não o texto, e é por isso que valeu copiá-las. Elas não cobrem tudo, mas são o
 que separa o regime de uma promessa.
+
+## O mapa das equivalências de checkpoint
+
+O Reversa manda o checkpoint declarar sua conclusão em `completed_at`, mas esse
+nome aparece em dois arquivos de referência e em nenhum dos mais de vinte
+`SKILL.md` que mandam salvar checkpoint. O resultado é medível: dos 64 projetos
+com `.reversa/state.json`, nove declaram conclusão por outro nome, em sete
+vocabulários distintos (`status: "concluido"`, `concluido_em`, `done: true`,
+`status: "completed"`, `status: "completo"`, `timestamp`, `status: "success"`).
+Para a leitura, um checkpoint assim não declarou conclusão alguma, e vira
+anomalia.
+
+O mapa em `src/domain/equivalencias.ts` é onde essas equivalências ficam depois
+de **uma pessoa** aprová-las. Ele guarda pares de campo e valor, nunca campos
+soltos: `status: "failed"` e `status: "success"` moram no mesmo campo e dizem o
+oposto, e um mapa por campo faria projeto que falhou aparecer como concluído.
+Guarda também as entradas que não são agente nenhum, como o `plano_aprovado`
+que mora no mapa de checkpoints sem ser checkpoint.
+
+Achando par aprovado, o checkpoint aparece concluído **com a procedência na
+linha**, dizendo por qual campo e valor fora do esquema ele foi reconhecido.
+Não achando, o comportamento é o de sempre: conclusão não declarada, com
+anomalia. O `completed_at` continua tendo precedência sobre tudo.
+
+### Propor e dispor são dois comandos
+
+```bash
+npm run aprender:equivalencias   # PROPÕE, consultando um modelo local
+npm run promover:equivalencias   # DISPÕE, a partir do que você marcou
+```
+
+O primeiro varre os `state.json` de uma raiz (`--raiz=~/dev`, por padrão o
+próprio repositório), isola os pares que ninguém decidiu ainda, elide o
+conteúdo, pergunta a um modelo local por Ollama (`--modelo=`, por padrão
+`qwen2.5:7b`) e escreve `propostas/equivalencias.md`, com a leitura sugerida, a
+razão do modelo e os projetos onde o par foi visto.
+
+A pergunta é feita em duas passagens, e a ordem importa. Primeiro cada
+checkpoint é perguntado inteiro, sem apontar campo algum, e o modelo diz qual
+dos campos fala de estado. Só depois, e só nos campos que essa primeira
+passagem elegeu, ele é perguntado campo a campo, o que recupera um segundo
+valor como `status: "success"` ao lado de `status: "concluido"`. Perguntar
+direto campo a campo faria o modelo concordar que `verde: 569` declara
+conclusão; perguntar só do jeito amplo perderia o segundo valor. Na rodada
+sobre os 64 projetos, a ordem devolveu seis pares em 1 min 13 s. **Ele nunca escreve no
+mapa**, e a conferência disso é um `git status` logo depois de rodar.
+
+O segundo não conhece o motor: abra `scripts/promover-equivalencias.js` e olhe
+os `require` do topo. Ele lê as caixas que você marcou na proposta e regenera o
+módulo, com a data da aprovação e a evidência. Marcar a caixa é o ato de
+aprovar; o que ficou desmarcado não entra, e o que o modelo não soube
+classificar a proposta nomeia à parte, sem caixa.
+
+O modelo roda no tempo do aprendizado, jamais no tempo da leitura. A extensão
+não fala com o Ollama, não fala com serviço algum e continua sem qualquer
+superfície de escrita: a suíte inteira roda sem modelo instalado. O mapa vai ao
+pacote porque é módulo, e não arquivo de dados; `.vscodeignore` só readmite
+`out/`, e uma aprovação que não chegasse ao `.vsix` valeria apenas para quem
+tem o repositório.
+
+Nenhum `state.json` é reescrito em passo algum, nem pelo aprendizado, nem pela
+promoção, nem pela leitura. A tradução acontece em memória e sobre o mapa.

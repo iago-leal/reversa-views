@@ -16,11 +16,14 @@ import {
   extractionLabel,
   inconsistencyLabel,
   linkOriginLabel,
+  nonAgentEntries,
   phaseMark,
+  provenanceText,
   revisionLabel,
   stageLabel,
 } from '../src/webview/domain/labels.ts'
 import type { Label } from '../src/webview/domain/types.ts'
+import type { CheckpointSituation } from '../src/domain/types.ts'
 import { PHASES } from '../src/heranca/reversa-domain/src/index.ts'
 import {
   BUG_PHASES,
@@ -30,7 +33,13 @@ import {
   CONFERENCE_STATES,
   LINK_ORIGINS,
 } from '../src/domain/types.ts'
-import { checkpointStateFixture, processFixture } from './helpers/reversa-fixtures.ts'
+import {
+  checkpointStateFixture,
+  discoveryStateFixture,
+  nonAgentEntryFixture,
+  preTwelveDiscoveryFixture,
+  processFixture,
+} from './helpers/reversa-fixtures.ts'
 
 const STAGES = [
   'sem-feature-ativa',
@@ -302,5 +311,67 @@ describe('o vocabulário do estado da descoberta (feature 011)', () => {
     })
 
     expect(herdado.status).toBe('em andamento')
+  })
+})
+
+/**
+ * Feature 012: a quarta situação, a procedência e os registros que não são
+ * agentes (T019, RF-08, RF-16, RF-17).
+ *
+ * Tudo em texto, e nunca só em cor: é o RNF-03, e é o motivo de a procedência
+ * ser uma frase e não um ícone. O caso da situação desconhecida existe pelo
+ * risco nomeado em `interfaces/protocolo-webview.md`: a união cresceu, e uma
+ * tela antiga diante de host novo receberia um valor que ela não conhece.
+ */
+describe('os rótulos da feature 012', () => {
+  it('dá à falha um texto próprio, distinto dos outros três', () => {
+    const textos = ['concluido', 'em-andamento', 'conclusao-nao-declarada', 'falhou'].map(
+      (situacao) => checkpointStateMark(checkpointStateFixture({ agent: 'x', situacao })).status,
+    )
+
+    expect(new Set(textos).size).toBe(4)
+    expect(textos[3]).toMatch(/falh/i)
+  })
+
+  it('trata situação desconhecida como a mais conservadora das quatro, e não quebra', () => {
+    const mark = checkpointStateMark(
+      checkpointStateFixture({ agent: 'x', situacao: 'inventada' as CheckpointSituation }),
+    )
+
+    expect(mark.status).toBe(checkpointStateMark(checkpointStateFixture({ agent: 'x', situacao: 'conclusao-nao-declarada' })).status)
+  })
+
+  it('nomeia campo e valor na procedência, e diz que estão fora do esquema', () => {
+    const texto = provenanceText({ campo: 'status', valor: 'concluido' })
+
+    expect(texto).toContain('status')
+    expect(texto).toContain('concluido')
+    expect(texto).toMatch(/fora do esquema/i)
+  })
+
+  it('não diz nada quando a situação veio do esquema, porque não há o que declarar', () => {
+    expect(provenanceText(null)).toBeNull()
+  })
+
+  it('não apresenta instante para o checkpoint reconhecido, nem que o objeto traga um', () => {
+    const mark = checkpointStateMark(
+      checkpointStateFixture({ agent: 'x', situacao: 'concluido', instante: null, reconhecidoPor: { campo: 'status', valor: 'concluido' } }),
+    )
+
+    expect(mark.instant).toBeNull()
+  })
+
+  it('lê a lista dos registros que não são agentes como vazia quando o host é anterior à feature', () => {
+    const axis = preTwelveDiscoveryFixture()
+
+    expect(nonAgentEntries(axis)).toEqual([])
+  })
+
+  it('devolve os registros quando eles existem, sem lhes atribuir situação alguma', () => {
+    const axis = discoveryStateFixture({ registrosNaoAgentes: [nonAgentEntryFixture('plano_aprovado', ['fases'])] })
+    const registros = nonAgentEntries(axis)
+
+    expect(registros).toHaveLength(1)
+    expect(registros[0]).not.toHaveProperty('situacao')
   })
 })

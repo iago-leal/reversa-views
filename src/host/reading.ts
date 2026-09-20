@@ -23,6 +23,7 @@ import { readDecomposition } from '../domain/decomposition.ts'
 import { readDeliveryLinks } from '../domain/delivery-link.ts'
 import type { DeliveryLinks } from '../domain/delivery-link.ts'
 import { readDiscoveryState } from '../domain/discovery-state.ts'
+import { MAPA_DE_EQUIVALENCIAS } from '../domain/equivalencias.ts'
 import { readGreenfield } from '../domain/greenfield.ts'
 import { readHistory } from '../domain/history.ts'
 import type {
@@ -30,6 +31,7 @@ import type {
   BugRegistry,
   DiscoveryStateAxis,
   GreenfieldAxis,
+  MapaDeEquivalencias,
   ProjectHistory,
 } from '../domain/types.ts'
 import { readBugFolders } from '../probe/bugs.ts'
@@ -61,6 +63,8 @@ export interface ReadingDeps {
   readLinks?: (pastas: FeatureFolderRead[]) => DeliveryLinks
   /** The judgement of feature 011, over the raw state file and the inherited anomalies. */
   readDiscovery?: typeof readDiscoveryState
+  /** The approved map of feature 012; the real one when the caller says nothing. */
+  equivalencias?: MapaDeEquivalencias
   /** Where the moment of the reading comes from. */
   clock?: () => Date
 }
@@ -165,10 +169,32 @@ export function readWorkspace(root: string, deps: ReadingDeps): ReadingResult {
     // the panel then declines to draw, because deciding what the screen shows
     // belongs to the panel (NG-03). Same try, same reason as every other
     // branch.
+    // Feature 012 hands the same branch a third input: the map a person
+    // approved. It is a compiled-in constant, never read from disk at run
+    // time, which is what keeps NG-04 intact and the reading under the 200 ms
+    // of RNF-01. Empty map, and this is exactly the reading of feature 011.
     const discoveryState = readDiscovery({
       stateJson: snapshot.stateJson,
       anomalias: process.anomalies,
+      equivalencias: deps.equivalencias ?? MAPA_DE_EQUIVALENCIAS,
     })
+
+    // The trail of the reading includes what the map decided, so that a
+    // conclusion shown on screen can be traced without opening the map: the
+    // probe report already records what was read, refused and truncated, and
+    // this is the same kind of record for what was recognised (RF-07 of the
+    // reading spec).
+    const reconhecidos = discoveryState.checkpoints.filter((c) => c.reconhecidoPor !== null).length
+    if (reconhecidos > 0 || discoveryState.registrosNaoAgentes.length > 0) {
+      deps.log.write(
+        logLine(
+          ORIGIN,
+          'equivalências aplicadas',
+          `${root}: ${reconhecidos} checkpoint(s) reconhecido(s) por par aprovado, ` +
+            `${discoveryState.registrosNaoAgentes.length} entrada(s) fora da contagem`,
+        ),
+      )
+    }
 
     return {
       kind: 'loaded',

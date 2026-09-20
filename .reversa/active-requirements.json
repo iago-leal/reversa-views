@@ -1,16 +1,14 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/011-estado-terminal-e-checkpoints",
-  "feature-id": "011",
-  "short-name": "estado-terminal-e-checkpoints",
-  "started-at": "2026-09-20T18:47:11Z",
-  "current-stage": "coding",
+  "feature-dir": "_reversa_forward/012-equivalencias-de-checkpoint",
+  "feature-id": "012",
+  "short-name": "equivalencias-de-checkpoint",
+  "started-at": "2026-09-20T20:42:06Z",
+  "current-stage": "to-do",
   "stages-completed": [
     "requirements",
     "clarify",
-    "plan",
-    "to-do",
-    "coding"
+    "plan"
   ],
   "paused-features": [
     {

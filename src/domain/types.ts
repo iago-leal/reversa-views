@@ -813,12 +813,21 @@ export interface ExtractionState {
  * measured -- and the panel says so instead of claiming it still runs.
  */
 export type CheckpointSituation =
-  /** `completed_at` is there, which is what the guide asks for. */
+  /** `completed_at` is there, or an approved pair reads as a conclusion. */
   | 'concluido'
-  /** No `completed_at`, and `modules_pending` is not empty: the documented signature of partial work. */
+  /** `modules_pending` is not empty, or an approved pair reads as work under way. */
   | 'em-andamento'
-  /** Neither: the conclusion, if any, was declared outside the canonical field. */
+  /** Neither, and no approved pair: the conclusion, if any, was declared outside the canonical field. */
   | 'conclusao-nao-declarada'
+  /**
+   * An approved pair reads as a failure (feature 012).
+   *
+   * This one NEVER comes from the schema. No canonical field declares that an
+   * agent ended badly, and inventing one would have the panel asserting what
+   * no documentation supports. It exists because an approved pair can say it,
+   * and only because of that.
+   */
+  | 'falhou'
 
 /** One checkpoint, judged by feature 011. */
 export interface CheckpointState {
@@ -837,6 +846,17 @@ export interface CheckpointState {
    * `adrs` have the same shape and are not files (D-08).
    */
   camposComLista: string[]
+  /**
+   * The approved pair that decided the situation, when the schema did not
+   * (feature 012). Null whenever `completed_at` or `modules_pending` decided.
+   *
+   * Three invariants hold together, and the suite pins all three. A non-null
+   * value means the situation came from the map, never from the schema. A
+   * non-null `instante` implies this is null, because the instant only ever
+   * comes from the canonical field. And `conclusao-nao-declarada` implies this
+   * is null, since recognising and not declaring are mutually exclusive.
+   */
+  reconhecidoPor: { campo: string; valor: string } | null
 }
 
 /**
@@ -875,6 +895,24 @@ export interface AbsorbedAnomaly {
 }
 
 /**
+ * One entry of the checkpoint map that names no agent at all (feature 012).
+ *
+ * The measurement of 2026-09-20 found three: `plano_aprovado` in `med-reversa`,
+ * `redator_progress` in `TECH+` and `decisoes_autor` in `afla`. They are
+ * records of a decision or of a count, living where the agents live.
+ *
+ * It has no situation, and that is the point: nothing is asked of a conclusion
+ * from something that is not an agent. What makes one of these is an approved
+ * KEY -- not a field-plus-value pair -- because they carry no state field to
+ * translate.
+ */
+export interface NonAgentEntry {
+  chave: string
+  /** The same preserved list-valued fields a checkpoint would carry. */
+  camposComLista: string[]
+}
+
+/**
  * The discovery-state axis of the project (feature 011).
  *
  * ABSENT from the payload means the reading did not happen -- a host older
@@ -889,6 +927,14 @@ export interface DiscoveryStateAxis {
   anomalias: DiscoveryStateAnomaly[]
   /** Inherited anomalies this axis recognised; the composition discounts them. */
   absorvidas: AbsorbedAnomaly[]
+  /**
+   * Entries approved as records that are not agents (feature 012).
+   *
+   * A key lives here OR in `checkpoints`, never in both. Leaving it in the
+   * same list under a flag would oblige every consumer to filter, and one of
+   * them would eventually forget.
+   */
+  registrosNaoAgentes: NonAgentEntry[]
 }
 
 /** The axis of a project whose `state.json` is absent or could not be read. */
@@ -897,4 +943,54 @@ export const EMPTY_DISCOVERY_STATE: DiscoveryStateAxis = {
   checkpoints: [],
   anomalias: [],
   absorvidas: [],
+  registrosNaoAgentes: [],
 }
+
+/**
+ * How one out-of-schema pair is to be read (feature 012).
+ *
+ * `nao-e-sinal` is deliberately absent. What is not a signal does not become a
+ * record: it only stops being asked about again, and that memory lives in the
+ * proposal, not in the map.
+ */
+export type LeituraDeEquivalencia = 'concluido' | 'falhou' | 'em-andamento'
+
+/**
+ * One approved pair, which is the unit of recognition (RN-01).
+ *
+ * The key is `campo` plus `valor`, never the field alone. Across the projects
+ * measured on 2026-09-20 the field `status` carried `concluido`, `completed`,
+ * `completo` and `success`, and would carry `failed` in a project that failed.
+ * Recognising by field would declare finished an agent that aborted.
+ */
+export interface EquivalenciaDeCampo {
+  campo: string
+  /** Trimmed and lowercased, never stripped of diacritics: `concluido` and `concluído` are different spellings a human approved separately. */
+  valor: string
+  leitura: LeituraDeEquivalencia
+  /** The day a person approved it, `YYYY-MM-DD`. */
+  aprovadoEm: string
+  /** Where the pair had been seen when the proposal was written; for human reading only. */
+  evidencia: string[]
+}
+
+/** One approved key, for an entry that carries no state field (RN-10). */
+export interface RegistroNaoAgente {
+  chave: string
+  aprovadoEm: string
+  evidencia: string[]
+}
+
+/**
+ * Everything a person has approved, which is all the panel is allowed to know.
+ *
+ * Empty or absent leaves the reading identical to feature 011, and that is the
+ * safe default: an unknown pair is never a guess, it is the previous behaviour.
+ */
+export interface MapaDeEquivalencias {
+  pares: readonly EquivalenciaDeCampo[]
+  naoAgentes: readonly RegistroNaoAgente[]
+}
+
+/** A map that has approved nothing; a COPY, never the shared constant. */
+export const EMPTY_MAPA_DE_EQUIVALENCIAS: MapaDeEquivalencias = { pares: [], naoAgentes: [] }

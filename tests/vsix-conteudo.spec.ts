@@ -18,11 +18,19 @@ import { naoPrevistos } from '../scripts/conteudo-esperado.js'
 import { TETO_DO_PACOTE_DA_EXTENSAO, formatarTamanho } from '../scripts/limites.js'
 import { lerEntradas } from '../scripts/vsix.js'
 
-/** O pacote mais recente na raiz, ou nada quando ninguém empacotou ainda. */
+/**
+ * O pacote mais recente na raiz, ou nada quando ninguém empacotou ainda.
+ *
+ * A escolha é pela data de modificação, e não pelo nome: em ordem alfabética
+ * `0.9.4` vem depois de `0.11.0`, e a suíte passou a conferir pacote antigo
+ * assim que a segunda casa da versão chegou a dois dígitos. Erro silencioso,
+ * porque o pacote velho passa em tudo que já passava quando foi construído.
+ */
 const PACOTE = readdirSync('.')
   .filter((nome) => nome.endsWith('.vsix'))
-  .sort()
-  .at(-1)
+  .map((nome) => ({ nome, quando: statSync(nome).mtimeMs }))
+  .sort((a, b) => a.quando - b.quando)
+  .at(-1)?.nome
 
 describe('o conteúdo do pacote gerado (RF-21)', () => {
   it.skipIf(PACOTE === undefined)('não leva caminho fora da lista prevista', () => {
@@ -43,6 +51,11 @@ describe('o conteúdo do pacote gerado (RF-21)', () => {
       'extension/out/host/update.js',
       'extension/out/host/net.js',
       'extension/out/host/build.js',
+      // Feature 012: sem o mapa aprovado dentro do pacote, o painel instalado
+      // leria todo projeto como se ninguém tivesse decidido coisa alguma, e as
+      // aprovações valeriam só em quem tem o repositório. É a razão de ele ser
+      // módulo e não arquivo de dados: o `.vscodeignore` só readmite `out/`.
+      'extension/out/domain/equivalencias.js',
     ]) {
       expect(caminhos, `${exigido} ficou de fora do pacote`).toContain(exigido)
     }

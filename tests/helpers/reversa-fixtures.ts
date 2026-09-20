@@ -26,8 +26,14 @@ import type {
   DeliveryAnomaly,
   DeliveryLinkReading,
   DeliveryLinkState,
+  CheckpointSituation,
   DiscoveryStateAnomaly,
   DiscoveryStateAxis,
+  EquivalenciaDeCampo,
+  LeituraDeEquivalencia,
+  MapaDeEquivalencias,
+  NonAgentEntry,
+  RegistroNaoAgente,
   CheckpointState,
   GreenfieldAxis,
   HistoryEntry,
@@ -741,8 +747,74 @@ export function checkpointStateFixture(
     situacao: 'concluido',
     instante: '2026-09-09T10:00:00Z',
     camposComLista: [],
+    reconhecidoPor: null,
     ...partes,
   }
+}
+
+/**
+ * One checkpoint recognised by an approved pair (feature 012).
+ *
+ * It builds the coherent shape and not just the fields: an instant is never
+ * set here, because a pair establishes THAT an agent finished and never WHEN.
+ * A fixture that carried both would let a bug through the suite.
+ * @param agent - the agent name.
+ * @param campo - the field that carried the declaration.
+ * @param valor - its value.
+ * @param situacao - what the pair reads as; concluded by default.
+ * @returns the judged checkpoint, with its provenance.
+ */
+export function recognisedCheckpointFixture(
+  agent: string,
+  campo = 'status',
+  valor = 'concluido',
+  situacao: CheckpointSituation = 'concluido',
+): CheckpointState {
+  return checkpointStateFixture({
+    agent,
+    situacao,
+    instante: null,
+    reconhecidoPor: { campo, valor },
+  })
+}
+
+/**
+ * One entry approved as a record that is not an agent (feature 012).
+ * @param chave - the key as the checkpoint map carries it.
+ * @param camposComLista - the preserved list-valued fields, if any.
+ * @returns the entry.
+ */
+export function nonAgentEntryFixture(chave: string, camposComLista: string[] = []): NonAgentEntry {
+  return { chave, camposComLista }
+}
+
+/**
+ * An approved map, empty by default -- which is the shape that leaves every
+ * case of feature 011 behaving exactly as it did.
+ * @param pares - the approved pairs.
+ * @param naoAgentes - the approved keys.
+ * @returns the map.
+ */
+export function mapaFixture(
+  pares: EquivalenciaDeCampo[] = [],
+  naoAgentes: RegistroNaoAgente[] = [],
+): MapaDeEquivalencias {
+  return { pares, naoAgentes }
+}
+
+/**
+ * One approved pair, with the bookkeeping filled in.
+ * @param campo - the field name.
+ * @param valor - its value.
+ * @param leitura - what it declares; concluded by default.
+ * @returns the pair.
+ */
+export function equivalenciaFixture(
+  campo: string,
+  valor: string,
+  leitura: LeituraDeEquivalencia = 'concluido',
+): EquivalenciaDeCampo {
+  return { campo, valor, leitura, aprovadoEm: '2026-09-20', evidencia: ['med-reversa'] }
 }
 
 /**
@@ -760,8 +832,31 @@ export function discoveryStateFixture(
     checkpoints: [checkpointStateFixture({ agent: 'scout' })],
     anomalias: [],
     absorvidas: [],
+    registrosNaoAgentes: [],
     ...overrides,
   }
+}
+
+/**
+ * The axis as a host that predates feature 012 would send it: the two new
+ * fields simply absent.
+ *
+ * It is deliberately typed loosely, because the point of the case is a shape
+ * the current types no longer describe. The screen has to survive it, reading
+ * the missing list as empty and the missing provenance as null.
+ * @param overrides - what the case is about.
+ * @returns the axis without the fields of feature 012.
+ */
+export function preTwelveDiscoveryFixture(
+  overrides: Partial<DiscoveryStateAxis> = {},
+): DiscoveryStateAxis {
+  const axis = discoveryStateFixture(overrides)
+  const solto = axis as unknown as Record<string, unknown>
+  delete solto.registrosNaoAgentes
+  for (const checkpoint of axis.checkpoints) {
+    delete (checkpoint as unknown as Record<string, unknown>).reconhecidoPor
+  }
+  return axis
 }
 
 /**

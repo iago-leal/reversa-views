@@ -11,9 +11,21 @@
 
 import type { ReactNode } from 'react'
 import type { ReversaProcess } from '../../heranca/reversa-domain/src/index.ts'
-import type { CheckpointState, DiscoveryStateAxis, GreenfieldAxis } from '../../domain/types.ts'
+import type {
+  CheckpointState,
+  DiscoveryStateAxis,
+  GreenfieldAxis,
+  NonAgentEntry,
+} from '../../domain/types.ts'
 import { brasiliaInstant } from '../domain/instants.ts'
-import { checkpointMark, checkpointStateMark, extractionLabel, phaseMark } from '../domain/labels.ts'
+import {
+  checkpointMark,
+  checkpointStateMark,
+  extractionLabel,
+  nonAgentEntries,
+  phaseMark,
+  provenanceText,
+} from '../domain/labels.ts'
 import { CollapsibleSection } from './CollapsibleSection.tsx'
 
 /** What the section draws. */
@@ -135,6 +147,9 @@ export function DiscoverySection(props: DiscoverySectionProps): ReactNode {
               <CheckpointRow checkpoint={checkpoint} key={checkpoint.agent} />
             ))}
       </ul>
+      {props.discoveryState === undefined ? null : (
+        <NonAgentRows registros={nonAgentEntries(props.discoveryState)} />
+      )}
     </CollapsibleSection>
   )
 }
@@ -156,6 +171,7 @@ export function DiscoverySection(props: DiscoverySectionProps): ReactNode {
 function CheckpointRow(props: { checkpoint: CheckpointState }): ReactNode {
   const mark = checkpointStateMark(props.checkpoint)
   const instant = brasiliaInstant(mark.instant)
+  const provenance = provenanceText(props.checkpoint.reconhecidoPor)
 
   return (
     <li data-checkpoint={props.checkpoint.agent} data-situacao={props.checkpoint.situacao}>
@@ -165,6 +181,14 @@ function CheckpointRow(props: { checkpoint: CheckpointState }): ReactNode {
           {' '}
           <span data-part="checkpoint-instant" data-instant={instant.raw}>
             {instant.text}
+          </span>
+        </>
+      )}
+      {provenance === null ? null : (
+        <>
+          {' '}
+          <span data-part="checkpoint-procedencia" className="muted">
+            {provenance}
           </span>
         </>
       )}
@@ -178,5 +202,38 @@ function CheckpointRow(props: { checkpoint: CheckpointState }): ReactNode {
         </>
       )}
     </li>
+  )
+}
+
+/**
+ * The entries that name no agent (feature 012, RF-17).
+ *
+ * They are drawn APART from the checkpoints and without a situation, because
+ * nothing is asked of a conclusion from something that is not an agent. They
+ * are drawn at all, rather than dropped, because a reader who saw
+ * `plano_aprovado` in the file deserves to find it on the panel.
+ * @param props - the entries the axis separated.
+ * @returns the list, or nothing when there are none.
+ */
+function NonAgentRows(props: { registros: NonAgentEntry[] }): ReactNode {
+  if (props.registros.length === 0) return null
+
+  return (
+    <ul className="rows" data-part="registros-nao-agentes">
+      {props.registros.map((registro) => (
+        <li data-registro={registro.chave} key={registro.chave}>
+          {registro.chave}{' '}
+          <span className="muted">registro aprovado como não sendo agente</span>
+          {registro.camposComLista.length === 0 ? null : (
+            <>
+              {' '}
+              <span data-part="registro-campos" className="muted">
+                campos com lista de textos: {registro.camposComLista.join(', ')}
+              </span>
+            </>
+          )}
+        </li>
+      ))}
+    </ul>
   )
 }

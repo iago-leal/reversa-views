@@ -57,6 +57,8 @@ const ramos = { decomposition: EMPTY_DECOMPOSITION, history: EMPTY_HISTORY, gree
 import {
   closedDiscoveryFixture,
   discoveryStateFixture,
+  preTwelveDiscoveryFixture,
+  recognisedCheckpointFixture,
   payloadFixture,
   processFixture,
 } from './helpers/reversa-fixtures.ts'
@@ -419,5 +421,55 @@ describe('o campo do estado da descoberta (feature 011, D-07)', () => {
 
     expect(carga.process.anomalies).toHaveLength(1)
     expect(carga.discoveryState?.absorvidas).toHaveLength(1)
+  })
+})
+
+/**
+ * Os campos da feature 012, e o valor novo da união.
+ *
+ * Os dois campos crescem por acréscimo e são seguros. O valor novo de
+ * `CheckpointSituation` é de outra natureza, e é o único risco real de
+ * incompatibilidade da feature: no `.vsix` host e tela viajam juntos, mas o
+ * preview serve a tela construída contra a leitura corrente.
+ */
+describe('os campos do reconhecimento por equivalência (feature 012)', () => {
+  it('mantém `discoveryState` como o único campo acrescentado à carga: a 012 cresce por dentro dele', () => {
+    const anterior = payloadFixture()
+    const com = payloadFixture({ discoveryState: discoveryStateFixture() })
+
+    expect(Object.keys(com).filter((k) => !Object.keys(anterior).includes(k))).toEqual(['discoveryState'])
+  })
+
+  it('trata a procedência ausente como nula, que é o que um host anterior manda', () => {
+    const axis = preTwelveDiscoveryFixture()
+    const carga = payloadFixture({ discoveryState: axis })
+
+    expect(carga.discoveryState?.checkpoints[0]?.reconhecidoPor ?? null).toBeNull()
+  })
+
+  it('trata a lista de registros ausente como vazia', () => {
+    const carga = payloadFixture({ discoveryState: preTwelveDiscoveryFixture() })
+
+    expect(carga.discoveryState?.registrosNaoAgentes ?? []).toEqual([])
+  })
+
+  it('atravessa o checkpoint reconhecido com campo, valor e sem instante', () => {
+    const carga = payloadFixture({
+      discoveryState: discoveryStateFixture({ checkpoints: [recognisedCheckpointFixture('scout')] }),
+    })
+    const checkpoint = carga.discoveryState?.checkpoints[0]
+
+    expect(checkpoint?.reconhecidoPor).toEqual({ campo: 'status', valor: 'concluido' })
+    expect(checkpoint?.instante).toBeNull()
+  })
+
+  it('atravessa a quarta situação sem transformação', () => {
+    const carga = payloadFixture({
+      discoveryState: discoveryStateFixture({
+        checkpoints: [recognisedCheckpointFixture('archaeologist', 'status', 'failed', 'falhou')],
+      }),
+    })
+
+    expect(carga.discoveryState?.checkpoints[0]?.situacao).toBe('falhou')
   })
 })

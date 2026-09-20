@@ -36,9 +36,12 @@ import type {
   CheckpointState,
   DiscoveryStateAnomaly,
   DiscoveryStateAxis,
+  EquivalenciaDeCampo,
   ExtractionState,
+  MapaDeEquivalencias,
+  NonAgentEntry,
 } from './types.ts'
-import { EMPTY_DISCOVERY_STATE } from './types.ts'
+import { EMPTY_DISCOVERY_STATE, EMPTY_MAPA_DE_EQUIVALENCIAS } from './types.ts'
 
 /** The file every anomaly of this axis names, and the one the absorption matches. */
 const FILE = '.reversa/state.json'
@@ -63,6 +66,14 @@ export interface DiscoveryStateInput {
   stateJson: string | null
   /** The anomalies the inherited layer recorded, for the absorption. */
   anomalias: readonly { file: string; code: string; detail?: string }[]
+  /**
+   * What a person has approved (feature 012); absent means nothing was.
+   *
+   * Optional on purpose. Omitting the field is the path by which every suite
+   * of feature 011 keeps passing without a line rewritten, and it is also the
+   * correct behaviour for any caller that does not yet know the map.
+   */
+  equivalencias?: MapaDeEquivalencias
 }
 
 /**
@@ -147,13 +158,91 @@ function camposComLista(entry: Record<string, unknown>): string[] {
  * @param entry - the checkpoint object.
  * @returns the judged checkpoint.
  */
-function lerCheckpoint(agent: string, entry: Record<string, unknown>): CheckpointState {
+function lerCheckpoint(
+  agent: string,
+  entry: Record<string, unknown>,
+  mapa: MapaDeEquivalencias,
+): CheckpointState {
   const instante = asString(entry.completed_at)
   const pendentes = asStringList(entry.modules_pending)
-  const situacao =
-    instante !== null ? 'concluido' : pendentes.length > 0 ? 'em-andamento' : 'conclusao-nao-declarada'
+  const comum = { agent, camposComLista: camposComLista(entry) }
 
-  return { agent, situacao, instante, camposComLista: camposComLista(entry) }
+  // The two rules of the schema, in the order `checkpoint-guide.md` declares
+  // them, and BEFORE the map is looked at (RN-02). A checkpoint that carries
+  // `status: "concluido"` next to a populated `modules_pending` is work under
+  // way, and reading it the other way round would declare finished an agent
+  // that is halfway through.
+  if (instante !== null) {
+    return { ...comum, situacao: 'concluido', instante, reconhecidoPor: null }
+  }
+  if (pendentes.length > 0) {
+    return { ...comum, situacao: 'em-andamento', instante: null, reconhecidoPor: null }
+  }
+
+  // Only now: what a person approved. The instant stays null whatever the map
+  // says, because an approved pair establishes THAT an agent finished and
+  // never WHEN -- `at` sits right there, with a valid instant inside, and it
+  // declares no end of work (RN-06).
+  const par = casarPar(entry, mapa)
+  if (par !== null) {
+    return {
+      ...comum,
+      situacao: par.leitura,
+      instante: null,
+      reconhecidoPor: { campo: par.campo, valor: par.valor },
+    }
+  }
+
+  return { ...comum, situacao: 'conclusao-nao-declarada', instante: null, reconhecidoPor: null }
+}
+
+/**
+ * The value of a field as the map writes it, or null when it is not a scalar.
+ *
+ * `true` becomes `"true"`, because `done: true` and `done: "true"` declare the
+ * same thing and telling them apart would multiply records without multiplying
+ * meaning. Case and edge spaces are normalised; diacritics are NOT, because
+ * `concluido` and `concluído` are two spellings a person approved separately.
+ * @param valor - whatever the field holds.
+ * @returns the comparable value, or null.
+ */
+function valorComparavel(valor: unknown): string | null {
+  if (typeof valor === 'string') return valor.trim().toLowerCase()
+  if (typeof valor === 'boolean' || typeof valor === 'number') return String(valor)
+  return null
+}
+
+/**
+ * The approved pair this checkpoint carries, if any (RN-01).
+ *
+ * The match is on field AND value, never on the field alone: `status` was
+ * measured carrying `concluido`, `completed`, `completo` and `success`, and a
+ * project that failed would carry `failed`. Matching by field would declare
+ * finished an agent that aborted.
+ *
+ * Fields are visited in the order the file writes them, so a checkpoint with
+ * two approved pairs is read by the first one -- deterministic, and the case
+ * is rare enough that inventing a precedence would be inventing a rule.
+ * @param entry - the checkpoint object.
+ * @param mapa - what a person approved.
+ * @returns the pair with its reading, or null.
+ */
+function casarPar(
+  entry: Record<string, unknown>,
+  mapa: MapaDeEquivalencias,
+): { campo: string; valor: string; leitura: EquivalenciaDeCampo['leitura'] } | null {
+  for (const [campo, bruto] of Object.entries(entry)) {
+    const comparavel = valorComparavel(bruto)
+    if (comparavel === null) continue
+    const par = mapa.pares.find((p) => p.campo === campo && p.valor === comparavel)
+    // The value that travels onward is the RAW one, not the comparable one.
+    // Normalising is how two spellings meet in the map; showing the normalised
+    // form on screen would be the panel rewriting what the file says, which is
+    // exactly what NG-05 forbids. `timestamp` makes the difference visible:
+    // it matches as `...t12:10:19z` and is shown as `...T12:10:19Z`.
+    if (par !== undefined) return { campo, valor: String(bruto), leitura: par.leitura }
+  }
+  return null
 }
 
 /**
@@ -161,20 +250,33 @@ function lerCheckpoint(agent: string, entry: Record<string, unknown>): Checkpoin
  * @param value - the `checkpoints` field, whatever it holds.
  * @returns the judged checkpoints; empty when the field is not a map.
  */
-function lerCheckpoints(value: unknown): CheckpointState[] {
+function lerCheckpoints(
+  value: unknown,
+  mapa: MapaDeEquivalencias,
+): { checkpoints: CheckpointState[]; registros: NonAgentEntry[] } {
   const record = asRecord(value)
-  if (record === null) return []
+  if (record === null) return { checkpoints: [], registros: [] }
 
-  const out: CheckpointState[] = []
+  const checkpoints: CheckpointState[] = []
+  const registros: NonAgentEntry[] = []
   for (const [agent, raw] of Object.entries(record)) {
     const entry = asRecord(raw)
     // A checkpoint that is not an object is the inherited layer's business: it
     // already records `tipo-invalido` for exactly this, and recording it again
     // here would be two anomalies for one defect.
     if (entry === null) continue
-    out.push(lerCheckpoint(agent, entry))
+
+    // An approved key leaves this list entirely and enters the other one
+    // (RF-17). A key belongs to one of the two, never to both: leaving it here
+    // under a flag would oblige every consumer to filter, and one of them
+    // would eventually forget.
+    if (mapa.naoAgentes.some((registro) => registro.chave === agent)) {
+      registros.push({ chave: agent, camposComLista: camposComLista(entry) })
+      continue
+    }
+    checkpoints.push(lerCheckpoint(agent, entry, mapa))
   }
-  return out
+  return { checkpoints, registros }
 }
 
 /**
@@ -239,13 +341,19 @@ export function readDiscoveryState(input: DiscoveryStateInput): DiscoveryStateAx
   const record = asRecord(parseJsonSafe(input.stateJson).value)
   if (record === null) return { ...EMPTY_DISCOVERY_STATE }
 
-  const checkpoints = lerCheckpoints(record.checkpoints)
+  const mapa = input.equivalencias ?? EMPTY_MAPA_DE_EQUIVALENCIAS
+  const { checkpoints, registros } = lerCheckpoints(record.checkpoints, mapa)
   const extracao = lerExtracao(record)
 
   return {
     extracao,
     checkpoints,
+    // The anomaly survives only where the map recognised nothing. Once a
+    // person has decided, repeating the warning has no addressee left; the
+    // decision stays auditable through the provenance on the row and through
+    // the map's own history (RN-05).
     anomalias: anomaliasDosCheckpoints(checkpoints),
     absorvidas: absorver(input.anomalias, extracao),
+    registrosNaoAgentes: registros,
   }
 }

@@ -15,7 +15,13 @@
 
 import type { Checkpoint, Phase } from '../../heranca/reversa-domain/src/index.ts'
 import type { UpdateStatus } from '../../host/protocol.ts'
-import type { CheckpointState, FeatureMark, FeatureSituation } from '../../domain/types.ts'
+import type {
+  CheckpointState,
+  DiscoveryStateAxis,
+  FeatureMark,
+  FeatureSituation,
+  NonAgentEntry,
+} from '../../domain/types.ts'
 import type { Label, StatusMark, UpdateLabel } from './types.ts'
 
 /** The seven stages of the forward cycle, as the reader names them. */
@@ -142,7 +148,19 @@ const CHECKPOINT_SITUATION_LABELS: Record<string, string> = {
   concluido: 'concluído em',
   'em-andamento': 'em andamento',
   'conclusao-nao-declarada': 'conclusão não declarada no campo canônico',
+  falhou: 'terminou em falha',
 }
+
+/**
+ * The situation an unknown value falls back to (feature 012).
+ *
+ * The union grew, and an older screen facing a newer host would receive a
+ * value it does not know. In the packaged extension host and screen travel
+ * together, but the preview serves the built screen against the current
+ * reading, and that is where the mismatch can exist. Falling back to the most
+ * conservative of the four is the honest answer: it claims nothing.
+ */
+const SITUACAO_CONSERVADORA = 'conclusao-nao-declarada'
 
 /**
  * The readable name of the situation of the extraction (feature 011, RF-04).
@@ -172,9 +190,41 @@ export function extractionLabel(situacao: string): Label {
 export function checkpointStateMark(checkpoint: CheckpointState): CheckpointMark {
   return {
     label: { text: checkpoint.agent, known: true, raw: checkpoint.agent },
-    status: CHECKPOINT_SITUATION_LABELS[checkpoint.situacao] ?? checkpoint.situacao,
+    status:
+      CHECKPOINT_SITUATION_LABELS[checkpoint.situacao] ??
+      CHECKPOINT_SITUATION_LABELS[SITUACAO_CONSERVADORA],
     instant: checkpoint.instante,
   }
+}
+
+/**
+ * The sentence that says where a recognition came from (RN-04, RF-08).
+ *
+ * It is a SENTENCE and not an icon: a state that reads only as a colour does
+ * not read at all for part of the audience (RNF-03). And it says "outside the
+ * schema" in so many words, because a recognised checkpoint must never end up
+ * indistinguishable from one the canonical field proved.
+ * @param reconhecidoPor - the pair that decided, or null when the schema did.
+ * @returns the sentence, or null when there is nothing to declare.
+ */
+export function provenanceText(
+  reconhecidoPor: CheckpointState['reconhecidoPor'],
+): string | null {
+  if (reconhecidoPor === null || reconhecidoPor === undefined) return null
+  return `declarado em ${reconhecidoPor.campo}: ${reconhecidoPor.valor}, fora do esquema`
+}
+
+/**
+ * The entries that are not agents, read from an axis of any vintage.
+ *
+ * A host older than feature 012 sends no list at all, and an absent list is an
+ * empty one: it means the reading did not look, never that the project has
+ * none.
+ * @param axis - the discovery-state axis.
+ * @returns the entries, empty when the field is absent.
+ */
+export function nonAgentEntries(axis: DiscoveryStateAxis): NonAgentEntry[] {
+  return axis.registrosNaoAgentes ?? []
 }
 
 /**

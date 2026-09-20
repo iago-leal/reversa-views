@@ -47,7 +47,7 @@ const CANONICAS = ['reconhecimento', 'escavacao', 'interpretacao', 'geracao', 'r
 const IDENTIDADE = ['version', 'project', 'user_name', 'output_folder']
 
 /** Os quatro estados que este auxiliar sabe produzir. */
-const CASOS = ['fase-estranha', 'parcial', 'terminal-e-estranha', 'saidas-nao-canonicas']
+const CASOS = ['fase-estranha', 'parcial', 'terminal-e-estranha', 'saidas-nao-canonicas', 'falha']
 
 /**
  * O que cada caso escreve por cima da identidade preservada.
@@ -56,6 +56,19 @@ const CASOS = ['fase-estranha', 'parcial', 'terminal-e-estranha', 'saidas-nao-ca
  * que se vai olhar: o estado excepcional só se reconhece ao lado do normal.
  */
 const FORMAS = {
+  falha: {
+    estado: {
+      phase: 'escavacao',
+      completed: ['reconhecimento'],
+      pending: ['escavacao', 'interpretacao', 'geracao', 'revisao'],
+      checkpoints: {
+        scout: { completed_at: '2026-09-01T10:00:00Z', files: ['_reversa_sdd/inventory.md'] },
+        archaeologist: { date: '2026-09-02', status: 'failed', artifacts: [] },
+      },
+    },
+    relato:
+      'checkpoint que terminou MAL, declarado fora do esquema: sem o par aprovado sai em conclusão não declarada, e com o par status/failed aprovado como falhou sai como falha, que é a quarta situação da feature 012',
+  },
   'fase-estranha': {
     estado: {
       phase: 're-extracao-005',

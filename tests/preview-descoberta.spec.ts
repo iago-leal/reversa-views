@@ -112,8 +112,15 @@ afterAll(() => {
 })
 
 describe('o auxiliar, antes de tocar em disco', () => {
-  it('sabe produzir os quatro estados que um projeto saudável não produz', () => {
-    expect(CASOS).toEqual(['fase-estranha', 'parcial', 'terminal-e-estranha', 'saidas-nao-canonicas'])
+  it('sabe produzir os cinco estados que um projeto saudável não produz', () => {
+    // O quinto entrou com a feature 012, para a quarta situação do checkpoint.
+    expect(CASOS).toEqual([
+      'fase-estranha',
+      'parcial',
+      'terminal-e-estranha',
+      'saidas-nao-canonicas',
+      'falha',
+    ])
   })
 
   it('recusa caso que não existe, sem copiar coisa alguma', () => {
@@ -227,6 +234,9 @@ describe('cada caso produz o estado que promete', () => {
       situacao: 'conclusao-nao-declarada',
       instante: null,
       camposComLista: ['achados', 'arquivos_canonicos'],
+      // Nulo porque a situação não veio de par aprovado algum, e é assim que a
+      // feature 012 deixa intacto o que a 011 lia (RF-15).
+      reconhecidoPor: null,
     })
     expect(lido.process.discovery.checkpoints.find((c) => c.agent === 'writer')?.files).toEqual([])
     // O checkpoint com `files` não sinaliza campo algum, ainda que carregue um.
@@ -237,5 +247,41 @@ describe('cada caso produz o estado que promete', () => {
         detail: 'writer: sem completed_at',
       }),
     ])
+  })
+})
+
+/**
+ * O quinto caso, da feature 012: o checkpoint que terminou mal.
+ *
+ * Ele existe porque a quarta situação só seria conferível na tela se algum
+ * projeto real tivesse falhado, e nenhum dos sessenta e quatro medidos falhou.
+ * Fabricá-lo sobre cópia é o mesmo regime dos quatro casos anteriores, e a
+ * origem continua intocada ao fim.
+ */
+describe('o caso da falha (feature 012)', () => {
+  it('planta um checkpoint que declara fracasso fora do esquema', () => {
+    const copia = estragar('falha', origem())
+    const estado = JSON.parse(readFileSync(path.join(copia, ESTADO), 'utf8')) as {
+      checkpoints: Record<string, Record<string, unknown>>
+    }
+
+    const falhos = Object.values(estado.checkpoints).filter((entrada) => entrada.status === 'failed')
+    expect(falhos).toHaveLength(1)
+    expect(falhos[0]).not.toHaveProperty('completed_at')
+  })
+
+  it('sem par aprovado, o checkpoint da falha sai em conclusão não declarada', () => {
+    const leitura = ler(estragar('falha', origem()))
+
+    expect(leitura.discoveryState.checkpoints.some((c) => c.situacao === 'falhou')).toBe(false)
+    expect(leitura.discoveryState.anomalias.some((a) => a.detail?.includes('sem completed_at'))).toBe(true)
+  })
+
+  it('preserva o original, como os quatro casos anteriores', () => {
+    const raiz = origem()
+    const antes = readFileSync(path.join(raiz, ESTADO), 'utf8')
+    estragar('falha', raiz)
+
+    expect(readFileSync(path.join(raiz, ESTADO), 'utf8')).toBe(antes)
   })
 })

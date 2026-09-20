@@ -46,6 +46,8 @@ import { readReversa } from '../src/heranca/reversa-domain/src/index.ts'
 import { readReversaSnapshot } from '../src/heranca/reversa-probe/src/index.ts'
 import { readBugFolders } from '../src/probe/bugs.ts'
 import { readFeatureFolders } from '../src/probe/features.ts'
+import { readDiscoveryState } from '../src/domain/discovery-state.ts'
+import type { MapaDeEquivalencias } from '../src/domain/types.ts'
 import { readGreenfieldArtifacts } from '../src/probe/greenfield.ts'
 import { BugsSection } from '../src/webview/ui/BugsSection.tsx'
 import { OriginSection } from '../src/webview/ui/OriginSection.tsx'
@@ -499,5 +501,76 @@ describe('o vínculo e as conferências no workspace de referência (feature 010
       `leitura e julgamento do vínculo e das conferências levaram ${decorrido.toFixed(1)} ms, acima do teto de ${TETO_MS} ms`,
     ).toBeLessThan(TETO_MS)
     process.stdout.write(`[feature 010] vínculo e conferências: ${decorrido.toFixed(1)} ms com ${entregas.length} pastas\n`)
+  })
+})
+
+
+describe('o mapa das equivalências no workspace de referência (feature 012)', () => {
+  /** Quantos pares o mapa carrega na medição, bem acima dos sete vocabulários medidos. */
+  const PARES = 50
+
+  /** Quantos checkpoints o estado traz, bem acima dos sete agentes do processo. */
+  const CHECKPOINTS = 50
+
+  /** Um mapa cheio: nenhum par casa por acaso, e a busca percorre a lista toda. */
+  function mapaCheio(): MapaDeEquivalencias {
+    return {
+      pares: Array.from({ length: PARES }, (_, i) => ({
+        campo: `campo_${i}`,
+        valor: `valor_${i}`,
+        leitura: 'concluido' as const,
+        aprovadoEm: '2026-09-20',
+        evidencia: ['referencia'],
+      })),
+      naoAgentes: [{ chave: 'plano_aprovado', aprovadoEm: '2026-09-20', evidencia: ['referencia'] }],
+    }
+  }
+
+  /**
+   * Metade dos checkpoints reconhecida pelo ÚLTIMO par do mapa, metade por
+   * nenhum. A metade reconhecida paga a busca inteira antes de casar, e a
+   * outra paga a busca inteira para não casar: as duas são o pior caso, e é
+   * de propósito que nenhum checkpoint casa no primeiro par.
+   */
+  function estadoDaReferencia(): string {
+    const checkpoints: Record<string, unknown> = {}
+    for (let i = 0; i < CHECKPOINTS; i++) {
+      checkpoints[`agente_${i}`] =
+        i % 2 === 0
+          ? { [`campo_${PARES - 1}`]: `valor_${PARES - 1}`, achados: ['a', 'b', 'c'] }
+          : { at: '2026-09-20T12:00:00Z', escopo: 'nada que declare conclusão' }
+    }
+    checkpoints.plano_aprovado = { at: '2026-09-20T12:00:00Z', fases: ['uma', 'outra'] }
+    return JSON.stringify({ current_phase: 'complete', checkpoints })
+  }
+
+  it(`consulta o mapa e julga os checkpoints em menos de ${TETO_MS} ms`, () => {
+    const stateJson = estadoDaReferencia()
+    const equivalencias = mapaCheio()
+    const ler = () => readDiscoveryState({ stateJson, anomalias: [], equivalencias })
+
+    ler()
+    let decorrido = Number.POSITIVE_INFINITY
+    let eixo = ler()
+    for (let rodada = 0; rodada < 3; rodada++) {
+      const inicio = performance.now()
+      eixo = ler()
+      decorrido = Math.min(decorrido, performance.now() - inicio)
+    }
+
+    // Sanidade: a metade reconhecida traz procedência, a outra metade vira
+    // anomalia, e a entrada aprovada como não sendo agente sai dos checkpoints.
+    expect(eixo.checkpoints).toHaveLength(CHECKPOINTS)
+    expect(eixo.checkpoints.filter((c) => c.reconhecidoPor !== null)).toHaveLength(CHECKPOINTS / 2)
+    expect(eixo.anomalias).toHaveLength(CHECKPOINTS / 2)
+    expect(eixo.registrosNaoAgentes).toHaveLength(1)
+
+    expect(
+      decorrido,
+      `a consulta ao mapa e o julgamento levaram ${decorrido.toFixed(1)} ms, acima do teto de ${TETO_MS} ms`,
+    ).toBeLessThan(TETO_MS)
+    process.stdout.write(
+      `[feature 012] mapa e checkpoints: ${decorrido.toFixed(2)} ms com ${PARES} pares e ${CHECKPOINTS} checkpoints\n`,
+    )
   })
 })

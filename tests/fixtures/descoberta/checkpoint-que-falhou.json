@@ -1,0 +1,12 @@
+{
+  "_nota": "A quarta situação da feature 012, e a única que jamais nasce do esquema: nenhum campo canônico declara fracasso. Com o par status/failed aprovado como falhou, o checkpoint sai falho; sem ele, sai em conclusão não declarada, como qualquer outro desconhecido.",
+  "version": "1.3.3",
+  "project": "terminou-mal",
+  "phase": "escavacao",
+  "completed": ["reconhecimento"],
+  "pending": ["escavacao", "interpretacao", "geracao", "revisao"],
+  "checkpoints": {
+    "scout": { "completed_at": "2026-09-01T10:00:00Z", "files": ["_reversa_sdd/inventory.md"] },
+    "archaeologist": { "date": "2026-09-02", "status": "failed", "artifacts": [] }
+  }
+}

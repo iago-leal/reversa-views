@@ -1,0 +1,14 @@
+{
+  "_nota": "As três entradas medidas que não nomeiam agente algum: registro de decisão, contador de progresso e registro de autoria, morando onde moram os agentes. Sem aprovação, cada uma vira anomalia de conclusão não declarada, que é verdade literal e utilidade duvidosa. Aprovadas as chaves, saem da contagem de checkpoints.",
+  "version": "1.3.3",
+  "project": "nem-tudo-e-agente",
+  "phase": "concluido",
+  "completed": ["reconhecimento", "escavacao", "interpretacao", "geracao", "revisao"],
+  "pending": [],
+  "checkpoints": {
+    "plano_aprovado": { "at": "2026-09-12T08:57:19", "escopo": "tres fontes", "adaptacao": "planilha", "fases": "plano completo" },
+    "redator_progress": { "items_completed": 33, "items_done": ["a", "b"], "items_pending": [], "items_total": 33, "last_completed_at": "2026-09-12T09:37:23" },
+    "decisoes_autor": { "data": "2026-08-13", "adrs_criados": 8, "lacunas": ["p-08"], "origem": "conversa" },
+    "scout": { "completed_at": "2026-09-01T10:00:00Z", "files": ["_reversa_sdd/inventory.md"] }
+  }
+}
