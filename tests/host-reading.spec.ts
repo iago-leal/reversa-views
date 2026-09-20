@@ -498,3 +498,87 @@ describe('vínculo e conferências na leitura (feature 010)', () => {
     expect(resultado.greenfield.panorama.vinculoParcial).toBe(true)
   })
 })
+
+describe('estado da descoberta na leitura (feature 011)', () => {
+  const ENCERRADO = JSON.stringify({
+    version: '1.3.3',
+    project: 'med-reversa',
+    phase: 'concluido',
+    completed: ['reconhecimento', 'escavacao', 'interpretacao', 'geracao', 'revisao'],
+    pending: [],
+    checkpoints: { writer: { at: '2026-09-12T19:30:00Z', status: 'concluido' } },
+  })
+
+  it('o eixo chega na carga, com a extração reconhecida como encerrada', () => {
+    const log = logSpy()
+    const result = readWorkspace('/w', {
+      readSnapshot: () => probeResult(ENCERRADO),
+      readProcess: readReversa,
+      log: log.port,
+    })
+
+    expect(result.kind).toBe('loaded')
+    if (result.kind !== 'loaded') return
+    expect(result.discoveryState.extracao).toEqual({ situacao: 'encerrada', bruto: 'concluido' })
+  })
+
+  it('absorve a anomalia que a herança registrou sobre a mesma fase', () => {
+    const log = logSpy()
+    const result = readWorkspace('/w', {
+      readSnapshot: () => probeResult(ENCERRADO),
+      readProcess: readReversa,
+      log: log.port,
+    })
+
+    if (result.kind !== 'loaded') return
+    // O processo traz mais de uma anomalia sobre este retrato mínimo, e só a
+    // da fase é absorvível: é justamente o que a tripla protege.
+    const daFase = result.process.anomalies.filter((a) => a.code === 'fase-desconhecida')
+    expect(daFase).toHaveLength(1)
+    expect(result.discoveryState.absorvidas).toEqual(daFase)
+    expect(result.discoveryState.absorvidas.length).toBeLessThan(result.process.anomalies.length)
+  })
+
+  it('o checkpoint sem completed_at vira conclusão não declarada, com a sua anomalia', () => {
+    const log = logSpy()
+    const result = readWorkspace('/w', {
+      readSnapshot: () => probeResult(ENCERRADO),
+      readProcess: readReversa,
+      log: log.port,
+    })
+
+    if (result.kind !== 'loaded') return
+    expect(result.discoveryState.checkpoints[0]?.situacao).toBe('conclusao-nao-declarada')
+    expect(result.discoveryState.anomalias).toHaveLength(1)
+  })
+
+  it('o eixo sai vazio, e sem exceção, quando o Reversa não está instalado', () => {
+    const log = logSpy()
+    const result = readWorkspace('/w', {
+      readSnapshot: () => probeResult(null),
+      readProcess: readReversa,
+      log: log.port,
+    })
+
+    if (result.kind !== 'loaded') return
+    expect(result.discoveryState.checkpoints).toEqual([])
+    expect(result.discoveryState.extracao.situacao).toBe('nao-iniciada')
+  })
+
+  it('uma exceção no ramo novo continua virando o estado de erro nomeado', () => {
+    const log = logSpy()
+    const result = readWorkspace('/w', {
+      readSnapshot: () => probeResult(INSTALLED),
+      readProcess: readReversa,
+      readDiscovery: () => {
+        throw new Error('o eixo explodiu')
+      },
+      log: log.port,
+    })
+
+    expect(result.kind).toBe('error')
+    if (result.kind !== 'error') return
+    expect(result.message).toBe('o eixo explodiu')
+    expect(log.lines.join(' ')).toContain('leitura lançou')
+  })
+})

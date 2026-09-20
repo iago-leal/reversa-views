@@ -1,15 +1,16 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/010-vinculo-spec-e-conferencias",
-  "feature-id": "010",
-  "short-name": "vinculo-spec-e-conferencias",
-  "started-at": "2026-09-19T18:45:54Z",
-  "current-stage": "to-do",
+  "feature-dir": "_reversa_forward/011-estado-terminal-e-checkpoints",
+  "feature-id": "011",
+  "short-name": "estado-terminal-e-checkpoints",
+  "started-at": "2026-09-20T18:47:11Z",
+  "current-stage": "coding",
   "stages-completed": [
     "requirements",
     "clarify",
     "plan",
-    "to-do"
+    "to-do",
+    "coding"
   ],
   "paused-features": [
     {

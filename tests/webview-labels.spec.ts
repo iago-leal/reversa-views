@@ -11,7 +11,9 @@ import {
   bugSeverityLabel,
   bugStateLabel,
   checkpointMark,
+  checkpointStateMark,
   conferenceStateLabel,
+  extractionLabel,
   inconsistencyLabel,
   linkOriginLabel,
   phaseMark,
@@ -28,7 +30,7 @@ import {
   CONFERENCE_STATES,
   LINK_ORIGINS,
 } from '../src/domain/types.ts'
-import { processFixture } from './helpers/reversa-fixtures.ts'
+import { checkpointStateFixture, processFixture } from './helpers/reversa-fixtures.ts'
 
 const STAGES = [
   'sem-feature-ativa',
@@ -248,5 +250,57 @@ describe('a origem da ligação e o estado da conferência (feature 010)', () =>
       expect(rotular('xyz')).toEqual({ text: 'xyz', known: false, raw: 'xyz' })
       expect(() => rotular('')).not.toThrow()
     }
+  })
+})
+
+describe('o vocabulário do estado da descoberta (feature 011)', () => {
+  it('nomeia as três situações da extração', () => {
+    expect(extractionLabel('nao-iniciada').known).toBe(true)
+    expect(extractionLabel('em-curso').known).toBe(true)
+    expect(extractionLabel('encerrada').text).toContain('ncerrad')
+  })
+
+  it('devolve o valor bruto, marcado como desconhecido, para situação fora do vocabulário', () => {
+    const rotulo = extractionLabel('inventada')
+
+    expect(rotulo).toEqual({ text: 'inventada', known: false, raw: 'inventada' })
+  })
+
+  it('nomeia os três estados do checkpoint', () => {
+    const concluido = checkpointStateMark(checkpointStateFixture({ agent: 'scout' }))
+    const andamento = checkpointStateMark(
+      checkpointStateFixture({ agent: 'archaeologist', situacao: 'em-andamento', instante: null }),
+    )
+    const naoDeclarada = checkpointStateMark(
+      checkpointStateFixture({ agent: 'writer', situacao: 'conclusao-nao-declarada', instante: null }),
+    )
+
+    expect(concluido.status).toBe('concluído em')
+    expect(andamento.status).toBe('em andamento')
+    expect(naoDeclarada.status).not.toBe('em andamento')
+    expect(naoDeclarada.status).not.toBe('concluído em')
+  })
+
+  it('devolve o instante apenas quando ele existe, e o nome do agente como rótulo', () => {
+    const marca = checkpointStateMark(
+      checkpointStateFixture({ agent: 'writer', situacao: 'conclusao-nao-declarada', instante: null }),
+    )
+
+    expect(marca.label).toEqual({ text: 'writer', known: true, raw: 'writer' })
+    expect(marca.instant).toBeNull()
+  })
+
+  it('não muda o rótulo herdado, que é a queda quando o eixo não vem', () => {
+    const herdado = checkpointMark({
+      agent: 'scout',
+      completedAt: null,
+      inProgress: true,
+      files: [],
+      modulesAnalyzed: [],
+      modulesPending: [],
+      extra: {},
+    })
+
+    expect(herdado.status).toBe('em andamento')
   })
 })

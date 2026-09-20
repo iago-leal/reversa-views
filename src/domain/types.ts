@@ -773,3 +773,128 @@ export interface DeliveryAnomaly {
   code: DeliveryAnomalyCode
   detail?: string
 }
+
+/**
+ * How far the extraction got, as feature 011 reads it.
+ *
+ * REVERSA documents five phases and `null` for "not started", and documents no
+ * value for "finished". The pipeline writes one anyway, and the measurement of
+ * 2026-09-20 found it in seventeen of the sixty-four projects with a
+ * `state.json` under `~/dev`, in five spellings. So this is not a typo to be
+ * flagged: it is a state to be read.
+ */
+export type ExtractionSituation =
+  /** No phase declared and none finished. */
+  | 'nao-iniciada'
+  /** A canonical phase, or an unknown one that does not declare closure. */
+  | 'em-curso'
+  /** The declared phase names a closure, whatever the spelling. */
+  | 'encerrada'
+
+/**
+ * The situation of the extraction, with the raw value beside the recognised
+ * one -- the rule of the house since feature 008, and what NG-05 asks: nothing
+ * on disk is normalised, corrected or dropped.
+ */
+export interface ExtractionState {
+  situacao: ExtractionSituation
+  /** `phase` exactly as the file carries it; null when the field is absent. */
+  bruto: string | null
+}
+
+/**
+ * How far one agent got with its checkpoint (feature 011).
+ *
+ * Three states where the inherited layer has two, and the third is the point.
+ * `checkpoint-guide.md` of REVERSA declares both registers: `completed_at`
+ * with `files` when an agent finishes, `modules_analyzed` with
+ * `modules_pending` while it works. A checkpoint carrying neither has
+ * declared its conclusion somewhere the schema does not name -- 26 of the 229
+ * measured -- and the panel says so instead of claiming it still runs.
+ */
+export type CheckpointSituation =
+  /** `completed_at` is there, which is what the guide asks for. */
+  | 'concluido'
+  /** No `completed_at`, and `modules_pending` is not empty: the documented signature of partial work. */
+  | 'em-andamento'
+  /** Neither: the conclusion, if any, was declared outside the canonical field. */
+  | 'conclusao-nao-declarada'
+
+/** One checkpoint, judged by feature 011. */
+export interface CheckpointState {
+  agent: string
+  situacao: CheckpointSituation
+  /**
+   * When it finished, absolute and unconverted, and ONLY when it came from
+   * `completed_at`. Taking it from `at`, `data` or `timestamp` would be the
+   * panel asserting a conclusion through the field that does not declare it,
+   * which is the whole thing this feature exists not to do.
+   */
+  instante: string | null
+  /**
+   * Preserved fields whose value is a list of strings, and only when `files`
+   * is absent. They are NOT called outputs anywhere: `achados`, `lacunas` and
+   * `adrs` have the same shape and are not files (D-08).
+   */
+  camposComLista: string[]
+}
+
+/**
+ * Why a piece of the discovery state could not be read as expected (D-02).
+ *
+ * A LOCAL union, by the precedent of `BugAnomalyCode`, `GreenfieldAnomalyCode`
+ * and `DeliveryAnomalyCode`.
+ *
+ * What is NOT here is as deliberate as what is: a closing phase, a checkpoint
+ * that finished, one that is still working and a field under an unexpected
+ * name are all named states of the reading, never anomalies.
+ */
+export type DiscoveryStateAnomalyCode =
+  /** A checkpoint with neither `completed_at` nor `modules_pending`; detail: the agent and the missing field. */
+  | 'checkpoint-sem-conclusao-declarada'
+
+/** One degradation of the discovery-state reading, in the common shape. */
+export interface DiscoveryStateAnomaly {
+  file: string
+  code: DiscoveryStateAnomalyCode
+  detail?: string
+}
+
+/**
+ * The identity of an INHERITED anomaly this axis recognised, and which the
+ * panel therefore does not draw.
+ *
+ * The identity is the whole triple, never the code alone: absorbing by code
+ * would wipe out every `fase-desconhecida`, including the one over a typo,
+ * which is exactly what EC-02 exists to catch.
+ */
+export interface AbsorbedAnomaly {
+  file: string
+  code: string
+  detail?: string
+}
+
+/**
+ * The discovery-state axis of the project (feature 011).
+ *
+ * ABSENT from the payload means the reading did not happen -- a host older
+ * than this feature -- and the panel then draws what it drew before: the
+ * inherited anomaly of the closing phase back on screen, and checkpoints in
+ * two states. Nothing here replaces the inherited `DiscoveryState` of
+ * `state.ts`; it judges beside it, over the same raw file.
+ */
+export interface DiscoveryStateAxis {
+  extracao: ExtractionState
+  checkpoints: CheckpointState[]
+  anomalias: DiscoveryStateAnomaly[]
+  /** Inherited anomalies this axis recognised; the composition discounts them. */
+  absorvidas: AbsorbedAnomaly[]
+}
+
+/** The axis of a project whose `state.json` is absent or could not be read. */
+export const EMPTY_DISCOVERY_STATE: DiscoveryStateAxis = {
+  extracao: { situacao: 'nao-iniciada', bruto: null },
+  checkpoints: [],
+  anomalias: [],
+  absorvidas: [],
+}

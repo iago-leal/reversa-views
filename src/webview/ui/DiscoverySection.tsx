@@ -11,9 +11,9 @@
 
 import type { ReactNode } from 'react'
 import type { ReversaProcess } from '../../heranca/reversa-domain/src/index.ts'
-import type { GreenfieldAxis } from '../../domain/types.ts'
+import type { CheckpointState, DiscoveryStateAxis, GreenfieldAxis } from '../../domain/types.ts'
 import { brasiliaInstant } from '../domain/instants.ts'
-import { checkpointMark, phaseMark } from '../domain/labels.ts'
+import { checkpointMark, checkpointStateMark, extractionLabel, phaseMark } from '../domain/labels.ts'
 import { CollapsibleSection } from './CollapsibleSection.tsx'
 
 /** What the section draws. */
@@ -28,6 +28,15 @@ export interface DiscoverySectionProps {
    * extracted yet, and nothing else changes.
    */
   greenfield?: GreenfieldAxis
+  /**
+   * The discovery-state axis, or its absence (feature 011).
+   *
+   * Optional for the same reason the greenfield axis is: a host older than the
+   * field does not send it, and the card then draws exactly what it drew
+   * before -- five phases, two checkpoint states, and no sentence about the
+   * extraction having ended.
+   */
+  discoveryState?: DiscoveryStateAxis
   collapsed: boolean
   onToggle: () => void
 }
@@ -45,6 +54,18 @@ function bornGreenfield(props: DiscoverySectionProps): boolean {
 }
 
 /**
+ * Whether the sentence of feature 011 applies: the extraction declared its
+ * end. The five phases stay exactly where they are, and the sentence is an
+ * ADDITION above them, by the same shape the greenfield sentence of feature
+ * 009 already uses. There is no sixth phase, because there is no sixth phase.
+ * @param props - the process and the axis.
+ * @returns true when the extraction ended.
+ */
+function extracaoEncerrada(props: DiscoverySectionProps): boolean {
+  return props.discoveryState?.extracao.situacao === 'encerrada'
+}
+
+/**
  * The discovery section.
  * @param props - the process, the collapse state and the toggle port.
  * @returns the section element.
@@ -59,6 +80,15 @@ export function DiscoverySection(props: DiscoverySectionProps): ReactNode {
       collapsed={props.collapsed}
       onToggle={props.onToggle}
     >
+      {props.discoveryState === undefined || !extracaoEncerrada(props) ? null : (
+        <p data-part="discovery-closed" className="muted">
+          {extractionLabel(props.discoveryState.extracao.situacao).text}: o processo declarou o fim
+          na fase{' '}
+          <span data-part="closed-raw">{props.discoveryState.extracao.bruto}</span>, valor que o
+          esquema do Reversa não documenta e que o fluxo escreve ao fechar. As cinco fases
+          canônicas seguem abaixo, como sempre.
+        </p>
+      )}
       {bornGreenfield(props) ? (
         <p data-part="discovery-greenfield" className="muted">
           Projeto nascido por /reversa-new, ainda sem extração: as fases seguem pendentes até que
@@ -79,28 +109,74 @@ export function DiscoverySection(props: DiscoverySectionProps): ReactNode {
         })}
       </ul>
       <ul className="rows">
-        {discovery.checkpoints.map((checkpoint) => {
-          const mark = checkpointMark(checkpoint)
-          const instant = brasiliaInstant(mark.instant)
-          return (
-            <li
-              data-checkpoint={checkpoint.agent}
-              data-done={String(checkpoint.completedAt !== null)}
-              key={checkpoint.agent}
-            >
-              {mark.label.text} <span className="status">{mark.status}</span>
-              {mark.instant === null ? null : (
-                <>
-                  {' '}
-                  <span data-part="checkpoint-instant" data-instant={instant.raw}>
-                    {instant.text}
-                  </span>
-                </>
-              )}
-            </li>
-          )
-        })}
+        {props.discoveryState === undefined
+          ? discovery.checkpoints.map((checkpoint) => {
+              const mark = checkpointMark(checkpoint)
+              const instant = brasiliaInstant(mark.instant)
+              return (
+                <li
+                  data-checkpoint={checkpoint.agent}
+                  data-done={String(checkpoint.completedAt !== null)}
+                  key={checkpoint.agent}
+                >
+                  {mark.label.text} <span className="status">{mark.status}</span>
+                  {mark.instant === null ? null : (
+                    <>
+                      {' '}
+                      <span data-part="checkpoint-instant" data-instant={instant.raw}>
+                        {instant.text}
+                      </span>
+                    </>
+                  )}
+                </li>
+              )
+            })
+          : props.discoveryState.checkpoints.map((checkpoint) => (
+              <CheckpointRow checkpoint={checkpoint} key={checkpoint.agent} />
+            ))}
       </ul>
     </CollapsibleSection>
+  )
+}
+
+/**
+ * One checkpoint as feature 011 judges it, in three states.
+ *
+ * `data-situacao` replaces `data-done`, which could only ever say two things,
+ * and the state travels as a WORD as well: a state that reads only as a colour
+ * does not read at all for part of the audience (RNF-03).
+ *
+ * The fields of `camposComLista` are named and nothing more. They are not
+ * called outputs, because `achados`, `lacunas` and `adrs` have the same shape
+ * and are not files, and thirteen different names were measured for what a
+ * checkpoint calls its outputs (D-08).
+ * @param props - the judged checkpoint.
+ * @returns the row.
+ */
+function CheckpointRow(props: { checkpoint: CheckpointState }): ReactNode {
+  const mark = checkpointStateMark(props.checkpoint)
+  const instant = brasiliaInstant(mark.instant)
+
+  return (
+    <li data-checkpoint={props.checkpoint.agent} data-situacao={props.checkpoint.situacao}>
+      {mark.label.text} <span className="status">{mark.status}</span>
+      {mark.instant === null ? null : (
+        <>
+          {' '}
+          <span data-part="checkpoint-instant" data-instant={instant.raw}>
+            {instant.text}
+          </span>
+        </>
+      )}
+      {props.checkpoint.camposComLista.length === 0 ? null : (
+        <>
+          {' '}
+          <span data-part="checkpoint-campos" className="muted">
+            sem arquivos no campo canônico; campos com lista de textos:{' '}
+            {props.checkpoint.camposComLista.join(', ')}
+          </span>
+        </>
+      )}
+    </li>
   )
 }

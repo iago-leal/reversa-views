@@ -27,6 +27,7 @@ import type {
   SectionName,
 } from '../domain/types.ts'
 import { blockingReasons } from '../domain/blocking.ts'
+import { composeAnomalies } from '../domain/anomalies-view.ts'
 import { readingIntegrity } from '../domain/integrity.ts'
 import { collapsibleSections, effectiveCollapsed, sectionOrder } from '../domain/sections.ts'
 import { themeAttributes } from '../theme/primer-themes.ts'
@@ -216,6 +217,7 @@ export function App(props: AppProps): ReactNode {
             <DiscoverySection
               process={payload.process}
               greenfield={payload.greenfield}
+              discoveryState={payload.discoveryState}
               collapsed={collapsed.has(discovery)}
               onToggle={toggle(discovery)}
             />
@@ -239,15 +241,12 @@ export function App(props: AppProps): ReactNode {
           </ErrorBoundary>
 
           <ErrorBoundary section={anomalies} onLog={onLog}>
+            {/* Feature 011: the sum that used to be written out here is now
+                composed once, in `anomalies-view.ts`, and the header counts the
+                same list. Two concatenations of one fact agreed by coincidence
+                until the discount of the absorbed anomalies arrived. */}
             <AnomaliesSection
-              anomalies={[
-                ...payload.process.anomalies,
-                ...(payload.bugs?.anomalias ?? []),
-                ...(payload.greenfield?.anomalias ?? []),
-                // Feature 010: the losses of the delivery axis, after the
-                // greenfield ones, in the common shape.
-                ...(payload.history?.anomalias ?? []),
-              ]}
+              anomalies={composeAnomalies(payload)}
               collapsed={collapsed.has(anomalies)}
               onToggle={toggle(anomalies)}
             />

@@ -253,6 +253,28 @@ As 21 linhas de comentário que mencionam o nome de pacote da origem, incluídos
 `@module`, seguem intactas. São registro histórico, não vínculo de compilação, e reescrevê-las
 criaria 21 adaptações a reaplicar em cada ressincronização, sem ganho algum.
 
+### Pendências de origem
+
+Nem toda regra que este projeto corrige vira adaptação. A feature 011 encontrou dois defeitos na
+camada herdada e resolveu os dois **fora** dela, na camada local, porque o que ambos pedem é decidir
+o que a tela mostra, e isso pertence ao painel pelo NG-03 de
+`_reversa_sdd/sdd/leitura-do-processo.md#4-non-goals`. Nenhuma adaptação nasceu daí, nenhum carimbo
+mudou, e o total declarado na abertura desta seção continua dezesseis.
+
+O que fica devendo é a origem. Quem mais herda do `scrum-harness` continua vendo os dois defeitos, e
+levá-los para lá é o mesmo caminho de aposentadoria que esta seção declara para as nove adaptações
+de regra. Enquanto isso não acontece, a divergência fica escrita aqui.
+
+| Achado na origem | Onde | Como foi resolvido aqui | O que falta |
+|---|---|---|---|
+| A fase de encerramento vira anomalia: `derivePhases` conhece as cinco fases canônicas e registra `fase-desconhecida` sobre qualquer outro valor de `phase`, inclusive os que o próprio REVERSA escreve ao fechar a extração, medidos em dezessete projetos de sessenta e quatro e sob cinco grafias em 2026-09-20 | `reversa-domain/src/state.ts`, `derivePhases` | `src/domain/discovery-state.ts` reconhece o encerramento pela forma e devolve a identidade da anomalia; `src/webview/domain/anomalies-view.ts` a desconta da lista que a tela desenha | Levar o reconhecimento ao `scrum-harness` e ressincronizar |
+| O checkpoint sem `completed_at` é dado como em curso: `readCheckpoints` deriva `inProgress` da ausência do campo, e afirma trabalho em andamento sobre checkpoint que declarou a conclusão sob nome que o esquema não tem, vinte e seis registros de duzentos e vinte e nove | `reversa-domain/src/state.ts`, `readCheckpoints` | `src/domain/discovery-state.ts` distingue três situações, e a terceira não afirma nem que terminou nem que corre | Levar o terceiro estado ao `scrum-harness` e ressincronizar |
+
+O que está acima é pendência, e não adaptação. Não há trecho original nem trecho adaptado, nada
+entra em `adaptacoes.yml` e nada aqui o ressincronizador reaplica; a suíte
+`tests/heranca-adaptacoes.spec.ts` fixa as duas coisas, para que a leitura desta subseção não
+escorregue para a das que a cercam.
+
 ## 6. Os três fixtures, sem carimbo
 
 `reversa-domain/tests/fixtures/` traz `check-legacy-policy.mjs`, `reversa-config.real.json` e

@@ -26,6 +26,9 @@ import type {
   DeliveryAnomaly,
   DeliveryLinkReading,
   DeliveryLinkState,
+  DiscoveryStateAnomaly,
+  DiscoveryStateAxis,
+  CheckpointState,
   GreenfieldAxis,
   HistoryEntry,
   LinkOrigin,
@@ -723,4 +726,81 @@ export function linkedGreenfieldFixture(
   overrides: Partial<ProductPanorama> = {},
 ): GreenfieldAxis {
   return greenfieldFixture({ panorama: linkedPanoramaFixture(semSpec, overrides) })
+}
+
+/**
+ * One checkpoint as feature 011 judges it, with a usable default for what the
+ * caller does not care to say.
+ * @param partes - what the case is actually about.
+ * @returns the judged checkpoint.
+ */
+export function checkpointStateFixture(
+  partes: Partial<CheckpointState> & { agent: string },
+): CheckpointState {
+  return {
+    situacao: 'concluido',
+    instante: '2026-09-09T10:00:00Z',
+    camposComLista: [],
+    ...partes,
+  }
+}
+
+/**
+ * The discovery-state axis, by default of a project mid-extraction with
+ * nothing absorbed -- which is the shape that leaves every existing case
+ * behaving exactly as it did.
+ * @param overrides - what the case is about.
+ * @returns the axis.
+ */
+export function discoveryStateFixture(
+  overrides: Partial<DiscoveryStateAxis> = {},
+): DiscoveryStateAxis {
+  return {
+    extracao: { situacao: 'em-curso', bruto: 'geracao' },
+    checkpoints: [checkpointStateFixture({ agent: 'scout' })],
+    anomalias: [],
+    absorvidas: [],
+    ...overrides,
+  }
+}
+
+/**
+ * The axis of an extraction that finished, with the inherited anomaly of the
+ * closing phase already absorbed.
+ *
+ * The absorbed triple has to match what `derivePhases` of the inherited layer
+ * would have recorded, `detail` included, or the composition discounts
+ * nothing: that is the whole point of feature 011, and a fixture that got it
+ * wrong would hide the defect it exists to catch.
+ * @param bruto - the closing value the file carries.
+ * @returns the axis.
+ */
+export function closedDiscoveryFixture(bruto = 'concluido'): DiscoveryStateAxis {
+  return discoveryStateFixture({
+    extracao: { situacao: 'encerrada', bruto },
+    absorvidas: [{ file: '.reversa/state.json', code: 'fase-desconhecida', detail: bruto }],
+  })
+}
+
+/**
+ * The axis of the `med-reversa`: extraction closed, and every checkpoint with
+ * its conclusion declared outside the canonical field.
+ * @param agentes - the agent names; the seven measured by default.
+ * @returns the axis.
+ */
+export function undeclaredDiscoveryFixture(
+  agentes: string[] = ['plano_aprovado', 'scout', 'archaeologist', 'detective', 'architect', 'writer', 'reviewer'],
+): DiscoveryStateAxis {
+  const anomalias: DiscoveryStateAnomaly[] = agentes.map((agent) => ({
+    file: '.reversa/state.json',
+    code: 'checkpoint-sem-conclusao-declarada',
+    detail: `${agent}: sem completed_at`,
+  }))
+  return {
+    ...closedDiscoveryFixture(),
+    checkpoints: agentes.map((agent) =>
+      checkpointStateFixture({ agent, situacao: 'conclusao-nao-declarada', instante: null }),
+    ),
+    anomalias,
+  }
 }

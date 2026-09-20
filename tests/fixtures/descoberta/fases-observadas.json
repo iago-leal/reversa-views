@@ -1,0 +1,6 @@
+{
+  "_nota": "Catálogo dos valores de phase medidos em ~/dev em 2026-09-20. Não é um state.json: é a lista contra a qual o reconhecimento se prova.",
+  "encerramento": ["concluido", "concluida", "concluido-c3", "concluido-escopado", "revisao_concluida"],
+  "canonicas": ["reconhecimento", "escavacao", "interpretacao", "geracao", "revisao"],
+  "estranhas": ["documentacao", "re-extracao-005", "reconciliacao", "geracaoo", "verificacao-de-regressao"]
+}

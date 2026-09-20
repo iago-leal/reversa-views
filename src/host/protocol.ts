@@ -16,6 +16,7 @@ import type { ProbeReport } from '../heranca/reversa-probe/src/snapshot.ts'
 import type {
   ActiveDecomposition,
   BugRegistry,
+  DiscoveryStateAxis,
   GreenfieldAxis,
   ProjectHistory,
 } from '../domain/types.ts'
@@ -151,6 +152,23 @@ export interface SetProcessData {
    * panel assuming the two were the same place.
    */
   builtFromRoot: string
+  /**
+   * How the discovery state reads once the closing phase and the three states
+   * of a checkpoint are recognised (feature 011, D-07).
+   *
+   * OPTIONAL, and appended at the end, by the rule every field before it
+   * followed: a host built before this feature sends nothing, and the webview
+   * then draws exactly what it drew before -- the inherited anomaly of the
+   * closing phase on screen, and checkpoints in two states. The absence is a
+   * reading that did not happen, never a project without a discovery.
+   *
+   * The inherited `process` keeps crossing the channel untransformed, this
+   * field included: `process.anomalies` still arrives WHOLE, with nothing
+   * discounted. What the axis carries in `absorvidas` is the identity of the
+   * ones it recognised, and the discount happens on the webview side, where
+   * deciding what the screen shows belongs (NG-03).
+   */
+  discoveryState?: DiscoveryStateAxis
 }
 
 /** The payload for every situation with no process to show. */

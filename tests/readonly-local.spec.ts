@@ -32,6 +32,7 @@ import * as greenfield from '../src/domain/greenfield.ts'
 import * as prdScope from '../src/domain/prd-scope.ts'
 import * as deliveryLink from '../src/domain/delivery-link.ts'
 import * as conferences from '../src/domain/conferences.ts'
+import * as discoveryState from '../src/domain/discovery-state.ts'
 
 /** As duas pastas do código local que esta feature acrescenta. */
 const PASTAS = ['src/probe', 'src/domain']
@@ -130,6 +131,7 @@ describe('módulo de plataforma só onde a leitura acontece (D-06)', () => {
       'src/domain/history.ts',
       'src/domain/delivery-link.ts',
       'src/domain/conferences.ts',
+      'src/domain/discovery-state.ts',
     ]) {
       const texto = readFileSync(julgamento, 'utf8')
       expect(texto, julgamento).not.toMatch(/reversa-probe/)
@@ -184,6 +186,7 @@ describe('nenhuma via de escrita, de execução ou de rede', () => {
       prdScope,
       deliveryLink,
       conferences,
+      discoveryState,
     ]) {
       for (const nome of Object.keys(modulo)) {
         expect(nome, `${nome} parece mutador`).not.toMatch(proibido)

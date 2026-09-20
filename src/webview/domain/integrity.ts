@@ -10,6 +10,7 @@
  */
 
 import type { SetProcessData } from '../../host/protocol.ts'
+import { composeAnomalies } from './anomalies-view.ts'
 import type { ReadingIntegrity } from './types.ts'
 
 /**
@@ -18,24 +19,14 @@ import type { ReadingIntegrity } from './types.ts'
  * @returns the counts, and whether any of them degraded the reading.
  */
 export function readingIntegrity(payload: SetProcessData): ReadingIntegrity {
-  // The anomalies of the bug registry are counted with the others, and by the
-  // same rule: a loss reading the bugs opens the anomalies section through the
-  // same path every other loss already opens it (feature 008). They are counted
-  // and not merged -- the payload keeps the two lists apart, because they have
-  // different origins and different vocabularies -- and an older host that
-  // sends no registry at all contributes nothing rather than throwing.
-  const registryAnomalies = payload.bugs === undefined ? 0 : payload.bugs.anomalias.length
-  // The anomalies of the greenfield axis join by the same rule and for the
-  // same reason (feature 009): counted, not merged, and nothing from a host
-  // that does not send the axis.
-  const greenfieldAnomalies =
-    payload.greenfield === undefined ? 0 : payload.greenfield.anomalias.length
-  // The losses of the delivery axis join last, by the same rule (feature 010,
-  // D-12): an older host sends a history without the field, and a host older
-  // still sends no history at all; both contribute nothing.
-  const deliveryAnomalies = payload.history?.anomalias?.length ?? 0
-  const anomalies =
-    payload.process.anomalies.length + registryAnomalies + greenfieldAnomalies + deliveryAnomalies
+  // Feature 011 moved the sum out of here. It used to add four lists by
+  // itself, and the section added the same four inline: two readings of one
+  // fact, which agreed only because both were plain concatenations. With the
+  // discount of what the discovery-state axis absorbs, they would stop
+  // agreeing, and the header would declare a degraded reading over an anomaly
+  // the section does not show -- the very failure the paragraph above warns
+  // against. So the list is composed ONCE, and counted here.
+  const anomalies = composeAnomalies(payload).length
   const refusals = payload.probe.refusals.length
   const truncated = payload.probe.truncated.length
 

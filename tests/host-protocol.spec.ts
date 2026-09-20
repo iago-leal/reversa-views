@@ -54,6 +54,13 @@ const probe: ProbeReport = {
  */
 const ramos = { decomposition: EMPTY_DECOMPOSITION, history: EMPTY_HISTORY, greenfield: EMPTY_GREENFIELD }
 
+import {
+  closedDiscoveryFixture,
+  discoveryStateFixture,
+  payloadFixture,
+  processFixture,
+} from './helpers/reversa-fixtures.ts'
+
 describe('estados de entrada', () => {
   it('nomeia os cinco de RF-15, na ordem do delta de dados', () => {
     expect(ENTRY_KINDS).toEqual(['no-folder', 'loading', 'no-reversa', 'installed', 'error'])
@@ -324,9 +331,11 @@ describe('os campos da feature 010 (D-13, RF-10)', () => {
   }
 
   /**
-   * O topo não ganha campo. A lista inclui, além dos dez que o caso da carga
-   * conta, os quatro de procedência e do registro de bugs, que o tipo declara
-   * e aquele caso deixa de fora de propósito.
+   * O topo não ganha campo POR ESTA FEATURE. A lista inclui, além dos dez que
+   * o caso da carga conta, os quatro de procedência e do registro de bugs, que
+   * o tipo declara e aquele caso deixa de fora de propósito, e o `discoveryState`
+   * que a feature 011 acrescentou DEPOIS, no fim: a ordem é o que este caso
+   * guarda, porque campo novo no meio quebraria o host anterior em silêncio.
    */
   it('o topo da carga não ganha campo algum', () => {
     const corpo = /export interface SetProcessData \{([\s\S]*?)\n\}/.exec(readFileSync('src/host/protocol.ts', 'utf8'))?.[1] ?? ''
@@ -346,6 +355,7 @@ describe('os campos da feature 010 (D-13, RF-10)', () => {
       'bugs',
       'greenfield',
       'builtFromRoot',
+      'discoveryState',
     ])
   })
 
@@ -378,5 +388,36 @@ describe('os campos da feature 010 (D-13, RF-10)', () => {
     expect(componente.ligacoes).toBeUndefined()
     expect(panorama.semSpec).toBeUndefined()
     expect(panorama.vinculoParcial).toBeUndefined()
+  })
+})
+
+describe('o campo do estado da descoberta (feature 011, D-07)', () => {
+  it('é opcional: a carga sem ele continua válida, e é o que um host anterior manda', () => {
+    const carga = payloadFixture()
+
+    expect(carga.discoveryState).toBeUndefined()
+    expect(carga.process).toBeDefined()
+  })
+
+  it('entra ao FIM da carga, sem renomear nem reordenar nada acima dele', () => {
+    const anterior = payloadFixture()
+    const comEixo = payloadFixture({ discoveryState: discoveryStateFixture() })
+
+    for (const chave of Object.keys(anterior)) {
+      expect(comEixo, chave).toHaveProperty(chave)
+    }
+    expect(Object.keys(comEixo).filter((k) => !Object.keys(anterior).includes(k))).toEqual([
+      'discoveryState',
+    ])
+  })
+
+  it('o processo herdado continua atravessando inteiro, com as anomalias sem desconto', () => {
+    const carga = payloadFixture({
+      process: processFixture({ state: { phase: 'concluido' } }),
+      discoveryState: closedDiscoveryFixture(),
+    })
+
+    expect(carga.process.anomalies).toHaveLength(1)
+    expect(carga.discoveryState?.absorvidas).toHaveLength(1)
   })
 })

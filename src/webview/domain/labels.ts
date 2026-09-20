@@ -15,7 +15,7 @@
 
 import type { Checkpoint, Phase } from '../../heranca/reversa-domain/src/index.ts'
 import type { UpdateStatus } from '../../host/protocol.ts'
-import type { FeatureMark, FeatureSituation } from '../../domain/types.ts'
+import type { CheckpointState, FeatureMark, FeatureSituation } from '../../domain/types.ts'
 import type { Label, StatusMark, UpdateLabel } from './types.ts'
 
 /** The seven stages of the forward cycle, as the reader names them. */
@@ -127,6 +127,53 @@ export function checkpointMark(checkpoint: Checkpoint): CheckpointMark {
     label: { text: agent, known: true, raw: agent },
     status: completedAt === null ? 'em andamento' : 'concluído em',
     instant: completedAt,
+  }
+}
+
+/** The three situations of the extraction (feature 011). */
+const EXTRACTION_LABELS: Record<string, string> = {
+  'nao-iniciada': 'Extração não iniciada',
+  'em-curso': 'Extração em curso',
+  encerrada: 'Extração encerrada',
+}
+
+/** The three states of a checkpoint, as the reader names them (feature 011). */
+const CHECKPOINT_SITUATION_LABELS: Record<string, string> = {
+  concluido: 'concluído em',
+  'em-andamento': 'em andamento',
+  'conclusao-nao-declarada': 'conclusão não declarada no campo canônico',
+}
+
+/**
+ * The readable name of the situation of the extraction (feature 011, RF-04).
+ * @param situacao - the situation as the axis derived it.
+ * @returns the label; never throws, for any input.
+ */
+export function extractionLabel(situacao: string): Label {
+  return lookUp(situacao, EXTRACTION_LABELS)
+}
+
+/**
+ * The agent of a judged checkpoint, plus its state and, only when it exists,
+ * the instant (feature 011, RF-05, RF-06).
+ *
+ * It sits BESIDE `checkpointMark` rather than replacing it, and the pair is
+ * the fallback the protocol needs: a host older than feature 011 sends no
+ * axis, the section draws with the inherited function, and the panel is the
+ * one it was before. Changing the old signature would have taken that away.
+ *
+ * The third state says what happened rather than guessing: the conclusion, if
+ * there was one, was declared outside the field the schema names. Seven other
+ * names carry it in the field, and the instant is NOT borrowed from any of
+ * them, which is why it comes back null here.
+ * @param checkpoint - one checkpoint as the axis judged it.
+ * @returns the label, the state and the instant.
+ */
+export function checkpointStateMark(checkpoint: CheckpointState): CheckpointMark {
+  return {
+    label: { text: checkpoint.agent, known: true, raw: checkpoint.agent },
+    status: CHECKPOINT_SITUATION_LABELS[checkpoint.situacao] ?? checkpoint.situacao,
+    instant: checkpoint.instante,
   }
 }
 

@@ -297,6 +297,10 @@ consulta à origem. Cada um se alcança por um comando:
 | "2 de 20 conferências registradas" numa entrega que continua convergida, sem razão nova na faixa | `node scripts/preview.js --workspace="$(node scripts/estragar-vinculo.js --caso=conferencias)"` |
 | Registro de conferências sem coluna `Data`: anomalia com a seção e o cabeçalho no detalhe | `node scripts/preview.js --workspace="$(node scripts/estragar-vinculo.js --caso=conferencias-sem-tabela)"` |
 | `legacy-impact.md` acima do teto: vínculo declarado parcial, com a anomalia do arquivo não lido | `node scripts/preview.js --workspace="$(node scripts/estragar-vinculo.js --caso=impacto-grande)"` |
+| Fase fora das canônicas e fora do encerramento: sem frase de encerramento, e a anomalia `fase-desconhecida` na tela | `node scripts/preview.js --workspace="$(node scripts/estragar-descoberta.js --caso=fase-estranha)"` |
+| Checkpoint sem `completed_at` e com `modules_pending`: em andamento, e sem anomalia por isso | `node scripts/preview.js --workspace="$(node scripts/estragar-descoberta.js --caso=parcial)"` |
+| Fase terminal com nome estranho em `completed`: frase de encerramento, e exatamente uma anomalia de fase | `node scripts/preview.js --workspace="$(node scripts/estragar-descoberta.js --caso=terminal-e-estranha)"` |
+| Checkpoint sem `files` e com campos de lista: os campos nomeados, sem virarem lista de arquivos | `node scripts/preview.js --workspace="$(node scripts/estragar-descoberta.js --caso=saidas-nao-canonicas)"` |
 
 | Desfecho da consulta | Comando |
 |---|---|

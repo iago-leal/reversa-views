@@ -1,0 +1,11 @@
+{
+  "_nota": "Fase de encerramento e, ao mesmo tempo, um nome fora do canônico em completed. Prova que a absorção casa a tripla inteira: uma anomalia de fase é absorvida, a outra fica em pé.",
+  "version": "1.3.3",
+  "project": "dois-nomes",
+  "phase": "concluido",
+  "completed": ["reconhecimento", "escavacao", "documentacao"],
+  "pending": [],
+  "checkpoints": {
+    "scout": { "completed_at": "2026-09-01T10:00:00Z", "files": ["_reversa_sdd/inventory.md"] }
+  }
+}

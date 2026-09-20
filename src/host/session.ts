@@ -126,6 +126,10 @@ export function sessionMessages(
       // because it IS provenance: the two say where the build came from, and
       // one of them is a place the reader can call.
       builtFromRoot: build.root,
+      // The discovery-state axis of feature 011, appended last by the same
+      // rule as every field before it: a panel older than the field ignores
+      // it, and draws what it drew before.
+      discoveryState: reading.discoveryState,
     },
   })
   return { messages, observedRoot: root }

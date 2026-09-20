@@ -13,11 +13,15 @@ import { describe, expect, it } from 'vitest'
 import { readingIntegrity } from '../src/webview/domain/integrity.ts'
 import { effectiveCollapsed } from '../src/webview/domain/sections.ts'
 import { EMPTY_PREFERENCES } from '../src/webview/domain/types.ts'
+import { composeAnomalies } from '../src/webview/domain/anomalies-view.ts'
 import {
+  closedDiscoveryFixture,
   greenfieldFixture,
   historyFixture,
   linkedHistoryFixture,
   payloadFixture,
+  processFixture,
+  undeclaredDiscoveryFixture,
 } from './helpers/reversa-fixtures.ts'
 
 describe('as anomalias do eixo greenfield na integridade', () => {
@@ -90,5 +94,55 @@ describe('as anomalias do histórico na integridade (feature 010)', () => {
     const integridade = readingIntegrity(payloadFixture({ history: historyFixture() }))
     expect(integridade.anomalies).toBe(0)
     expect(integridade.degraded).toBe(false)
+  })
+})
+
+describe('a contagem passa a vir da composição (feature 011, D-03)', () => {
+  it('uma anomalia absorvida deixa de degradar a leitura', () => {
+    const carga = payloadFixture({
+      process: processFixture({ state: { phase: 'concluido' } }),
+      discoveryState: closedDiscoveryFixture(),
+    })
+    const integridade = readingIntegrity(carga)
+
+    expect(carga.process.anomalies).toHaveLength(1)
+    expect(integridade.anomalies).toBe(0)
+    expect(integridade.degraded).toBe(false)
+  })
+
+  it('a contagem do cabeçalho é a mesma lista que a seção desenha', () => {
+    const carga = payloadFixture({
+      process: processFixture({ state: { phase: 'concluido' } }),
+      discoveryState: undeclaredDiscoveryFixture(),
+    })
+
+    expect(readingIntegrity(carga).anomalies).toBe(composeAnomalies(carga).length)
+  })
+
+  it('as anomalias do próprio eixo degradam a leitura, como as dos outros três', () => {
+    const integridade = readingIntegrity(
+      payloadFixture({ discoveryState: undeclaredDiscoveryFixture(['writer']) }),
+    )
+
+    expect(integridade.anomalies).toBe(1)
+    expect(integridade.degraded).toBe(true)
+  })
+
+  it('um host anterior, que não envia o eixo, contribui com nada', () => {
+    const carga = payloadFixture({ process: processFixture({ state: { phase: 'documentacao' } }) })
+    const integridade = readingIntegrity(carga)
+
+    expect(carga.discoveryState).toBeUndefined()
+    expect(integridade.anomalies).toBe(1)
+    expect(integridade.degraded).toBe(true)
+  })
+
+  it('a leitura que só perdeu a anomalia absorvida não abre mais a seção de anomalias', () => {
+    const carga = payloadFixture({
+      process: processFixture({ state: { phase: 'concluido' } }),
+      discoveryState: closedDiscoveryFixture(),
+    })
+
+    expect(effectiveCollapsed(EMPTY_PREFERENCES, readingIntegrity(carga))).toContain('anomalies')
   })
 })

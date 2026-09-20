@@ -22,11 +22,13 @@ import { readBugs } from '../domain/bugs.ts'
 import { readDecomposition } from '../domain/decomposition.ts'
 import { readDeliveryLinks } from '../domain/delivery-link.ts'
 import type { DeliveryLinks } from '../domain/delivery-link.ts'
+import { readDiscoveryState } from '../domain/discovery-state.ts'
 import { readGreenfield } from '../domain/greenfield.ts'
 import { readHistory } from '../domain/history.ts'
 import type {
   ActiveDecomposition,
   BugRegistry,
+  DiscoveryStateAxis,
   GreenfieldAxis,
   ProjectHistory,
 } from '../domain/types.ts'
@@ -57,6 +59,8 @@ export interface ReadingDeps {
   readGreenfieldFolder?: (root: string, outputFolder: string) => GreenfieldRead
   /** The judgement of feature 010, which extracts the link each folder declares. */
   readLinks?: (pastas: FeatureFolderRead[]) => DeliveryLinks
+  /** The judgement of feature 011, over the raw state file and the inherited anomalies. */
+  readDiscovery?: typeof readDiscoveryState
   /** Where the moment of the reading comes from. */
   clock?: () => Date
 }
@@ -77,6 +81,8 @@ export type ReadingResult =
       bugs: BugRegistry
       /** The greenfield axis of the project (feature 009). */
       greenfield: GreenfieldAxis
+      /** The discovery state of the project (feature 011). */
+      discoveryState: DiscoveryStateAxis
     }
   | { kind: 'error'; message: string }
 
@@ -98,6 +104,7 @@ export function readWorkspace(root: string, deps: ReadingDeps): ReadingResult {
     deps.readGreenfieldFolder ??
     ((where: string, outputFolder: string) => readGreenfieldArtifacts({ root: where, outputFolder }))
   const readLinks = deps.readLinks ?? readDeliveryLinks
+  const readDiscovery = deps.readDiscovery ?? readDiscoveryState
   const clock = deps.clock ?? (() => new Date())
 
   try {
@@ -150,6 +157,19 @@ export function readWorkspace(root: string, deps: ReadingDeps): ReadingResult {
       vinculos,
     })
 
+    // The discovery-state axis of feature 011 runs last among the local
+    // branches, and is the only one that reads what the INHERITED branch
+    // produced: the anomalies it absorbs are the ones `derivePhases` recorded,
+    // and matching them needs both the raw phase and the anomaly. Nothing is
+    // removed from `process` here -- what comes back is the IDENTITY of what
+    // the panel then declines to draw, because deciding what the screen shows
+    // belongs to the panel (NG-03). Same try, same reason as every other
+    // branch.
+    const discoveryState = readDiscovery({
+      stateJson: snapshot.stateJson,
+      anomalias: process.anomalies,
+    })
+
     return {
       kind: 'loaded',
       entry: process.installed ? 'installed' : 'no-reversa',
@@ -160,6 +180,7 @@ export function readWorkspace(root: string, deps: ReadingDeps): ReadingResult {
       history,
       bugs,
       greenfield,
+      discoveryState,
     }
   } catch (cause) {
     const message = cause instanceof Error ? cause.message : String(cause)

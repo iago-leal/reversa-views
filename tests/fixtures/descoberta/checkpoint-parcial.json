@@ -1,0 +1,12 @@
+{
+  "_nota": "A assinatura documentada do trabalho em curso, do checkpoint-guide: sem completed_at e com modules_pending. Deve sair em andamento, e sem anomalia alguma.",
+  "version": "1.3.3",
+  "project": "meio-do-caminho",
+  "phase": "escavacao",
+  "completed": ["reconhecimento"],
+  "pending": ["escavacao", "interpretacao", "geracao", "revisao"],
+  "checkpoints": {
+    "scout": { "completed_at": "2026-09-01T10:00:00Z", "files": ["_reversa_sdd/inventory.md"] },
+    "archaeologist": { "modules_analyzed": ["auth", "orders"], "modules_pending": ["payments", "users"] }
+  }
+}

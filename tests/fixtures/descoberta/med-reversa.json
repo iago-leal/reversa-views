@@ -1,0 +1,19 @@
+{
+  "_nota": "A forma medida no med-reversa em 2026-09-20, escrita aqui e não copiada: fase de encerramento, sete checkpoints, nenhum com completed_at, seis declarando status, todos com at, e as saídas sob três nomes diferentes.",
+  "version": "1.3.3",
+  "project": "med-reversa",
+  "user_name": "iago",
+  "output_folder": "_reversa_sdd",
+  "phase": "concluido",
+  "completed": ["reconhecimento", "escavacao", "interpretacao", "geracao", "revisao"],
+  "pending": [],
+  "checkpoints": {
+    "plano_aprovado": { "at": "2026-09-12T09:00:00Z", "escopo": "extração completa", "fases": 5 },
+    "scout": { "at": "2026-09-12T10:30:00Z", "status": "concluido", "outputs": ["_reversa_sdd/inventory.md"], "lacunas": ["dialeto do banco"] },
+    "archaeologist": { "at": "2026-09-12T13:00:00Z", "status": "concluido", "modules_analyzed": ["folha", "estoque"], "achados_principais": ["duas máquinas de estado"] },
+    "detective": { "at": "2026-09-12T15:00:00Z", "status": "concluido", "adrs": ["ADR-001"], "contradicoes_catalogadas": 3 },
+    "architect": { "at": "2026-09-12T17:00:00Z", "status": "concluido", "entidades_modeladas": 41, "dividas_priorizadas": ["sem teste de integração"] },
+    "writer": { "at": "2026-09-12T19:30:00Z", "status": "concluido", "arquivos_canonicos": ["_reversa_sdd/sdd/folha.md"], "globais": ["glossario.md"] },
+    "reviewer": { "at": "2026-09-12T21:00:00Z", "status": "concluido", "artefatos": ["_reversa_sdd/review.md"], "achados_novos": [] }
+  }
+}

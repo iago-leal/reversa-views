@@ -1,0 +1,12 @@
+{
+  "_nota": "Checkpoint sem files e com campos de lista de textos sob nomes não canônicos, ao lado de campos que não são lista. Prova que a sinalização nomeia sem chamar de saída, e que o checkpoint com files não sinaliza nada.",
+  "version": "1.3.3",
+  "project": "nomes-proprios",
+  "phase": "revisao",
+  "completed": ["reconhecimento", "escavacao", "interpretacao", "geracao"],
+  "pending": ["revisao"],
+  "checkpoints": {
+    "writer": { "at": "2026-09-01T10:00:00Z", "arquivos_canonicos": ["a.md", "b.md"], "achados": ["um achado"], "cobertura_vba": 82, "nota": "texto solto" },
+    "reviewer": { "completed_at": "2026-09-01T12:00:00Z", "files": ["c.md"], "artefatos": ["d.md"] }
+  }
+}
