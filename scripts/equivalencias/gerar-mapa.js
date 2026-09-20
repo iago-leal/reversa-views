@@ -48,6 +48,17 @@ function literal(valor) {
 }
 
 /**
+ * A identidade de um par nas tabelas auxiliares: campo e valor, nunca o campo
+ * sozinho. Quatro valores de `status` são quatro decisões diferentes.
+ * @param {string} campo - o nome do campo.
+ * @param {string} valor - o valor comparável.
+ * @returns {string} a chave composta.
+ */
+function chaveDoPar(campo, valor) {
+  return `${campo}\u0000${valor}`
+}
+
+/**
  * O mapa novo, com o que a proposta aprovou acrescentado ao que já havia.
  *
  * Crescimento por acréscimo: registro antigo não é reescrito, e mantém a data
@@ -76,7 +87,7 @@ function fundir(atual, aprovado, hoje, evidencias = {}) {
       valor: novo.valor,
       leitura: novo.leitura,
       aprovadoEm: hoje,
-      evidencia: evidencias[novo.campo] ?? [],
+      evidencia: evidencias[chaveDoPar(novo.campo, novo.valor)] ?? [],
     })
   }
 
@@ -183,4 +194,5 @@ function lerMapaDeModulo(texto) {
   }
 }
 
-module.exports = { ConflitoDeEquivalencia, DESTINO, fundir, gerarModulo, lerMapaDeModulo, literal }
+module.exports = {
+  chaveDoPar, ConflitoDeEquivalencia, DESTINO, fundir, gerarModulo, lerMapaDeModulo, literal }

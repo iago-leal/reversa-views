@@ -9,7 +9,14 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { ConflitoDeEquivalencia, fundir, gerarModulo, lerMapaDeModulo } from '../scripts/equivalencias/gerar-mapa.js'
+import {
+  ConflitoDeEquivalencia,
+  chaveDoPar,
+  fundir,
+  gerarModulo,
+  lerMapaDeModulo,
+} from '../scripts/equivalencias/gerar-mapa.js'
+import { evidencias } from '../scripts/promover-equivalencias.js'
 
 const HOJE = '2026-09-20'
 const VAZIO = { pares: [], naoAgentes: [] }
@@ -21,10 +28,33 @@ function aprovado(campo: string, valor: string, leitura = 'concluido') {
 
 describe('a fusão do que foi aprovado', () => {
   it('acrescenta o par aprovado, com a data de hoje', () => {
-    const mapa = fundir(VAZIO, { pares: [aprovado('status', 'concluido')], chaves: [] }, HOJE, { status: ['med-reversa'] })
+    const mapa = fundir(VAZIO, { pares: [aprovado('status', 'concluido')], chaves: [] }, HOJE, {
+      [chaveDoPar('status', 'concluido')]: ['med-reversa'],
+    })
 
     expect(mapa.pares).toEqual([
       { campo: 'status', valor: 'concluido', leitura: 'concluido', aprovadoEm: HOJE, evidencia: ['med-reversa'] },
+    ])
+  })
+
+  it('dá a cada valor do MESMO campo a sua própria evidência', () => {
+    // A primeira promoção real saiu com `status: "completed"` visto em
+    // `scrapping`, que é quem traz `status: "success"`: a evidência era
+    // indexada pelo campo, e os quatro valores de `status` colidiam num só.
+    // Evidência errada é pior que evidência ausente, porque ninguém desconfia.
+    const mapa = fundir(
+      VAZIO,
+      { pares: [aprovado('status', 'completed'), aprovado('status', 'success')], chaves: [] },
+      HOJE,
+      {
+        [chaveDoPar('status', 'completed')]: ['comentarios-concursos'],
+        [chaveDoPar('status', 'success')]: ['scrapping'],
+      },
+    )
+
+    expect(mapa.pares.map((p) => [p.valor, p.evidencia])).toEqual([
+      ['completed', ['comentarios-concursos']],
+      ['success', ['scrapping']],
     ])
   })
 
@@ -126,5 +156,54 @@ describe('a releitura do módulo em disco', () => {
     const segunda = fundir(relido, { pares: [aprovado('done', 'true')], chaves: [] }, HOJE, {})
 
     expect(segunda.pares.map((p) => p.campo).sort()).toEqual(['done', 'status'])
+  })
+})
+
+describe('a evidência relida da proposta', () => {
+  /** Dois pares do mesmo campo, como a proposta real os escreve. */
+  const PROPOSTA = [
+    '## Pares novos',
+    '',
+    '- [x] `status: "completed"` → **concluído**',
+    '      _o motor disse:_ campo de situação com valor de conclusão',
+    '      _visto em:_ comentarios-concursos',
+    '      ```equivalencia',
+    '      {"campo":"status","valor":"completed","leitura":"concluido"}',
+    '      ```',
+    '',
+    '- [ ] `status: "success"` → **concluído**',
+    '      _o motor disse:_ status de sucesso',
+    '      _visto em:_ scrapping',
+    '      ```equivalencia',
+    '      {"campo":"status","valor":"success","leitura":"concluido"}',
+    '      ```',
+    '',
+    '## Entradas a decidir: agente ou registro',
+    '',
+    '- [x] `plano_aprovado` → aprovar como **registro que não é agente**',
+    '      _campos da entrada:_ at, escopo, adaptacao, fases',
+    '      _visto em:_ med-reversa',
+    '      ```nao-agente',
+    '      {"chave":"plano_aprovado"}',
+    '      ```',
+    '',
+  ].join('\n')
+
+  it('separa os valores do mesmo campo, lendo o bloco de dados e não o título', () => {
+    const lido = evidencias(PROPOSTA)
+
+    expect(lido[chaveDoPar('status', 'completed')]).toEqual(['comentarios-concursos'])
+    expect(lido[chaveDoPar('status', 'success')]).toEqual(['scrapping'])
+  })
+
+  it('lê também a entrada que não é agente, pela chave', () => {
+    expect(evidencias(PROPOSTA).plano_aprovado).toEqual(['med-reversa'])
+  })
+
+  it('colhe a evidência de item DESMARCADO também, porque marcar vem depois de ler', () => {
+    // A leitura da evidência não filtra por caixa: quem filtra é `lerMarcados`.
+    // Ler os dois separa as responsabilidades e evita que a ordem das duas
+    // chamadas mude o que se registra.
+    expect(Object.keys(evidencias(PROPOSTA))).toHaveLength(3)
   })
 })
