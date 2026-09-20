@@ -24,3 +24,8 @@ heranca.origens.yml
 # Ao contrário de src/host/inheritance.ts, que é versionado porque muda
 # raramente, versionar este deixaria a árvore suja depois de toda construção.
 src/host/build.ts
+
+# Formulários de perguntas e as respostas devolvidas: material de conversa,
+# gerado pelo rito de perguntas-e-respostas e refeito a cada rodada. O que
+# uma resposta decide vira requisito ou spec, e é isso que se versiona.
+perguntas/
