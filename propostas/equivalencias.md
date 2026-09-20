@@ -6,7 +6,7 @@ Anote ao lado do item o que quiser: a promoção lê apenas as caixas e os bloco
 
 ## Pares novos
 
-- [ ] `done: "true"` → **concluído**
+- [x] `done: "true"` → **concluído**
       _o motor disse:_ campo booleano de conclusão
       _visto em:_ capacities
       ```equivalencia
@@ -20,28 +20,28 @@ Anote ao lado do item o que quiser: a promoção lê apenas as caixas e os bloco
       {"campo":"last_completed_at","valor":"2026-04-28t20:10:00z","leitura":"concluido"}
       ```
 
-- [ ] `status: "completed"` → **concluído**
+- [x] `status: "completed"` → **concluído**
       _o motor disse:_ campo de situação com valor de conclusão
       _visto em:_ comentarios-concursos
       ```equivalencia
       {"campo":"status","valor":"completed","leitura":"concluido"}
       ```
 
-- [ ] `status: "completo"` → **concluído**
+- [x] `status: "completo"` → **concluído**
       _o motor disse:_ status de conclusão
       _visto em:_ medicina-leal-app
       ```equivalencia
       {"campo":"status","valor":"completo","leitura":"concluido"}
       ```
 
-- [ ] `status: "concluido"` → **concluído**
+- [x] `status: "concluido"` → **concluído**
       _o motor disse:_ campo de situação
       _visto em:_ afla, med-reversa
       ```equivalencia
       {"campo":"status","valor":"concluido","leitura":"concluido"}
       ```
 
-- [ ] `status: "success"` → **concluído**
+- [x] `status: "success"` → **concluído**
       _o motor disse:_ status de sucesso
       _visto em:_ scrapping
       ```equivalencia
@@ -84,7 +84,7 @@ deixe desmarcado tudo o que tiver a menor dúvida.
       {"chave":"architect_c3"}
       ```
 
-- [ ] `decisoes_autor` → aprovar como **registro que não é agente**
+- [x] `decisoes_autor` → aprovar como **registro que não é agente**
       _campos da entrada:_ data, origem, perguntas_respondidas, adrs_criados, deriva_corrigida, mudancas_de_escopo, requisitos_novos, lacunas, tarefas_desimpedidas, escopo_nao_incorporado
       _visto em:_ afla
       ```nao-agente
@@ -105,7 +105,7 @@ deixe desmarcado tudo o que tiver a menor dúvida.
       {"chave":"detective_c3"}
       ```
 
-- [ ] `plano_aprovado` → aprovar como **registro que não é agente**
+- [x] `plano_aprovado` → aprovar como **registro que não é agente**
       _campos da entrada:_ at, escopo, adaptacao, fases
       _visto em:_ med-reversa
       ```nao-agente

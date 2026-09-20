@@ -12,6 +12,7 @@ import { EMPTY_SNAPSHOT, readReversa } from '../src/heranca/reversa-domain/src/i
 import type { ReversaSnapshot } from '../src/heranca/reversa-domain/src/index.ts'
 import type { ProbeResult } from '../src/heranca/reversa-probe/src/snapshot.ts'
 import { readDeliveryLinks } from '../src/domain/delivery-link.ts'
+import { EMPTY_MAPA_DE_EQUIVALENCIAS } from '../src/domain/types.ts'
 import { readWorkspace } from '../src/host/reading.ts'
 import type { LogPort } from '../src/host/ports.ts'
 
@@ -541,15 +542,50 @@ describe('estado da descoberta na leitura (feature 011)', () => {
 
   it('o checkpoint sem completed_at vira conclusão não declarada, com a sua anomalia', () => {
     const log = logSpy()
+    // Mapa vazio DE PROPÓSITO: este caso é o da feature 011, e ele tem de
+    // continuar valendo em quem nunca aprovou par algum. Desde que
+    // `status: "concluido"` foi aprovado neste repositório, o mesmo retrato lido
+    // com o mapa real sai concluído, que é o caso logo abaixo.
     const result = readWorkspace('/w', {
       readSnapshot: () => probeResult(ENCERRADO),
       readProcess: readReversa,
       log: log.port,
+      equivalencias: EMPTY_MAPA_DE_EQUIVALENCIAS,
     })
 
     if (result.kind !== 'loaded') return
     expect(result.discoveryState.checkpoints[0]?.situacao).toBe('conclusao-nao-declarada')
     expect(result.discoveryState.anomalias).toHaveLength(1)
+  })
+
+  it('o mesmo checkpoint sai concluído, com procedência, sob o mapa aprovado', () => {
+    const log = logSpy()
+    const result = readWorkspace('/w', {
+      readSnapshot: () => probeResult(ENCERRADO),
+      readProcess: readReversa,
+      log: log.port,
+      equivalencias: {
+        pares: [
+          {
+            campo: 'status',
+            valor: 'concluido',
+            leitura: 'concluido',
+            aprovadoEm: '2026-09-20',
+            evidencia: ['med-reversa'],
+          },
+        ],
+        naoAgentes: [],
+      },
+    })
+
+    if (result.kind !== 'loaded') return
+    const checkpoint = result.discoveryState.checkpoints[0]
+    expect(checkpoint?.situacao).toBe('concluido')
+    expect(checkpoint?.reconhecidoPor).toEqual({ campo: 'status', valor: 'concluido' })
+    // O instante continua vindo só de `completed_at`: o `at` do retrato não
+    // vira hora de conclusão por causa do par aprovado (RF-06).
+    expect(checkpoint?.instante).toBeNull()
+    expect(result.discoveryState.anomalias).toEqual([])
   })
 
   it('o eixo sai vazio, e sem exceção, quando o Reversa não está instalado', () => {

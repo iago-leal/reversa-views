@@ -128,10 +128,20 @@ const FORMAS = {
           files: ['_reversa_sdd/review.md'],
           artefatos: ['_reversa_sdd/review.md'],
         },
+        // Terceiro checkpoint com um campo que nenhum par aprovado alcança, e
+        // que por isso continua em conclusão não declarada. Ele existe desde
+        // que o mapa da 012 deixou de estar vazio neste repositório: sem ele, o
+        // caso deixaria de mostrar a situação que ele foi feito para mostrar,
+        // porque `status: "concluido"` passou a ser reconhecido.
+        scout: {
+          at: '2026-09-01T09:00:00Z',
+          estado: 'pronto',
+          lacunas: ['duas rotinas sem origem', 'um contrato sem consumidor'],
+        },
       },
     },
     relato:
-      'checkpoint sem files e com campos de lista de textos sob nomes não canônicos: o painel nomeia os campos sem chamá-los de saídas, e a lista de arquivos continua vazia',
+      'checkpoint sem files e com campos de lista de textos sob nomes não canônicos: o painel nomeia os campos sem chamá-los de saídas, e a lista de arquivos continua vazia. O `scout` traz um campo de estado que ninguém aprovou, e segue em conclusão não declarada ao lado do `writer` reconhecido'
   },
 }
 

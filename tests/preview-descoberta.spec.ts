@@ -231,20 +231,30 @@ describe('cada caso produz o estado que promete', () => {
 
     expect(writer).toEqual({
       agent: 'writer',
-      situacao: 'conclusao-nao-declarada',
+      // Reconhecido desde que `status: "concluido"` foi aprovado neste
+      // repositório: o preview mostra o painel como ele está, e não como estava
+      // antes da primeira promoção. O instante segue nulo, porque conclusão
+      // reconhecida por par aprovado não inventa hora (RF-06).
+      situacao: 'concluido',
       instante: null,
       camposComLista: ['achados', 'arquivos_canonicos'],
-      // Nulo porque a situação não veio de par aprovado algum, e é assim que a
-      // feature 012 deixa intacto o que a 011 lia (RF-15).
-      reconhecidoPor: null,
+      reconhecidoPor: { campo: 'status', valor: 'concluido' },
     })
+    // E o caso continua mostrando a situação que ele existe para mostrar: o
+    // `scout` traz `estado: "pronto"`, que ninguém aprovou.
+    const scout = lido.discoveryState.checkpoints.find((c) => c.agent === 'scout')
+    expect(scout?.situacao).toBe('conclusao-nao-declarada')
+    expect(scout?.reconhecidoPor).toBeNull()
+    expect(scout?.camposComLista).toEqual(['lacunas'])
     expect(lido.process.discovery.checkpoints.find((c) => c.agent === 'writer')?.files).toEqual([])
     // O checkpoint com `files` não sinaliza campo algum, ainda que carregue um.
     expect(reviewer?.camposComLista).toEqual([])
+    // Uma anomalia só, e a do `scout`: a do `writer` calou-se quando o par foi
+    // aprovado, que é o efeito inteiro da feature 012 numa linha de teste.
     expect(naTela(lido)).toEqual([
       expect.objectContaining({
         code: 'checkpoint-sem-conclusao-declarada',
-        detail: 'writer: sem completed_at',
+        detail: 'scout: sem completed_at',
       }),
     ])
   })
