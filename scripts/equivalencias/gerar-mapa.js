@@ -59,6 +59,27 @@ function chaveDoPar(campo, valor) {
 }
 
 /**
+ * A identidade de uma etapa nas tabelas auxiliares. O prefixo a separa das
+ * chaves de registro que não é agente, que são texto livre e poderiam coincidir
+ * com o nome de uma etapa.
+ * @param {string} nome - o nome comparável da etapa.
+ * @returns {string} a chave composta.
+ */
+function chaveDaEtapa(nome) {
+  return `etapa\u0000${nome}`
+}
+
+/**
+ * O nome de uma etapa como o mapa o guarda: aparado e em minúsculas, com os
+ * diacríticos preservados, pelo precedente do valor comparável da 012.
+ * @param {string} nome - o nome como veio da proposta.
+ * @returns {string} o nome comparável.
+ */
+function nomeComparavel(nome) {
+  return String(nome).trim().toLowerCase()
+}
+
+/**
  * O mapa novo, com o que a proposta aprovou acrescentado ao que já havia.
  *
  * Crescimento por acréscimo: registro antigo não é reescrito, e mantém a data
@@ -66,7 +87,12 @@ function chaveDoPar(campo, valor) {
  * porque sobrescrever calado apagaria uma decisão anterior sem que ninguém
  * visse (D-11).
  * @param {object} atual - o mapa como está no módulo.
- * @param {{pares: object[], chaves: object[]}} aprovado - o que foi marcado.
+ *
+ * As etapas (feature 015) entram pelo mesmo regime e sem conflito possível: o
+ * registro não carrega leitura, de modo que aprovar de novo só UNE a evidência.
+ * E elas são CARREGADAS mesmo quando a proposta não aprova nenhuma, que é o
+ * cuidado maior: sem isso, uma promoção de checkpoints apagaria as etapas.
+ * @param {{pares: object[], chaves: object[], etapas?: object[]}} aprovado - o que foi marcado.
  * @param {string} hoje - a data da aprovação, `YYYY-MM-DD`.
  * @param {Record<string, string[]>} evidencias - onde cada item foi visto.
  * @returns {object} o mapa novo, ordenado de modo estável.
@@ -97,11 +123,25 @@ function fundir(atual, aprovado, hoje, evidencias = {}) {
     naoAgentes.push({ chave: nova.chave, aprovadoEm: hoje, evidencia: evidencias[nova.chave] ?? [] })
   }
 
+  const etapas = (atual.etapas ?? []).map((e) => ({ ...e, evidencia: [...e.evidencia] }))
+  for (const nova of aprovado.etapas ?? []) {
+    const nome = nomeComparavel(nova.nome)
+    if (nome === '') continue
+    const vistas = evidencias[chaveDaEtapa(nome)] ?? []
+    const antiga = etapas.find((e) => e.nome === nome)
+    if (antiga !== undefined) {
+      antiga.evidencia = [...new Set([...antiga.evidencia, ...vistas])].sort()
+      continue
+    }
+    etapas.push({ nome, aprovadoEm: hoje, evidencia: [...new Set(vistas)].sort() })
+  }
+
   // Ordem estável, para que o diff mostre a decisão e não a ordem em que ela
   // por acaso foi lida.
   pares.sort((a, b) => `${a.campo}\u0000${a.valor}`.localeCompare(`${b.campo}\u0000${b.valor}`))
   naoAgentes.sort((a, b) => a.chave.localeCompare(b.chave))
-  return { pares, naoAgentes }
+  etapas.sort((a, b) => a.nome.localeCompare(b.nome))
+  return { pares, naoAgentes, etapas }
 }
 
 /** A lista de evidência como literal, vazia inclusive. */
@@ -137,6 +177,19 @@ function gerarModulo(mapa) {
         `    },`,
     )
     .join('\n')
+  const etapas = (mapa.etapas ?? [])
+    .map(
+      (e) =>
+        `    {\n` +
+        `      nome: ${literal(e.nome)},\n` +
+        `      aprovadoEm: ${literal(e.aprovadoEm)},\n` +
+        `      evidencia: ${literalDeLista(e.evidencia)},\n` +
+        `    },`,
+    )
+    .join('\n')
+  // A lista vazia sai numa linha só, sem a linha em branco que o molde das
+  // outras duas deixaria no meio do módulo.
+  const blocoDeEtapas = etapas === '' ? '  etapas: [],' : `  etapas: [\n${etapas}\n  ],`
 
   return `/**
  * The approved map of out-of-schema equivalences (feature 012).
@@ -166,6 +219,7 @@ ${pares}
   naoAgentes: [
 ${naoAgentes}
   ],
+${blocoDeEtapas}
 }
 `
 }
@@ -185,14 +239,19 @@ ${naoAgentes}
  */
 function lerMapaDeModulo(texto) {
   const corpo = texto.match(/MAPA_DE_EQUIVALENCIAS:\s*MapaDeEquivalencias\s*=\s*(\{[\s\S]*\})\s*$/m)
+  // O mapa vazio segue com a forma da 012, sem `etapas`: o campo é opcional, e
+  // ausente lê como nenhuma etapa aprovada.
   if (corpo === null) return { pares: [], naoAgentes: [] }
   try {
     const mapa = runInNewContext(`(${corpo[1]})`, Object.create(null), { timeout: 1000 })
-    return { pares: mapa.pares ?? [], naoAgentes: mapa.naoAgentes ?? [] }
+    // As TRÊS listas. Devolver só as duas da 012 era o risco maior da feature
+    // 015: a promoção funde sobre o que esta função devolve, e o que ela não
+    // devolve deixa de existir no módulo regenerado.
+    return { pares: mapa.pares ?? [], naoAgentes: mapa.naoAgentes ?? [], etapas: mapa.etapas ?? [] }
   } catch {
     return { pares: [], naoAgentes: [] }
   }
 }
 
 module.exports = {
-  chaveDoPar, ConflitoDeEquivalencia, DESTINO, fundir, gerarModulo, lerMapaDeModulo, literal }
+  chaveDaEtapa, chaveDoPar, ConflitoDeEquivalencia, DESTINO, fundir, gerarModulo, lerMapaDeModulo, literal, nomeComparavel }

@@ -790,6 +790,8 @@ export type ExtractionSituation =
   | 'em-curso'
   /** The declared phase names a closure, whatever the spelling. */
   | 'encerrada'
+  /** `phase` recognised and already finished, `pending` empty, and the five phases of the current cycle finished (feature 015). */
+  | 'encerrada-sem-declaracao'
 
 /**
  * The situation of the extraction, with the raw value beside the recognised
@@ -903,6 +905,8 @@ export interface CheckpointState {
 export type DiscoveryStateAnomalyCode =
   /** A checkpoint with neither `completed_at` nor `modules_pending`; detail: the agent and the missing field. */
   | 'checkpoint-sem-conclusao-declarada'
+  /** A declared closure with a recognised name still in `pending`; detail: the `phase` and the pending names (feature 015). */
+  | 'encerramento-com-pendencia'
 
 /** One degradation of the discovery-state reading, in the common shape. */
 export interface DiscoveryStateAnomaly {
@@ -966,6 +970,50 @@ export interface DiscoveryStateAxis {
    * them would eventually forget.
    */
   registrosNaoAgentes: NonAgentEntry[]
+  /** Absent when no cycle phase was recognised (feature 015). */
+  ciclo?: CicloCorrente
+  /** Absent when no approved stage is present in the file (feature 015). */
+  etapas?: EtapaReconhecida[]
+}
+
+/** One of the five phases REVERSA documents. */
+export type FaseCanonica = 'reconhecimento' | 'escavacao' | 'interpretacao' | 'geracao' | 'revisao'
+
+/**
+ * The cycle a re-extracted project is in (feature 015).
+ *
+ * Derived from the numeric suffix of the phase names alone. No top-level key
+ * is read for it: eleven projects re-extracted, one of them writes `cycle`,
+ * and the other ten record the re-extraction under nine spellings.
+ */
+export interface CicloCorrente {
+  /** The largest integer among the cycle phases of `phase`, `completed` and `pending`. */
+  numero: number
+  /** Always five, in canonical order. */
+  fases: FaseDoCiclo[]
+}
+
+/** One canonical phase as the current cycle has it. */
+export interface FaseDoCiclo {
+  canonica: FaseCanonica
+  /** The same three values the inherited layer uses, so the card swaps the source and not the drawing. */
+  status: 'done' | 'current' | 'pending'
+  /** The name on disk that sustains the status; null when the phase does not appear with the suffix of the cycle. */
+  bruto: string | null
+}
+
+/**
+ * One approved stage present in the file (feature 015).
+ *
+ * `bruto` is what the disk says and what the screen shows; `base` is the name
+ * as the map keeps it. The `sufixo` never enters the count of the cycle: in
+ * `re-extracao-005` the number follows the delivered feature, not the cycle.
+ */
+export interface EtapaReconhecida {
+  bruto: string
+  base: string
+  sufixo: number | null
+  situacao: 'concluida' | 'em-curso' | 'pendente'
 }
 
 /** The axis of a project whose `state.json` is absent or could not be read. */
@@ -1013,6 +1061,21 @@ export interface RegistroNaoAgente {
 }
 
 /**
+ * One approved stage outside the canon (feature 015, RN-02).
+ *
+ * Each name is an independent record: there is no synonym and no group. The
+ * grouping the engine suggests is how the proposal is laid out, and since the
+ * screen shows the raw name, a synonym would have no observable effect.
+ */
+export interface EtapaAprovada {
+  /** Trimmed and lowercased; diacritics preserved. */
+  nome: string
+  aprovadoEm: string
+  /** Projects in which the name, or a variant with a suffix, was seen. */
+  evidencia: string[]
+}
+
+/**
  * Everything a person has approved, which is all the panel is allowed to know.
  *
  * Empty or absent leaves the reading identical to feature 011, and that is the
@@ -1021,6 +1084,13 @@ export interface RegistroNaoAgente {
 export interface MapaDeEquivalencias {
   pares: readonly EquivalenciaDeCampo[]
   naoAgentes: readonly RegistroNaoAgente[]
+  /**
+   * Absent or empty: no stage approved, and the phases are read by form alone.
+   *
+   * OPTIONAL because the suites of feature 012 build maps by hand with two
+   * fields, and none of them may be rewritten.
+   */
+  etapas?: readonly EtapaAprovada[]
 }
 
 /** A map that has approved nothing; a COPY, never the shared constant. */

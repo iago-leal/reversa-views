@@ -1,0 +1,9 @@
+{
+  "_nota": "Erros de grafia sobre fase canônica, com e sem sufixo de ciclo, ao lado de uma fase de ciclo legítima. O erro continua anomalia, e a fase de ciclo não.",
+  "version": "1.3.3",
+  "project": "grafia",
+  "phase": "geracao",
+  "completed": ["reconhecimento", "escavacao-c2", "escavacão", "interpretaçao", "escavacão-c2"],
+  "pending": ["revisao"],
+  "checkpoints": {}
+}

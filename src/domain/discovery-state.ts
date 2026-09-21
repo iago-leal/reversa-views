@@ -32,12 +32,16 @@
 
 import { asRecord, asString, asStringList, parseJsonSafe } from '../heranca/reversa-domain/src/index.ts'
 import { elidirCheckpoint } from './elisao.ts'
+import { classificarNome, FASES_CANONICAS } from './fases.ts'
+import type { NomeDeFase } from './fases.ts'
 import type {
   AbsorbedAnomaly,
   CheckpointState,
+  CicloCorrente,
   DiscoveryStateAnomaly,
   DiscoveryStateAxis,
   EquivalenciaDeCampo,
+  EtapaReconhecida,
   ExtractionState,
   MapaDeEquivalencias,
   NonAgentEntry,
@@ -47,19 +51,11 @@ import { EMPTY_DISCOVERY_STATE, EMPTY_MAPA_DE_EQUIVALENCIAS } from './types.ts'
 /** The file every anomaly of this axis names, and the one the absorption matches. */
 const FILE = '.reversa/state.json'
 
-/** The five phases REVERSA documents, which are tested BEFORE the closing family. */
-const CANONICAS = new Set(['reconhecimento', 'escavacao', 'interpretacao', 'geracao', 'revisao'])
-
-/** The inherited code this axis is able to absorb, and the only one. */
+/** The inherited code this axis absorbs over a recognised name. */
 const ABSORVIVEL = 'fase-desconhecida'
 
-/**
- * The root a closing value carries, in all five spellings measured:
- * `concluido`, `concluida`, `concluido-c3`, `concluido-escopado` and
- * `revisao_concluida`. No canonical phase contains it, so precedence and root
- * never collide.
- */
-const RAIZ_DE_ENCERRAMENTO = 'conclu'
+/** The inherited code this axis absorbs over an extraction that closed without saying so (feature 015). */
+const JA_CONCLUIDA = 'fase-atual-ja-concluida'
 
 /** What the judgement needs; both come from what was already read. */
 export interface DiscoveryStateInput {
@@ -78,42 +74,190 @@ export interface DiscoveryStateInput {
 }
 
 /**
- * Whether a phase value declares the end of the extraction.
+ * The three lists of phase names, each name already judged (feature 015).
  *
- * By form: the value is split on `-` and `_`, each segment is lowercased and
- * stripped of diacritics, and one segment starting with the root is enough.
- * Nothing on disk is rewritten by this -- the raw value travels beside the
- * recognised one, which is what NG-05 asks.
- * @param bruto - the value as the file carries it.
- * @returns true when it names a closure.
+ * Judged ONCE, here, and handed to everything that follows: the situation,
+ * the cycle, the stages and the new anomaly all read the same judgement, which
+ * is the whole reason `classificarNome` exists.
  */
-function declaraEncerramento(bruto: string): boolean {
-  return bruto
-    .split(/[-_]/)
-    .map((parte) => parte.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase())
-    .some((parte) => parte.startsWith(RAIZ_DE_ENCERRAMENTO))
+interface NomesJulgados {
+  phase: NomeDeFase | null
+  completed: NomeDeFase[]
+  pending: NomeDeFase[]
 }
 
 /**
- * How far the extraction got (RF-01, RF-02).
+ * Judge `phase`, `completed` and `pending`, and nothing else of the file.
  *
- * The precedence is the point, and it runs in this order: the canonical five
- * first, so a typo over `geracao` stays an unknown phase and keeps its
- * anomaly; then the closing family; then everything else, which is an
- * extraction under way under a name the reader does not know.
+ * No other top-level key is read. `cycle`, `cycle_N` and the nine spellings of
+ * a re-extraction stay out: adopting one would be choosing the spelling of one
+ * project against nine.
  * @param record - the parsed `state.json`.
+ * @param mapa - what a person approved.
+ * @returns the judged names, in the order the file carries them.
+ */
+function julgarNomes(record: Record<string, unknown>, mapa: MapaDeEquivalencias): NomesJulgados {
+  const bruto = asString(record.phase)
+  return {
+    phase: bruto === null ? null : classificarNome(bruto, mapa),
+    completed: asStringList(record.completed).map((nome) => classificarNome(nome, mapa)),
+    pending: asStringList(record.pending).map((nome) => classificarNome(nome, mapa)),
+  }
+}
+
+/** Whether a judged name is one the reader recognises as a phase or a stage. */
+function reconhecido(nome: NomeDeFase): boolean {
+  return nome.tipo === 'canonica' || nome.tipo === 'ciclo' || nome.tipo === 'etapa'
+}
+
+/**
+ * The current cycle, which is the largest integer among the cycle phases
+ * (RN-08). The suffix of a stage never counts: in `re-extracao-005` the number
+ * follows the delivered feature.
+ * @param nomes - the judged names.
+ * @returns the number, or null when no cycle phase was recognised.
+ */
+function numeroDoCiclo(nomes: NomesJulgados): number | null {
+  const todos = [...(nomes.phase === null ? [] : [nomes.phase]), ...nomes.completed, ...nomes.pending]
+  const ciclos = todos.flatMap((nome) => (nome.tipo === 'ciclo' ? [nome.ciclo] : []))
+  return ciclos.length === 0 ? null : Math.max(...ciclos)
+}
+
+/**
+ * Whether the five phases of the current cycle are all in `completed`: the
+ * canonical five when there is no cycle, the five with the suffix of the
+ * current cycle when there is one.
+ * @param nomes - the judged names.
+ * @returns true when none of the five is missing.
+ */
+function cincoFasesConcluidas(nomes: NomesJulgados): boolean {
+  const numero = numeroDoCiclo(nomes)
+  return FASES_CANONICAS.every((fase) =>
+    nomes.completed.some((nome) =>
+      numero === null
+        ? nome.tipo === 'canonica' && nome.canonica === fase
+        : nome.tipo === 'ciclo' && nome.canonica === fase && nome.ciclo === numero,
+    ),
+  )
+}
+
+/**
+ * How far the extraction got (feature 011, RF-01 and RF-02; feature 015, RF-20).
+ *
+ * The precedence is the point. The canonical five come first, so a typo over
+ * `geracao` stays an unknown phase and keeps its anomaly; then the closing
+ * family, exactly as feature 011 wrote it; then everything else, which is an
+ * extraction under way.
+ *
+ * Feature 015 adds ONE reading on top, and only where the file did not declare
+ * a closure: `pending` empty, `phase` recognised and already in `completed`,
+ * and the five phases of the current cycle finished. Eleven of the sixty-four
+ * projects measured on 2026-09-21 have exactly this form. All three conditions
+ * are necessary -- `phase` in `completed` alone would reach an extraction under
+ * way with a repeated phase, which is what `capacities` is.
+ * @param nomes - the judged names.
  * @returns the situation, with the raw value beside it.
  */
-function lerExtracao(record: Record<string, unknown>): ExtractionState {
-  const bruto = asString(record.phase)
-  const concluidas = asStringList(record.completed)
-
-  if (bruto === null) {
-    return { situacao: concluidas.length === 0 ? 'nao-iniciada' : 'em-curso', bruto: null }
+function lerExtracao(nomes: NomesJulgados): ExtractionState {
+  const phase = nomes.phase
+  if (phase === null) {
+    return { situacao: nomes.completed.length === 0 ? 'nao-iniciada' : 'em-curso', bruto: null }
   }
-  if (CANONICAS.has(bruto)) return { situacao: 'em-curso', bruto }
-  if (declaraEncerramento(bruto)) return { situacao: 'encerrada', bruto }
-  return { situacao: 'em-curso', bruto }
+  const bruto = phase.bruto
+  if (phase.tipo === 'encerramento') return { situacao: 'encerrada', bruto }
+
+  const parouSemDeclarar =
+    nomes.pending.length === 0 &&
+    reconhecido(phase) &&
+    nomes.completed.some((nome) => nome.bruto === bruto) &&
+    cincoFasesConcluidas(nomes)
+
+  return { situacao: parouSemDeclarar ? 'encerrada-sem-declaracao' : 'em-curso', bruto }
+}
+
+/**
+ * The five phases as the current cycle has them (RF-09).
+ *
+ * The precedence is the one of `derivePhases`: done if the name with the
+ * suffix of the cycle is in `completed`, else current if it is the `phase`,
+ * else pending -- INCLUDING when the name appears in no list at all, which is
+ * what the inherited layer does with a canonical phase missing from both.
+ * With two spellings of the same cycle for one phase (`geracao-c2` and
+ * `geracao-2`), the first in `completed` wins, then the `phase`, then the
+ * first in `pending`. Earlier cycles do not appear.
+ * @param nomes - the judged names.
+ * @returns the cycle, or undefined when no cycle phase was recognised.
+ */
+function lerCiclo(nomes: NomesJulgados): CicloCorrente | undefined {
+  const numero = numeroDoCiclo(nomes)
+  if (numero === null) return undefined
+
+  return {
+    numero,
+    fases: FASES_CANONICAS.map((canonica) => {
+      const doCiclo = (nome: NomeDeFase | null): nome is NomeDeFase =>
+        nome !== null && nome.tipo === 'ciclo' && nome.canonica === canonica && nome.ciclo === numero
+
+      const concluida = nomes.completed.find(doCiclo)
+      if (concluida !== undefined) return { canonica, status: 'done' as const, bruto: concluida.bruto }
+      if (doCiclo(nomes.phase)) return { canonica, status: 'current' as const, bruto: nomes.phase.bruto }
+      const pendente = nomes.pending.find(doCiclo)
+      return { canonica, status: 'pending' as const, bruto: pendente?.bruto ?? null }
+    }),
+  }
+}
+
+/**
+ * The approved stages present in the file (RF-22), in the order the file
+ * carries them: `completed`, then the `phase` if not yet listed, then
+ * `pending`, with no duplicate by raw name.
+ *
+ * A stage that is the `phase` AND sits in `completed` reads as finished, and
+ * that is exactly the case the closure without declaration looks for.
+ * @param nomes - the judged names.
+ * @returns the stages, or undefined when none is present.
+ */
+function lerEtapas(nomes: NomesJulgados): EtapaReconhecida[] | undefined {
+  const etapas: EtapaReconhecida[] = []
+  const acrescentar = (nome: NomeDeFase | null, situacao: EtapaReconhecida['situacao']): void => {
+    if (nome === null || nome.tipo !== 'etapa') return
+    if (etapas.some((etapa) => etapa.bruto === nome.bruto)) return
+    etapas.push({ bruto: nome.bruto, base: nome.base, sufixo: nome.sufixo, situacao })
+  }
+
+  for (const nome of nomes.completed) acrescentar(nome, 'concluida')
+  acrescentar(nomes.phase, 'em-curso')
+  for (const nome of nomes.pending) acrescentar(nome, 'pendente')
+
+  return etapas.length === 0 ? undefined : etapas
+}
+
+/**
+ * The anomaly of a closure declared over pending work (RF-07, RN-06).
+ *
+ * ONE per project and not one per pending name, because the defect is one: the
+ * declaration contradicts the list. Before this feature the defect of `afla`
+ * showed only by accident, as five `fase-desconhecida` over `pending`; with
+ * the cycle phases recognised it would leave the screen without anyone having
+ * fixed it. An unrecognised name in `pending` stays out of the detail: it
+ * already has its own `fase-desconhecida`.
+ * @param extracao - the situation this axis recognised.
+ * @param nomes - the judged names.
+ * @returns the anomaly, or nothing.
+ */
+function anomaliaDoEncerramento(extracao: ExtractionState, nomes: NomesJulgados): DiscoveryStateAnomaly[] {
+  if (extracao.situacao !== 'encerrada' || extracao.bruto === null) return []
+
+  const pendentes = nomes.pending.filter(reconhecido).map((nome) => nome.bruto)
+  if (pendentes.length === 0) return []
+
+  return [
+    {
+      file: FILE,
+      code: 'encerramento-com-pendencia',
+      detail: `${extracao.bruto}: pending ainda lista ${pendentes.join(', ')}`,
+    },
+  ]
 }
 
 /** The keys the inherited layer already knows; anything else is preserved elsewhere. */
@@ -329,33 +473,52 @@ function anomaliasDosCheckpoints(checkpoints: readonly CheckpointState[]): Disco
 
 /**
  * The inherited anomalies this axis recognised, and which the panel therefore
- * does not draw (D-02).
+ * does not draw (feature 011, D-02; feature 015, D-08).
  *
  * The identity is the WHOLE triple, never the code alone. Absorbing by code
  * would wipe out every `fase-desconhecida`, including the one over a typo,
  * which is exactly what EC-02 exists to catch -- and a `state.json` carrying a
  * closing phase AND a stray name in `completed` produces both at once.
  *
+ * Three rules, and the first is feature 011's, untouched:
+ *
+ * 1. `fase-desconhecida` over the `phase`, when the extraction closed;
+ * 2. `fase-desconhecida` over any name that reads as a cycle phase or as an
+ *    approved stage, whichever of the three lists it came from;
+ * 3. `fase-atual-ja-concluida` over the `phase`, when the extraction closed
+ *    without declaring it.
+ *
+ * The same name in two lists yields two inherited anomalies with one triple,
+ * and both are returned: the composition discounts them all.
+ *
  * Nothing is removed from the inherited list here. This is the identity of
  * what the composition on the webview side discounts, and the reading keeps
  * reporting the disk whole.
  * @param anomalias - what the inherited layer recorded.
  * @param extracao - the situation this axis recognised.
- * @returns the absorbed ones, empty when the extraction did not close.
+ * @param mapa - what a person approved.
+ * @returns the absorbed ones, in the order the inherited layer recorded them.
  */
 function absorver(
   anomalias: readonly { file: string; code: string; detail?: string }[],
   extracao: ExtractionState,
+  mapa: MapaDeEquivalencias,
 ): AbsorbedAnomaly[] {
-  if (extracao.situacao !== 'encerrada' || extracao.bruto === null) return []
+  const sobreOPhase = (detail: string | undefined): boolean =>
+    extracao.bruto !== null && detail === extracao.bruto
 
   return anomalias
-    .filter(
-      (anomalia) =>
-        anomalia.file === FILE &&
-        anomalia.code === ABSORVIVEL &&
-        anomalia.detail === extracao.bruto,
-    )
+    .filter((anomalia) => {
+      if (anomalia.file !== FILE) return false
+      if (anomalia.code === JA_CONCLUIDA) {
+        return extracao.situacao === 'encerrada-sem-declaracao' && sobreOPhase(anomalia.detail)
+      }
+      if (anomalia.code !== ABSORVIVEL) return false
+      if (extracao.situacao === 'encerrada' && sobreOPhase(anomalia.detail)) return true
+      if (anomalia.detail === undefined) return false
+      const tipo = classificarNome(anomalia.detail, mapa).tipo
+      return tipo === 'ciclo' || tipo === 'etapa'
+    })
     .map((anomalia) => ({ ...anomalia }))
 }
 
@@ -375,7 +538,10 @@ export function readDiscoveryState(input: DiscoveryStateInput): DiscoveryStateAx
 
   const mapa = input.equivalencias ?? EMPTY_MAPA_DE_EQUIVALENCIAS
   const { checkpoints, registros } = lerCheckpoints(record.checkpoints, mapa)
-  const extracao = lerExtracao(record)
+  const nomes = julgarNomes(record, mapa)
+  const extracao = lerExtracao(nomes)
+  const ciclo = lerCiclo(nomes)
+  const etapas = lerEtapas(nomes)
 
   return {
     extracao,
@@ -384,8 +550,12 @@ export function readDiscoveryState(input: DiscoveryStateInput): DiscoveryStateAx
     // person has decided, repeating the warning has no addressee left; the
     // decision stays auditable through the provenance on the row and through
     // the map's own history (RN-05).
-    anomalias: anomaliasDosCheckpoints(checkpoints),
-    absorvidas: absorver(input.anomalias, extracao),
+    anomalias: [...anomaliasDosCheckpoints(checkpoints), ...anomaliaDoEncerramento(extracao, nomes)],
+    absorvidas: absorver(input.anomalias, extracao, mapa),
     registrosNaoAgentes: registros,
+    // OPTIONAL fields, absent rather than empty, so the suites that build the
+    // axis by hand keep compiling and an older screen sees nothing new.
+    ...(ciclo === undefined ? {} : { ciclo }),
+    ...(etapas === undefined ? {} : { etapas }),
   }
 }

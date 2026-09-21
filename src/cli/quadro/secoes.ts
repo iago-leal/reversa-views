@@ -30,6 +30,9 @@ import {
   checkpointMark,
   checkpointStateMark,
   componentSituationLabel,
+  currentStageSentence,
+  cyclePhaseMarks,
+  cycleSentence,
   extractionLabel,
   greenfieldStageLabel,
   markLabel,
@@ -40,7 +43,9 @@ import {
   scenarioLabel,
   situationLabel,
   stageLabel,
+  stagesLine,
   stepStatusLabel,
+  undeclaredClosureSentence,
 } from '../../webview/domain/labels.ts'
 import { originSteps, pipelineStarted } from '../../webview/domain/origin-view.ts'
 import { panoramaView } from '../../webview/domain/panorama-view.ts'
@@ -310,10 +315,30 @@ function secaoDaDescoberta(carga: SetProcessData): SecaoDesenhada {
     )
   }
 
-  const itens: ItemDaSecao[] = discovery.phases.map((fase) => {
-    const marca = phaseMark(fase)
-    return { texto: `${marca.label.text} · ${marca.status}`, artefato: null }
-  })
+  // Feature 015: as frases são as de `labels.ts`, as mesmas da tela, e nulas
+  // diante de host anterior ou de projeto sem ciclo e sem etapa aprovada.
+  const semDeclaracao = undeclaredClosureSentence(eixo)
+  if (semDeclaracao !== null) corpo.push(semDeclaracao)
+  const ciclo = cycleSentence(eixo)
+  if (ciclo !== null) corpo.push(ciclo)
+
+  const fasesDoCiclo = cyclePhaseMarks(eixo)
+  const itens: ItemDaSecao[] =
+    fasesDoCiclo === null
+      ? discovery.phases.map((fase) => {
+          const marca = phaseMark(fase)
+          return { texto: `${marca.label.text} · ${marca.status}`, artefato: null }
+        })
+      : fasesDoCiclo.map((marca) => ({
+          texto: [marca.label.text, marca.status, marca.raw].filter((parte) => parte !== null).join(' · '),
+          artefato: null,
+        }))
+
+  // A linha das etapas vem SOB as cinco fases, como na tela, e por isso é item
+  // e não corpo: o corpo é desenhado antes dos itens.
+  for (const frase of [stagesLine(eixo), currentStageSentence(eixo)]) {
+    if (frase !== null) itens.push({ texto: frase, artefato: null })
+  }
 
   if (eixo === undefined) {
     for (const checkpoint of discovery.checkpoints) {

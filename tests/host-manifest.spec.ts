@@ -104,7 +104,7 @@ describe('comandos da paleta (RF-07, D-11)', () => {
 })
 
 describe('as três unidades de compilação (RF-23, D-04, e D-03 da feature 014)', () => {
-  it('declara os vinte e seis scripts, e apenas eles', () => {
+  it('declara os trinta scripts, e apenas eles', () => {
     expect(Object.keys(manifesto.scripts ?? {})).toEqual([
       'pretest',
       'test',
@@ -134,6 +134,13 @@ describe('as três unidades de compilação (RF-23, D-04, e D-03 da feature 014)
       'compile:cli',
       'prepainel',
       'painel',
+      // Feature 015: a contagem da raiz, que passa pela mesma leitura e pela
+      // mesma composição do painel, e por isso mora na unidade de terminal. O
+      // aprendizado e a promoção a chamam ao fim, e constroem a unidade antes.
+      'precontar:anomalias',
+      'contar:anomalias',
+      'preaprender:equivalencias',
+      'prepromover:equivalencias',
     ])
   })
 

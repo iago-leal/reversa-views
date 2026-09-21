@@ -1,0 +1,12 @@
+{
+  "_nota": "Forma medida no DelphiSga: pending guarda prosa no lugar de nome de fase. É defeito de gravação na fonte, e não vocabulário. Os textos abaixo são inventados; a forma é a medida.",
+  "version": "1.3.3",
+  "project": "prosa-no-lugar-de-fase",
+  "phase": "revisao",
+  "completed": ["reconhecimento", "escavacao", "interpretacao", "geracao"],
+  "pending": [
+    "Rever o módulo de cadastro depois que o cliente confirmar quais relatórios ainda são usados pela contabilidade no fechamento mensal",
+    "Conferir com o responsável pelo banco de dados se as tabelas de histórico podem ser lidas sem bloquear a rotina noturna de consolidação"
+  ],
+  "checkpoints": {}
+}

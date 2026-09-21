@@ -46,8 +46,18 @@ const CANONICAS = ['reconhecimento', 'escavacao', 'interpretacao', 'geracao', 'r
 /** Os campos de identidade que a cópia herda do original, quando existem. */
 const IDENTIDADE = ['version', 'project', 'user_name', 'output_folder']
 
-/** Os quatro estados que este auxiliar sabe produzir. */
+/** Os cinco estados das features 011 e 012. */
 const CASOS = ['fase-estranha', 'parcial', 'terminal-e-estranha', 'saidas-nao-canonicas', 'falha']
+
+/**
+ * Os três estados da feature 015, em lista PRÓPRIA. A lista acima é inventário
+ * que a suíte das features 011 e 012 prende, e crescer por acréscimo aqui é o
+ * que mantém aquela suíte sem uma linha reescrita. O comando aceita as duas.
+ */
+const CASOS_DAS_FASES = ['ciclo-com-etapa', 'encerramento-com-pendencia', 'encerrada-sem-declaracao']
+
+/** Tudo o que `--caso=` aceita. */
+const TODOS_OS_CASOS = [...CASOS, ...CASOS_DAS_FASES]
 
 /**
  * O que cada caso escreve por cima da identidade preservada.
@@ -56,6 +66,42 @@ const CASOS = ['fase-estranha', 'parcial', 'terminal-e-estranha', 'saidas-nao-ca
  * que se vai olhar: o estado excepcional só se reconhece ao lado do normal.
  */
 const FORMAS = {
+  'ciclo-com-etapa': {
+    estado: {
+      phase: 'escavacao-c2',
+      completed: [...CANONICAS, 'reconciliacao', 'reconhecimento-c2'],
+      pending: ['interpretacao-c2', 'geracao-c2', 'revisao-c2'],
+      checkpoints: {
+        scout: { completed_at: '2026-09-01T10:00:00Z', files: ['_reversa_sdd/inventory.md'] },
+      },
+    },
+    relato:
+      'segundo ciclo de extração, com uma etapa fora do cânone que ninguém aprovou: a frase do ciclo 2, as cinco fases na situação DESTE ciclo com o nome bruto ao lado, nenhuma fase-desconhecida sobre fase de ciclo, e exatamente uma sobre `reconciliacao`, que espera aprovação no mapa',
+  },
+  'encerramento-com-pendencia': {
+    estado: {
+      phase: 'concluido-c3',
+      completed: [...CANONICAS, 'reconhecimento-c3'],
+      pending: ['escavacao-c3', 'interpretacao-c3', 'geracao-c3', 'revisao-c3'],
+      checkpoints: {
+        scout: { completed_at: '2026-09-01T10:00:00Z', files: ['_reversa_sdd/inventory.md'] },
+      },
+    },
+    relato:
+      'encerramento declarado com fase ainda pendente, que é defeito de gravação: a frase de encerramento da 011, o ciclo 3 com quatro fases pendentes, e UMA anomalia encerramento-com-pendencia nomeando `concluido-c3` e as quatro fases, no lugar das quatro fase-desconhecida que antes só a denunciavam por acidente',
+  },
+  'encerrada-sem-declaracao': {
+    estado: {
+      phase: 'revisao',
+      completed: [...CANONICAS],
+      pending: [],
+      checkpoints: {
+        scout: { completed_at: '2026-09-01T10:00:00Z', files: ['_reversa_sdd/inventory.md'] },
+      },
+    },
+    relato:
+      'extração que parou sem declarar o fim, forma medida em onze projetos: as cinco fases concluídas, a frase própria do encerramento sem declaração, distinta da do declarado, e nenhuma fase-atual-ja-concluida na tela',
+  },
   falha: {
     estado: {
       phase: 'escavacao',
@@ -180,9 +226,9 @@ function adoecer(caso, destino) {
 function principal(argumentos, raiz) {
   const pedidoDoCaso = argumentos.find((argumento) => argumento.startsWith('--caso='))
   const caso = pedidoDoCaso === undefined ? '' : pedidoDoCaso.slice('--caso='.length)
-  if (!CASOS.includes(caso)) {
+  if (!TODOS_OS_CASOS.includes(caso)) {
     process.stderr.write(
-      `caso inválido: "${caso}".\nOs que existem: ${CASOS.join(', ')}.\n` +
+      `caso inválido: "${caso}".\nOs que existem: ${TODOS_OS_CASOS.join(', ')}.\n` +
         'Use --caso=<nome>, e --workspace=<caminho> para adoecer outro workspace.\n',
     )
     return 1
@@ -218,4 +264,4 @@ if (require.main === module) {
   process.exit(principal(process.argv.slice(2), path.resolve(__dirname, '..')))
 }
 
-module.exports = { CANONICAS, CASOS, ESTADO, FORMAS, principal }
+module.exports = { CANONICAS, CASOS, CASOS_DAS_FASES, ESTADO, FORMAS, TODOS_OS_CASOS, principal }

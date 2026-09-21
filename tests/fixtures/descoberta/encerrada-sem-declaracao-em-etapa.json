@@ -1,0 +1,9 @@
+{
+  "_nota": "A mesma forma com phase numa etapa fora do cânone, medida no modelo-empresa. Só lê como encerrada sem declaração depois de aprovada a etapa.",
+  "version": "1.3.3",
+  "project": "parou-na-documentacao",
+  "phase": "documentacao",
+  "completed": ["reconhecimento", "escavacao", "interpretacao", "geracao", "revisao", "documentacao"],
+  "pending": [],
+  "checkpoints": {}
+}

@@ -1,0 +1,9 @@
+{
+  "_nota": "Forma medida no capacities: phase já concluída, mas com trabalho pendente. NÃO é encerramento sem declaração, e a fase-atual-ja-concluida continua à vista.",
+  "version": "1.3.3",
+  "project": "ainda-ha-trabalho",
+  "phase": "interpretacao",
+  "completed": ["reconhecimento", "escavacao", "interpretacao"],
+  "pending": ["geracao", "revisao"],
+  "checkpoints": {}
+}

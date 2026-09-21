@@ -4,10 +4,14 @@
   "feature-id": "015",
   "short-name": "fases-fora-do-canone",
   "started-at": "2026-09-21T18:56:59Z",
-  "current-stage": "clarify",
+  "current-stage": "coding",
   "stages-completed": [
     "requirements",
-    "clarify"
+    "clarify",
+    "plan",
+    "to-do",
+    "audit",
+    "coding"
   ],
   "paused-features": []
 }

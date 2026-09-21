@@ -1,0 +1,9 @@
+{
+  "_nota": "Forma medida no tcr-ana-luisa: phase numa etapa com sufixo numérico, que acompanha a feature entregue e não o ciclo, com fases canônicas ainda pendentes.",
+  "version": "1.3.3",
+  "project": "re-extraindo",
+  "phase": "re-extracao-005",
+  "completed": ["reconhecimento", "escavacao", "interpretacao", "re-extracao-003", "re-extracao-004"],
+  "pending": ["geracao", "revisao"],
+  "checkpoints": {}
+}

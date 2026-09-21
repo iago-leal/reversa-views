@@ -1,0 +1,9 @@
+{
+  "_nota": "Forma medida em onze dos sessenta e quatro projetos: phase numa fase já concluída, as cinco em completed e pending vazio. O arquivo parou sem declarar o fim.",
+  "version": "1.3.3",
+  "project": "parou-na-revisao",
+  "phase": "revisao",
+  "completed": ["reconhecimento", "escavacao", "interpretacao", "geracao", "revisao"],
+  "pending": [],
+  "checkpoints": {}
+}

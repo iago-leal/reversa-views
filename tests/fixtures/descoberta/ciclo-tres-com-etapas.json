@@ -1,0 +1,15 @@
+{
+  "_nota": "Forma medida no afla em 2026-09-21: dois ciclos concluídos, o terceiro aberto, quatro etapas fora do cânone, e o encerramento declarado com o pending ainda povoado. São quinze nomes fora do cânone: dez fases de ciclo e cinco nomes de etapa.",
+  "version": "1.3.3",
+  "project": "ciclo-tres",
+  "phase": "concluido-c3",
+  "completed": [
+    "reconhecimento", "escavacao", "interpretacao", "geracao", "revisao",
+    "reconciliacao",
+    "reconhecimento-c2", "escavacao-c2", "interpretacao-c2", "geracao-c2", "revisao-c2",
+    "verificacao-regressao", "saneamento", "auditoria-cruzada",
+    "reconhecimento-c3"
+  ],
+  "pending": ["escavacao-c3", "interpretacao-c3", "geracao-c3", "revisao-c3", "verificacao-regressao-c3"],
+  "checkpoints": {}
+}

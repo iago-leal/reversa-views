@@ -513,8 +513,15 @@ describe('o campo da forma elidida (feature 013)', () => {
     expect(declarados[declarados.length - 1]).toBe('discoveryState')
   })
 
-  it('DiscoveryStateAxis continua com os cinco campos da 012', () => {
-    expect(campos('DiscoveryStateAxis')).toHaveLength(5)
+  it('DiscoveryStateAxis tem os cinco campos da 012 e os dois opcionais da 015, ao fim', () => {
+    const declarados = campos('DiscoveryStateAxis')
+
+    expect(declarados).toHaveLength(7)
+    expect(declarados.slice(5)).toEqual([
+      { nome: 'ciclo', opcional: true },
+      { nome: 'etapas', opcional: true },
+    ])
+    expect(declarados.slice(0, 5).every((c) => !c.opcional)).toBe(true)
   })
 
   it('atravessa a forma elidida sem transformação', () => {

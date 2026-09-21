@@ -146,11 +146,12 @@ export function checkpointMark(checkpoint: Checkpoint): CheckpointMark {
   }
 }
 
-/** The three situations of the extraction (feature 011). */
+/** The situations of the extraction (feature 011, and the fourth of feature 015). */
 const EXTRACTION_LABELS: Record<string, string> = {
   'nao-iniciada': 'Extração não iniciada',
   'em-curso': 'Extração em curso',
   encerrada: 'Extração encerrada',
+  'encerrada-sem-declaracao': 'Extração encerrada sem declaração',
 }
 
 /** The three states of a checkpoint, as the reader names them (feature 011). */
@@ -235,6 +236,109 @@ export function provenanceText(
  */
 export function nonAgentEntries(axis: DiscoveryStateAxis): NonAgentEntry[] {
   return axis.registrosNaoAgentes ?? []
+}
+
+/** The three situations of an approved stage, as words (feature 015). */
+const STAGE_SITUATION_LABELS: Record<string, string> = {
+  concluida: 'concluída',
+  'em-curso': 'em curso',
+  pendente: 'pendente',
+}
+
+/** Where the recognition of a stage came from, in so many words (RN-13). */
+const STAGE_PROVENANCE = 'reconhecida pelo mapa de equivalências'
+
+/**
+ * The sentence that names the current cycle (feature 015, RF-10).
+ *
+ * The sentences of this feature live HERE, shared by the screen and by the
+ * terminal, because that is how feature 014 holds the parity: one text, two
+ * drawings. A sentence written twice is two sentences within a month.
+ * @param axis - the discovery-state axis, of any vintage.
+ * @returns the sentence, or null when the project has no cycle or the host is older.
+ */
+export function cycleSentence(axis: DiscoveryStateAxis | undefined): string | null {
+  const ciclo = axis?.ciclo
+  if (ciclo === undefined) return null
+  return `Ciclo ${ciclo.numero} de extração: as cinco fases abaixo mostram a situação deste ciclo, e os ciclos anteriores não aparecem.`
+}
+
+/** One of the five phases as the current cycle has it, turned readable. */
+export interface CyclePhaseMark extends StatusMark {
+  /** The canonical name, which is what the markup keys on. */
+  name: string
+  /** The status as the reading carries it: `done`, `current` or `pending`. */
+  rawStatus: string
+  /** The name on disk that sustains the status; null when the phase is in no list. */
+  raw: string | null
+}
+
+/**
+ * The five phases in the situation of the current cycle (RF-10).
+ *
+ * The words are the ones `phaseMark` uses, so the card swaps the SOURCE and
+ * not the drawing. The raw name travels beside each phase that has one, which
+ * is what makes the wide form of the suffix checkable on screen.
+ * @param axis - the discovery-state axis, of any vintage.
+ * @returns the five marks, or null when there is no cycle to draw.
+ */
+export function cyclePhaseMarks(axis: DiscoveryStateAxis | undefined): CyclePhaseMark[] | null {
+  const ciclo = axis?.ciclo
+  if (ciclo === undefined) return null
+  return ciclo.fases.map((fase) => ({
+    name: fase.canonica,
+    label: lookUp(fase.canonica, PHASE_LABELS),
+    status: PHASE_STATUS[fase.status] ?? fase.status,
+    rawStatus: fase.status,
+    raw: fase.bruto,
+  }))
+}
+
+/**
+ * The line that lists the approved stages present in the file (RF-22, RN-13).
+ *
+ * The RAW name, the situation as a word, and the mention of the map as the
+ * origin of the recognition -- said once for the line, because every stage on
+ * it was recognised the same way.
+ * @param axis - the discovery-state axis, of any vintage.
+ * @returns the line, or null when no approved stage is present.
+ */
+export function stagesLine(axis: DiscoveryStateAxis | undefined): string | null {
+  const etapas = axis?.etapas
+  if (etapas === undefined || etapas.length === 0) return null
+  const nomes = etapas.map(
+    (etapa) => `${etapa.bruto} (${STAGE_SITUATION_LABELS[etapa.situacao] ?? etapa.situacao})`,
+  )
+  return `Etapas fora do cânone, ${STAGE_PROVENANCE.replace('reconhecida', 'reconhecidas')}: ${nomes.join(', ')}.`
+}
+
+/**
+ * The sentence that names the stage under way (RF-22).
+ *
+ * When the `phase` is an approved stage, none of the five phases is the
+ * current one -- and that already comes so from the reading. The sentence says
+ * it, so the absence of a current phase does not read as a defect.
+ * @param axis - the discovery-state axis, of any vintage.
+ * @returns the sentence, or null when no stage is under way.
+ */
+export function currentStageSentence(axis: DiscoveryStateAxis | undefined): string | null {
+  const emCurso = axis?.etapas?.find((etapa) => etapa.situacao === 'em-curso')
+  if (emCurso === undefined) return null
+  return `Etapa em curso: ${emCurso.bruto}, ${STAGE_PROVENANCE}. Nenhuma das cinco fases é a corrente.`
+}
+
+/**
+ * The sentence of the extraction that closed without declaring it (RF-20).
+ *
+ * DISTINCT from the one of the declared closure on purpose: this file declared
+ * nothing, and "the process declared the end" would be false about it.
+ * @param axis - the discovery-state axis, of any vintage.
+ * @returns the sentence, or null in any other situation.
+ */
+export function undeclaredClosureSentence(axis: DiscoveryStateAxis | undefined): string | null {
+  const extracao = axis?.extracao
+  if (extracao === undefined || extracao.situacao !== 'encerrada-sem-declaracao') return null
+  return `${EXTRACTION_LABELS['encerrada-sem-declaracao']}: as cinco fases estão concluídas e nada ficou pendente, mas o arquivo parou na fase ${extracao.bruto} sem declarar o fim.`
 }
 
 /**

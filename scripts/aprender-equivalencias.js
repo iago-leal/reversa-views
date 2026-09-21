@@ -20,11 +20,13 @@ const { existsSync, readFileSync, writeFileSync } = require('node:fs')
 const path = require('node:path')
 
 const { coletar } = require('./equivalencias/coletar')
+const { coletarFases, paresElegiveis } = require('./equivalencias/coletar-fases')
 const { elidirCheckpoint } = require('./equivalencias/elidir')
 const { lerEstados, resolverRaiz } = require('./equivalencias/estados')
 const { lerMapaDeModulo, DESTINO } = require('./equivalencias/gerar-mapa')
-const { MODELO_PADRAO, criarClassificador } = require('./equivalencias/motor')
+const { MODELO_PADRAO, criarClassificador, criarClassificadorDeFases } = require('./equivalencias/motor')
 const { escreverProposta } = require('./equivalencias/proposta')
+const { COMANDO_DE_CONSTRUCAO, tabelaDaRaiz } = require('./contar-anomalias')
 
 const raizDoRepo = path.resolve(__dirname, '..')
 
@@ -37,9 +39,98 @@ function argumento(argumentos, nome, padrao) {
   return achado === undefined ? padrao : achado.slice(nome.length + 3)
 }
 
+/**
+ * A raiz como a proposta a anota: com o til no lugar da pasta pessoal, para que
+ * o arquivo não carregue o nome de usuário de quem aprendeu.
+ * @param {string} raiz - a raiz resolvida.
+ * @returns {string} a raiz abreviada.
+ */
+function abreviarRaiz(raiz) {
+  const pessoal = require('node:os').homedir()
+  return raiz === pessoal || raiz.startsWith(`${pessoal}${path.sep}`) ? `~${raiz.slice(pessoal.length)}` : raiz
+}
+
 /** Uma linha no terminal, que é o registro desta ferramenta. */
 function registrar(linha) {
   process.stdout.write(`${linha}\n`)
+}
+
+/**
+ * A contagem da raiz ao fim de uma rodada (feature 015, RF-16, D-21).
+ *
+ * Mora aqui, e a promoção a importa, porque as duas dizem a mesma coisa do
+ * mesmo jeito. Sem `out-cli/` a contagem não roda, e isso NÃO muda o código de
+ * saída: a rodada já fez o que tinha a fazer, e a falta da ferramenta de
+ * terminal não é motivo para chamar de falha uma proposta ou uma promoção já
+ * escritas.
+ * @param {string} raiz - a raiz a contar.
+ * @param {object} mapa - o mapa a aplicar na contagem.
+ * @param {(raiz: string, mapa: object) => string[]|null} contar - quem conta.
+ * @param {(linha: string) => void} dizer - onde as linhas saem.
+ */
+function imprimirContagem(raiz, mapa, contar, dizer) {
+  const tabela = contar(raiz, mapa)
+  if (tabela === null) {
+    dizer(`\na contagem da raiz não rodou: a unidade de terminal não existe em out-cli/.`)
+    dizer(`construa-a com \`${COMANDO_DE_CONSTRUCAO}\` e conte com \`npm run contar:anomalias -- ${raiz}\`.`)
+    return
+  }
+  dizer('')
+  for (const linha of tabela) dizer(linha)
+}
+
+/** A contagem de verdade, que a suíte substitui. */
+function contarDeVerdade(raiz, mapa) {
+  return tabelaDaRaiz(raiz, { mapa })
+}
+
+/**
+ * A passagem das fases (feature 015, RF-12, RF-13, RF-17).
+ *
+ * Vem DEPOIS da dos checkpoints e antes de qualquer escrita, e é essa ordem que
+ * sustenta a promessa de que proposta pela metade não existe: conexão recusada
+ * aqui encerra a rodada sem escrever nada, ainda que os checkpoints já tenham
+ * sido todos classificados.
+ *
+ * Os filtros da forma, da decisão já tomada e da grafia moram na coleta; aqui
+ * só chega ao motor o que é dele. Primeiro a natureza, uma vez por candidato;
+ * depois a comparação, só entre os que saíram `etapa` e só nos pares com palavra
+ * em comum.
+ * @param {{estados: object[], mapa: object, motor: {natureza: Function, comparar: Function}}} entrada -
+ *   os estados lidos, o mapa vigente e as duas perguntas.
+ * @returns {Promise<{ok: true, fases: object}|{ok: false, erro: Error}>} a seção
+ *   de fases, ou a falha de transporte que encerra a rodada.
+ */
+async function passagemDasFases({ estados, mapa, motor }) {
+  const { candidatos, grafia } = coletarFases({ estados, mapa })
+  const comCaixa = []
+  const recusados = []
+  const mesmas = []
+
+  try {
+    for (const candidato of candidatos) {
+      const resposta = await motor.natureza(candidato.nome, candidato.vizinhos)
+      if (resposta !== null && resposta.leitura === 'nao-e-fase') {
+        recusados.push({ nome: candidato.nome, evidencia: candidato.evidencia })
+        continue
+      }
+      // Nulo é toda resposta inutilizável, e o nome entra COM caixa, marcado
+      // como não classificado: decidir sem a sugestão é pior que decidir com
+      // ela, e melhor que o nome sumir da proposta.
+      comCaixa.push({ ...candidato, classificado: resposta !== null })
+    }
+
+    const julgadas = comCaixa.filter((c) => c.classificado).map((c) => c.nome)
+    const aprovadas = (mapa.etapas ?? []).map((etapa) => etapa.nome)
+    for (const { a, b } of paresElegiveis(julgadas, aprovadas)) {
+      const resposta = await motor.comparar(a, b)
+      if (resposta !== null && resposta.leitura === 'mesma') mesmas.push({ a, b, razao: resposta.razao })
+    }
+  } catch (erro) {
+    return { ok: false, erro }
+  }
+
+  return { ok: true, fases: { candidatos: comCaixa, mesmas, grafia, recusados } }
 }
 
 /**
@@ -53,6 +144,16 @@ async function principal(argumentos = [], deps = {}) {
   const modelo = argumento(argumentos, 'modelo', MODELO_PADRAO)
   const saida = path.resolve(raizDoRepo, argumento(argumentos, 'saida', PROPOSTA))
   const classificar = deps.classificar ?? criarClassificador({ modelo })
+  // Quem injeta o classificador dos checkpoints e não o das fases roda SEM a
+  // passagem das fases. É o que mantém as suítes da 012 sem linha reescrita e,
+  // mais que isso, sem motor: o padrão aqui é o transporte de verdade, e uma
+  // suíte que o herdasse por omissão ligaria para `localhost`.
+  const motorDasFases =
+    deps.classificarFases ?? (deps.classificar === undefined ? criarClassificadorDeFases({ modelo }) : null)
+  // A mesma regra para a contagem: ela lê a unidade compilada, e a suíte que não
+  // a pediu não deve depender de `out-cli/` existir.
+  const contarPorOmissao = deps.classificar === undefined ? contarDeVerdade : null
+  const contar = deps.contar === undefined ? contarPorOmissao : deps.contar
 
   const moduloAtual = existsSync(path.join(raizDoRepo, DESTINO))
     ? readFileSync(path.join(raizDoRepo, DESTINO), 'utf8')
@@ -170,7 +271,22 @@ async function principal(argumentos = [], deps = {}) {
     razao: Object.keys(chave.exemplo).join(', '),
   }))
 
-  const texto = escreverProposta({ pares: propostos, chaves: chavesPropostas, naoClassificados })
+  let fases
+  if (motorDasFases !== null) {
+    const passagem = await passagemDasFases({ estados, mapa, motor: motorDasFases })
+    if (!passagem.ok) {
+      registrar(`\nerro: o motor local não respondeu na passagem das fases (${passagem.erro.message}).`)
+      registrar('nada foi escrito, nem a parte dos checkpoints. Confira se ele está no ar e rode de novo.')
+      return 1
+    }
+    fases = passagem.fases
+    registrar(
+      `fases: ${fases.candidatos.length} nomes a decidir, ${fases.grafia.length} erros de grafia, ` +
+        `${fases.recusados.length} recusados pelo motor`,
+    )
+  }
+
+  const texto = escreverProposta({ pares: propostos, chaves: chavesPropostas, naoClassificados, fases, raiz: abreviarRaiz(raiz) })
   const pasta = path.dirname(saida)
   if (!existsSync(pasta)) require('node:fs').mkdirSync(pasta, { recursive: true })
   writeFileSync(saida, texto, 'utf8')
@@ -179,6 +295,8 @@ async function principal(argumentos = [], deps = {}) {
   registrar(`propostos: ${propostos.length} pares e ${chavesPropostas.length} entradas`)
   if (naoClassificados.length > 0) registrar(`não classificados: ${naoClassificados.length} (a proposta os nomeia)`)
   registrar('o mapa NÃO foi tocado. Marque o que aprovar e rode `npm run promover:equivalencias`.')
+  // Com o mapa VIGENTE: aprender não aprova, e o número é o de antes da decisão.
+  if (contar !== null) imprimirContagem(raiz, mapa, contar, registrar)
   return 0
 }
 
@@ -191,4 +309,13 @@ if (require.main === module) {
     })
 }
 
-module.exports = { PROPOSTA, lerEstados, principal, resolverRaiz }
+module.exports = {
+  PROPOSTA,
+  abreviarRaiz,
+  contarDeVerdade,
+  imprimirContagem,
+  lerEstados,
+  passagemDasFases,
+  principal,
+  resolverRaiz,
+}

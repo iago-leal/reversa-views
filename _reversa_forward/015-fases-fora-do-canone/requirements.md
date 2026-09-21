@@ -34,8 +34,8 @@ vocabulário legítimo do que é defeito de gravação, que continua à vista.
 | `src/heranca/reversa-domain/src/state.ts`, função `derivePhases` | Registra `fase-desconhecida` sobre cada nome de `completed`, de `pending` e de `phase` que não seja uma das cinco canônicas, e devolve sempre as cinco fases, com situação derivada só dos nomes canônicos | 🟢 |
 | `src/domain/discovery-state.ts`, função `absorver` | Desconta a anomalia apenas quando o detalhe é igual ao valor bruto de `phase` e a extração foi reconhecida como encerrada. Nome de fase em `completed` ou `pending` nunca é descontado | 🟢 |
 | `scripts/equivalencias/coletar.js` e `scripts/equivalencias/motor.js` | A coleta lê somente a chave `checkpoints` de cada `state.json`, e o enunciado do motor pergunta somente se um campo declara o estado de um agente, com quatro respostas possíveis. Nome de fase não é coletado nem teria resposta que o descrevesse | 🟢 |
-| Medição dos 64 projetos com `.reversa/state.json` em `~/dev`, feita em 2026-09-21 | Seis projetos trazem nome fora do cânone em `completed` ou `pending`, descontada a família do encerramento. Em cinco é vocabulário: `afla` (15 nomes), `tcr-ana-luisa` (`re-extracao-003` a `-005`), `aps-inteligente` (`regressao`), `comentarios-concursos` (`verificacao-de-regressao`) e `modelo-empresa` (`documentacao`). No sexto, `DelphiSga`, o `pending` guarda 19 parágrafos de prosa, que é defeito de gravação | 🟢 |
-| `~/dev/afla/.reversa/state.json`, lido em 2026-09-21 | Três ciclos declarados (`cycle: 3`, mais `cycle_2` e `cycle_3` com data de início, motivo e política). Dos 15 nomes, dez são fase canônica com sufixo (`reconhecimento-c2` a `revisao-c3`), quatro são etapas sem sufixo (`reconciliacao`, `contrato-insumo`, `decisoes-autor`, `verificacao-regressao`) e um é etapa com sufixo (`verificacao-regressao-c3`). O mesmo arquivo declara `phase: "concluido-c3"` e mantém as cinco fases do terceiro ciclo em `pending` | 🟢 |
+| Medição dos 64 projetos com `.reversa/state.json` em `~/dev`, feita em 2026-09-21 | Seis projetos trazem nome fora do cânone em `completed` ou `pending`, descontada a família do encerramento. Em cinco é vocabulário: `afla` (15 nomes), `tcr-ana-luisa` (`re-extracao-003` a `-005`), `aps-inteligente` (`regressao`), `comentarios-concursos` (`verificacao-de-regressao`) e `modelo-empresa` (`documentacao`). No sexto, `DelphiSga`, o `pending` guarda 20 valores em prosa, que é defeito de gravação | 🟢 |
+| `~/dev/afla/.reversa/state.json`, lido em 2026-09-21 | Três ciclos declarados (`cycle: 3`, mais `cycle_2` e `cycle_3` com data de início, motivo e política). Dos 15 nomes, dez são fase canônica com sufixo (`reconhecimento-c2` a `revisao-c3`), quatro são etapas sem sufixo (`reconciliacao`, `contrato-insumo`, `decisoes-autor`, `verificacao-regressao`) e um é etapa com sufixo (`verificacao-regressao-c3`). O mesmo arquivo declara `phase: "concluido-c3"` e mantém em `pending` quatro fases do terceiro ciclo (`reconhecimento-c3` está concluída) mais a etapa `verificacao-regressao-c3` | 🟢 |
 
 ## 3. Personas e cenários de uso
 
@@ -49,25 +49,31 @@ vocabulário legítimo do que é defeito de gravação, que continua à vista.
 
 1. **RN-01:** Fase de ciclo é uma das cinco fases canônicas seguida de um sufixo numérico, e é
    reconhecida pela forma, sem lista literal e sem consulta ao mapa. Sufixo numérico é um separador,
-   um texto opcional sem espaço e um inteiro ao fim: `-c2`, `-2` e `-ciclo-2` têm a forma, e o
-   inteiro é o número do ciclo. Ela não é anomalia na tela, esteja em `phase`, em `completed` ou em
+   que é o hífen ou o sublinhado, um texto opcional sem espaço e um inteiro ao fim: `-c2`, `-2`,
+   `-ciclo-2` e `_c2` têm a forma, e o inteiro é o número do ciclo. Ela não é anomalia na tela, esteja em `phase`, em `completed` ou em
    `pending`. 🟢
    - Origem no legado: emenda `_reversa_sdd/addenda/011-estado-terminal-e-checkpoints.md`, linha do
      EC-02
    - Tipo: alterada
    - Justificativa medida: dez dos quinze nomes do `afla` têm essa forma, e o número do ciclo cresce
      a cada re-extração. Uma lista estaria desatualizada no quarto ciclo.
-   - Decidido na sessão de 2026-09-21, pergunta 1: qualquer sufixo numérico, e não só `-cN`.
+   - Decidido na sessão de 2026-09-21, pergunta 1: qualquer sufixo numérico, e não só `-cN`. O
+     separador foi fixado na segunda rodada, pergunta 6: a regra é de forma, e a forma não depende
+     do que já foi visto nas listas de fases, onde só o hífen aparece.
 
 2. **RN-02:** Etapa fora do cânone só é reconhecida por aprovação registrada no mapa. A unidade de
    aprovação é o nome da etapa, comparado sem distinção de caixa e de espaços nas bordas, e cada
-   registro guarda a data da aprovação e os projetos em que o nome foi visto. 🟢
+   registro guarda a data da aprovação e os projetos em que o nome foi visto. Cada nome aprovado é
+   registro independente: o mapa não guarda relação de sinônimo, e o agrupamento que o motor sugere
+   é apresentação da proposta, para que grafias vizinhas sejam decididas juntas. 🟢
    - Origem no legado: estende `_reversa_sdd/addenda/012-equivalencias-de-checkpoint.md`, que fixa
      o mesmo regime para o par de campo e valor
    - Tipo: nova
    - Justificativa medida: `regressao`, `verificacao-regressao` e `verificacao-de-regressao` são
      três grafias em três projetos para o que parece ser uma etapa só. É vocabulário aberto, sem
      fonte normativa, e a 012 já decidiu que a fonte possível é a decisão de quem mantém o painel.
+   - Decidido na segunda rodada de 2026-09-21, pergunta 1: como a RN-05 manda a tela mostrar o nome
+     bruto, a relação de sinônimo não teria efeito observável, e o mapa fica com um regime só.
 
 3. **RN-03:** O sufixo numérico aplica-se também à etapa aprovada, na mesma forma da RN-01:
    aprovada `verificacao-regressao`, o nome `verificacao-regressao-c3` é reconhecido sem aprovação
@@ -103,11 +109,13 @@ vocabulário legítimo do que é defeito de gravação, que continua à vista.
 
 7. **RN-07:** Só é candidato a fase o valor com forma de identificador: texto sem espaço e com até
    40 caracteres. O que passa disso não é perguntado ao motor nem oferecido à aprovação, e continua
-   anomalia. 🟡
+   anomalia. 🟢
    - Tipo: nova
-   - Justificativa medida: os 19 parágrafos no `pending` do `DelphiSga` são defeito de gravação na
-     fonte. Traduzi-los no painel esconderia o defeito, e o caminho deles é o prompt de correção da
-     feature 013.
+   - Justificativa medida: os 20 valores em prosa no `pending` do `DelphiSga` são defeito de
+     gravação na fonte. Traduzi-los no painel esconderia o defeito, e o caminho deles é o prompt de
+     correção da feature 013.
+   - Confirmado na segunda rodada de 2026-09-21, pergunta 7: o nome legítimo mais longo medido tem
+     24 caracteres, e o menor valor defeituoso do `DelphiSga` tem 116 e contém espaços.
 
 8. **RN-08:** O ciclo corrente é o maior inteiro entre as fases de ciclo reconhecidas em `phase`,
    `completed` e `pending`, e nenhuma chave de topo do `state.json` é lida para isso. Havendo ciclo,
@@ -135,10 +143,11 @@ vocabulário legítimo do que é defeito de gravação, que continua à vista.
     - Decidido na sessão de 2026-09-21, pergunta 8: a contagem é comando próprio, só de leitura, que
       o aprendizado e a promoção chamam ao fim.
 
-11. **RN-11:** Extração com as cinco fases canônicas em `completed`, `pending` vazio e `phase` numa
-    fase canônica já concluída é reconhecida pela forma como encerrada sem declaração. A tela diz
-    isso em texto, distinto do encerramento declarado, e a `fase-atual-ja-concluida` correspondente
-    é descontada pela mesma regra da tripla. 🟢
+11. **RN-11:** Extração com as cinco fases do ciclo corrente em `completed` (as canônicas, quando
+    não há ciclo), `pending` vazio e `phase` num nome reconhecido e já concluído, seja fase
+    canônica, fase de ciclo ou etapa aprovada, é reconhecida pela forma como encerrada sem
+    declaração. A tela diz isso em texto, distinto do encerramento declarado, e a
+    `fase-atual-ja-concluida` correspondente é descontada pela mesma regra da tripla. 🟢
     - Origem no legado: estende `_reversa_sdd/addenda/011-estado-terminal-e-checkpoints.md`, que
       reconhece o encerramento só pelo valor de `phase`
     - Tipo: nova
@@ -146,12 +155,28 @@ vocabulário legítimo do que é defeito de gravação, que continua à vista.
       fato mais sistemático que o ciclo, e pelo critério da 011 vai pela forma.
     - Decidido na sessão de 2026-09-21, pergunta 7, que veio como "decida você": entra na 015, como
       Should.
+    - Alcance fixado na segunda rodada, pergunta 4: o `modelo-empresa` tem a mesma forma com
+      `phase: "documentacao"`, e sem a extensão seguiria exibindo `fase-atual-ja-concluida` depois
+      de aprovada a etapa. Com fase de ciclo não há caso medido; entra porque a forma é a mesma.
 
 12. **RN-12:** Nome a até 2 caracteres de distância de edição de uma fase canônica é erro de grafia,
-    e não candidato a etapa. A proposta o lista à parte, sem caixa de aprovação, e ele não é
+    e não candidato a etapa. A comparação vale para o nome inteiro e para a base que resta depois
+    de retirado o sufixo numérico, de modo que `escavacão-c2` é erro de grafia. A proposta o lista à parte, sem caixa de aprovação, e ele não é
     perguntado ao motor. No painel continua anomalia, como manda a RN-04. 🟢
     - Tipo: nova
-    - Decidido na sessão de 2026-09-21, pergunta 4.
+    - Decidido na sessão de 2026-09-21, pergunta 4. A comparação sobre a base veio da segunda
+      rodada, pergunta 5: sem ela, o erro com sufixo iria ao motor com caixa de aprovação.
+
+13. **RN-13:** A etapa aprovada tem lugar próprio no cartão da Descoberta e no terminal: uma linha de
+    texto sob as cinco fases lista cada etapa presente no `state.json`, com o nome bruto, a situação
+    (concluída ou pendente) e a menção ao mapa como origem do reconhecimento. Quando o `phase`
+    corrente é etapa aprovada, uma frase em texto a nomeia como etapa em curso, e nenhuma das cinco
+    fases fica marcada como atual. Projeto sem etapa aprovada não ganha linha nem frase. 🟢
+    - Tipo: nova
+    - Justificativa medida: o `tcr-ana-luisa` está em `phase: "re-extracao-005"`, com `geracao` e
+      `revisao` pendentes, e o `modelo-empresa` em `phase: "documentacao"`. No `afla`, aprovadas as
+      quatro etapas, são cinco nomes a mostrar.
+    - Decidido na segunda rodada de 2026-09-21, perguntas 2 e 3.
 
 ## 5. Requisitos Funcionais
 
@@ -163,21 +188,22 @@ vocabulário legítimo do que é defeito de gravação, que continua à vista.
 | RF-04 | Com o mapa sem etapa alguma aprovada, a leitura de um projeto sem fase de ciclo é idêntica à de antes da feature | Must | Suíte compara a leitura dos projetos de referência antes e depois, com mapa vazio, e não acha diferença | 🟢 |
 | RF-05 | O sufixo numérico sobre etapa aprovada é reconhecido pela aprovação da etapa de base, e o inteiro dele não conta como ciclo | Must | Aprovada `verificacao-regressao`, `verificacao-regressao-c3` sai reconhecida; aprovada `re-extracao`, `re-extracao-005` sai reconhecida e o ciclo corrente do `tcr-ana-luisa` continua ausente; retirada a aprovação, os nomes voltam a ser anomalia | 🟢 |
 | RF-06 | O desconto de anomalia alcança toda `fase-desconhecida` cujo detalhe seja nome reconhecido, e só essas | Must | No `afla`, com as quatro etapas aprovadas, nenhuma `fase-desconhecida` chega à tela; num `state.json` com `escavacao-c2` e `escavacão` em `completed`, a primeira é descontada e a segunda aparece | 🟢 |
-| RF-07 | A leitura registra anomalia própria quando a extração está encerrada e `pending` ainda lista fase reconhecida | Must | No `afla`, a anomalia aparece uma vez, nomeando `concluido-c3` e as cinco fases pendentes; em projeto encerrado com `pending` vazio, não aparece | 🟢 |
-| RF-08 | Valor sem forma de identificador não é candidato a fase | Must | Os 19 valores do `pending` do `DelphiSga` continuam anomalia, não entram na proposta e não são enviados ao motor | 🟡 |
+| RF-07 | A leitura registra anomalia própria quando a extração está encerrada e `pending` ainda lista fase reconhecida | Must | No `afla`, com as etapas aprovadas, a anomalia aparece uma vez, nomeando `concluido-c3` e os cinco nomes pendentes (quatro fases de ciclo e `verificacao-regressao-c3`); sem a aprovação, nomeia as quatro fases de ciclo, e `verificacao-regressao-c3` segue como `fase-desconhecida`; em projeto encerrado com `pending` vazio, não aparece | 🟢 |
+| RF-08 | Valor sem forma de identificador não é candidato a fase | Must | Os 20 valores do `pending` do `DelphiSga` continuam anomalia, não entram na proposta e não são enviados ao motor; um nome sem espaço com 41 caracteres também não é candidato | 🟢 |
 | RF-09 | O eixo da descoberta informa o ciclo corrente, que é o maior inteiro entre as fases de ciclo reconhecidas, e a situação das cinco fases nesse ciclo | Must | Para o `afla`, a leitura traz ciclo 3, com `reconhecimento` concluída e as outras quatro pendentes; para projeto sem fase de ciclo, o campo vem ausente; nenhuma chave de topo além de `phase`, `completed` e `pending` é lida | 🟢 |
 | RF-10 | Havendo ciclo, o cartão da Descoberta mostra as cinco fases na situação do ciclo corrente, sob uma frase em texto que nomeia o ciclo, e o painel de linha de comando mostra o mesmo; ciclos anteriores não aparecem | Must | No `afla`, os dois mostram o terceiro ciclo e as cinco fases dele; num projeto sem ciclo, o cartão é idêntico ao de antes; a suíte de paridade entre tela e terminal passa | 🟢 |
 | RF-11 | A carga enviada à tela cresce só por acréscimo, com campos opcionais ao fim | Must | Tela nova com host anterior desenha o que desenhava na 014, sem ciclo e com as anomalias de fase de volta | 🟢 |
 | RF-12 | O aprendizado coleta os nomes de `phase`, `completed` e `pending` que ninguém decidiu, acumulando os projetos em que cada um aparece, e não pergunta de novo o que o mapa já decide nem o que a forma já reconhece | Must | Sobre `~/dev`, a coleta devolve os nomes de etapa dos cinco projetos medidos, cada um com a sua evidência, e nenhuma fase de ciclo | 🟢 |
-| RF-13 | O motor local recebe, para cada nome de etapa, uma pergunta própria, com vocabulário de três respostas (etapa legítima fora do cânone, mesma etapa que outra já vista, não é fase), e a resposta que não seja sobre o nome perguntado é descartada. O vocabulário só é fixado depois da prova de viabilidade, que antecede o plano | Must | A prova de viabilidade sobre os nomes reais da raiz, mais casos negativos, está registrada na pasta da feature com o placar; com o motor substituído por duplo, cada resposta do vocabulário produz o item correspondente na proposta, e resposta sobre outro nome não produz item | 🟡 |
+| RF-13 | O motor local recebe duas perguntas próprias, cada uma com duas respostas: a de natureza, uma vez por nome candidato (`etapa` ou `nao-e-fase`), e a de comparação, uma vez por par de nomes julgados etapa, entre si e contra as etapas já aprovadas (`mesma` ou `diferentes`). A resposta que não seja sobre o nome ou o par perguntado é descartada. O desenho foi fixado pela prova de viabilidade, que reprovou a pergunta única de três respostas | Must | A prova está registrada em `prova-de-viabilidade.md`, na pasta da feature, com o placar (6 de 14 na pergunta única; 14 de 14 na natureza e 7 de 9 na comparação, sem falso `mesma`); com o motor substituído por duplo, `nao-e-fase` tira o nome da seção de fases, `mesma` junta os dois nomes num grupo e `diferentes` os deixa separados, e resposta sobre outro nome ou outro par não produz item | 🟢 |
 | RF-14 | A proposta ganha uma seção de fases, no formato de caixas da seção de checkpoints, agrupando os nomes que o motor apontou como a mesma etapa | Must | A proposta gerada sobre `~/dev` traz a seção, com a razão do motor e a evidência por nome; o mapa não muda | 🟢 |
-| RF-15 | A promoção lê as caixas da seção de fases e regenera o mapa com as etapas aprovadas, sem conhecer o motor | Must | Marcadas duas etapas, o mapa passa a trazê-las com data e evidência; `git status` mostra só o mapa alterado | 🟢 |
-| RF-16 | Um comando próprio, só de leitura, conta as anomalias que o painel exibe em cada projeto de uma raiz, por código e por número de projetos, e indica quais códigos o mapa alcança; o aprendizado e a promoção o chamam ao fim | Must | Sobre `~/dev`, a saída lista cada código com ocorrências e projetos, a soma bate com a das leituras individuais dos 64 projetos, inclusive nas anomalias de linha longa, e `git status` não acusa arquivo alterado | 🟢 |
+| RF-15 | A promoção lê as caixas da seção de fases e regenera o mapa com as etapas aprovadas, um registro independente por nome, sem conhecer o motor | Must | Marcadas duas etapas de um mesmo grupo, o mapa passa a trazer dois registros, cada um com data e evidência, e nenhuma relação entre eles; a terceira do grupo, não marcada, continua anomalia; `git status` mostra só o mapa alterado | 🟢 |
+| RF-16 | Um comando próprio, só de leitura, `npm run contar:anomalias -- <raiz>`, com tabela em texto por padrão e `--json` para a saída estruturada, conta as anomalias que o painel exibe em cada projeto de uma raiz, por código e por número de projetos, e indica quais códigos o mapa alcança; o aprendizado e a promoção o chamam ao fim | Must | Sobre `~/dev`, a saída lista cada código com ocorrências e projetos, a soma, conferida pela saída `--json`, bate com a das leituras individuais dos 64 projetos, inclusive nas anomalias de linha longa, e `git status` não acusa arquivo alterado | 🟢 |
 | RF-17 | Motor fora do ar encerra a rodada sem proposta pela metade, como na 012, também na passagem das fases | Must | Com o transporte recusando conexão na segunda pergunta, nada é escrito e a causa é nomeada | 🟢 |
 | RF-18 | O preview ganha estados doentes que exercitam a feature sobre cópia do workspace, no molde do `estragar:descoberta` | Should | Existem ao menos os estados "ciclo com etapa não aprovada" e "encerrada com pendência", cada um conferido por suíte contra a leitura real do host | 🟡 |
 | RF-19 | A pendência de origem fica declarada em `src/heranca/PROCEDENCIA.md`, sem adaptação nova | Should | A subseção de pendências de origem nomeia a fase de ciclo; o total de adaptações declaradas não muda | 🟢 |
-| RF-20 | A leitura reconhece pela forma a extração encerrada sem declaração, e a tela e o terminal a nomeiam em texto próprio | Should | Nos 11 projetos medidos, a extração sai como encerrada sem declaração e a `fase-atual-ja-concluida` não chega à tela; no `capacities`, com `pending` povoado, a anomalia continua; as suítes da 011 passam sem linha reescrita | 🟢 |
-| RF-21 | A proposta lista à parte, sem caixa de aprovação, o nome a até 2 caracteres de distância de edição de uma fase canônica, e esse nome não é enviado ao motor | Must | Com `escavacão` e `interpretaçao` na raiz, os dois saem na lista de erros de grafia, cada um com a fase canônica vizinha, e a promoção não tem como aprová-los | 🟢 |
+| RF-20 | A leitura reconhece pela forma a extração encerrada sem declaração, com `phase` em fase canônica, fase de ciclo ou etapa aprovada, e a tela e o terminal a nomeiam em texto próprio | Should | Nos 11 projetos medidos, a extração sai como encerrada sem declaração e a `fase-atual-ja-concluida` não chega à tela; no `modelo-empresa`, o mesmo acontece depois de aprovada `documentacao`, e antes disso não; no `capacities`, com `pending` povoado, a anomalia continua; as suítes da 011 passam sem linha reescrita | 🟢 |
+| RF-21 | A proposta lista à parte, sem caixa de aprovação, o nome a até 2 caracteres de distância de edição de uma fase canônica, medido sobre o nome inteiro e sobre a base sem o sufixo numérico, e esse nome não é enviado ao motor | Must | Com `escavacão`, `interpretaçao` e `escavacão-c2` na raiz, os três saem na lista de erros de grafia, cada um com a fase canônica vizinha, e a promoção não tem como aprová-los | 🟢 |
+| RF-22 | O cartão da Descoberta e o painel de linha de comando listam, numa linha de texto sob as cinco fases, as etapas aprovadas presentes no `state.json`, com nome bruto, situação e menção ao mapa; sendo o `phase` corrente uma etapa aprovada, uma frase a nomeia como etapa em curso | Must | No `afla`, com as quatro etapas aprovadas, a linha traz os cinco nomes; no `tcr-ana-luisa`, com `re-extracao` aprovada, a frase nomeia `re-extracao-005` como etapa em curso e nenhuma das cinco fases sai como atual; em projeto sem etapa aprovada, nem linha nem frase; a suíte de paridade entre tela e terminal passa | 🟢 |
 
 ## 6. Requisitos Não Funcionais
 
@@ -235,6 +261,11 @@ Cenário: qualquer sufixo numérico sobre fase canônica
   Então os dois nomes saem reconhecidos como fases do ciclo 2
   E "geracao-2a" no mesmo arquivo continua fase-desconhecida
 
+Cenário: sublinhado como separador do sufixo
+  Dado um state.json com "escavacao_c2" em completed
+  Quando o painel lê o projeto
+  Então o nome sai reconhecido como fase do ciclo 2
+
 Cenário: o ciclo aparece na tela e no terminal
   Dado um state.json com as cinco fases canônicas e "reconhecimento-c3" em completed
   E "escavacao-c3" em pending
@@ -255,6 +286,26 @@ Cenário: extração encerrada sem declaração
   Então a extração aparece como encerrada sem declaração, em texto
   E a anomalia fase-atual-ja-concluida não chega à tela
 
+Cenário: encerramento sem declaração com etapa aprovada em phase
+  Dado o mapa com a etapa "documentacao" aprovada
+  E um state.json com phase "documentacao", as cinco fases e "documentacao" em completed e pending vazio
+  Quando o painel lê o projeto
+  Então a extração aparece como encerrada sem declaração
+  E a anomalia fase-atual-ja-concluida não chega à tela
+
+Cenário: etapa aprovada em curso
+  Dado o mapa com a etapa "re-extracao" aprovada
+  E um state.json com phase "re-extracao-005" e "geracao" em pending
+  Quando o painel lê o projeto, na tela e na linha de comando
+  Então os dois nomeiam "re-extracao-005" como etapa em curso, com a menção ao mapa
+  E nenhuma das cinco fases aparece como atual
+
+Cenário: etapas aprovadas sob as cinco fases
+  Dado o mapa com a etapa "reconciliacao" aprovada
+  E um state.json com "reconciliacao" em completed
+  Quando o painel lê o projeto
+  Então uma linha de texto sob as cinco fases lista "reconciliacao" como concluída, com a menção ao mapa
+
 Cenário: fase atual já concluída com trabalho pendente continua anomalia
   Dado um state.json com phase "interpretacao" em completed e pending povoado
   Quando o painel lê o projeto
@@ -265,6 +316,12 @@ Cenário: erro de grafia não é oferecido à aprovação
   Quando o aprendizado roda
   Então a proposta lista "escavacão" entre os erros de grafia, ao lado de "escavacao"
   E o nome não tem caixa de aprovação nem é enviado ao motor
+
+Cenário: erro de grafia com sufixo de ciclo
+  Dado uma raiz com um projeto que grava "escavacão-c2" em completed
+  Quando o aprendizado roda
+  Então a proposta lista "escavacão-c2" entre os erros de grafia, ao lado de "escavacao"
+  E o painel continua mostrando fase-desconhecida sobre o nome
 
 Cenário: projeto sem ciclo lê como antes
   Dado um state.json sem cycle, com as cinco fases canônicas e o mapa sem etapa aprovada
@@ -303,6 +360,7 @@ Cenário: host anterior à feature
 | RF-07 | Must | Sem ele a feature esconde o único defeito verdadeiro do `afla`, que hoje só se vê por acidente |
 | RF-03, RF-04, RF-12 a RF-15, RF-17, RF-21 | Must | São o segundo eixo do mapa. Sem ele as etapas fora do cânone ficam sem caminho de decisão, e a alternativa seria a lista literal que a 011 recusou. O RF-13 é Must por decisão da sessão de 2026-09-21, pergunta 3, contra a recomendação de deixá-lo para depois, e por isso a prova de viabilidade do motor antecede o `/reversa-plan` |
 | RF-08 | Must | Impede que o defeito de gravação do `DelphiSga` chegue à proposta como vocabulário |
+| RF-22 | Must | Sem lugar na tela, a etapa aprovada só desapareceria da lista de anomalias, e o cenário de aceite que exige a menção ao mapa não teria onde se cumprir |
 | RF-09, RF-10, RF-11 | Must | O ciclo é o estado real do projeto re-extraído; sem ele o cartão mostra cinco fases concluídas de um ciclo que já passou |
 | RF-16 | Must | Fecha a lacuna de processo que deixou estas anomalias invisíveis depois da primeira promoção |
 | RF-20 | Should | Alcança 11 projetos com a mesma mudança de código; fica abaixo do Must porque a feature se sustenta sem ele |
@@ -365,15 +423,51 @@ respostas em `perguntas/respostas/respostas-fases-e-ciclo-2026-09-21.md`. Três 
   **R:** Mudar: bug encerrado não sobe à faixa por bloqueio. A recomendação era manter a regra; a
   decisão foi a contrária. Segue junto com o defeito acima, fora desta feature.
 
+### Sessão 2026-09-21, segunda rodada
+
+Perguntas em `perguntas/etapas-e-alcance.json`, versão `9b48410555c9`. O formulário não foi
+devolvido: a resposta veio na conversa, em bloco, "sigamos suas recomendações e prossigamos", e por
+isso cada uma das oito vale pela primeira opção. O registro está em
+`perguntas/respostas/respostas-etapas-e-alcance-2026-09-21.md`.
+
+- **Q:** Quando dois nomes são aprovados como a mesma etapa, o que o mapa guarda?
+  **R:** Cada nome aprovado é registro independente; o agrupamento é só apresentação da proposta.
+  Aplicada na RN-02 e no RF-15.
+- **Q:** Onde a etapa aprovada aparece no cartão da Descoberta?
+  **R:** Numa linha de texto sob as cinco fases, com situação e menção ao mapa. Virou a RN-13 e o
+  RF-22.
+- **Q:** Quando o `phase` corrente é uma etapa aprovada, o que o cartão diz que está em curso?
+  **R:** Uma frase em texto nomeia a etapa em curso, com o nome bruto, e nenhuma das cinco fases
+  fica marcada como atual. Aplicada na RN-13 e no RF-22.
+- **Q:** O encerramento sem declaração vale também com fase de ciclo ou etapa aprovada em `phase`?
+  **R:** Vale para os três. Aplicada na RN-11 e no RF-20.
+- **Q:** `escavacão-c2` é erro de grafia ou candidato a etapa?
+  **R:** Erro de grafia: a comparação vale para o nome inteiro e para a base sem o sufixo. Aplicada
+  na RN-12 e no RF-21.
+- **Q:** O separador do sufixo numérico é o hífen e o sublinhado, ou só o hífen?
+  **R:** Hífen e sublinhado. Aplicada na RN-01; a premissa saiu das lacunas.
+- **Q:** O teto de 40 caracteres, sem espaço, está bom?
+  **R:** Manter. A RN-07 e o RF-08 passaram a 🟢.
+- **Q:** Como o comando de contagem se chama e em que formato responde?
+  **R:** `npm run contar:anomalias -- <raiz>`, com tabela em texto por padrão e `--json`. Aplicada
+  no RF-16.
+
+Dois reparos de fato entraram junto, sem pergunta, por medição de 2026-09-21: o `pending` do `afla`
+guarda quatro fases do terceiro ciclo mais a etapa `verificacao-regressao-c3`, e não cinco fases; e
+o `pending` do `DelphiSga` guarda 20 valores em prosa, e não 19.
+
 ## 10. Lacunas
 
-Nenhuma dúvida em aberto. Duas premissas foram adotadas para aplicar as respostas, e ficam à vista
-para contestação antes do plano:
+Nenhuma dúvida em aberto. A premissa que restava foi resolvida pela prova de viabilidade de
+2026-09-21, e fica aqui o que ela deixou para o plano:
 
-- 🟡 O separador do sufixo numérico é o hífen ou o sublinhado. Nas listas de fases medidas só
-  aparece o hífen; o sublinhado entra porque os checkpoints do `afla` o usam (`scout_c2`).
-- 🟡 O vocabulário de três respostas do RF-13 é o ponto de partida da prova de viabilidade, e não o
-  resultado dela. Na 012, foi a prova que mostrou que quatro valores acertavam onde dois erravam.
+- 🟢 O vocabulário de três respostas do RF-13 foi reprovado (6 de 14), e o desenho passou a duas
+  perguntas de duas respostas, registrado em `prova-de-viabilidade.md`.
+- 🟢 A razão que o motor dá na pergunta de natureza saiu falsa em sete dos oito positivos, embora o
+  veredito estivesse certo. Decidido no plano, D-17 do `roadmap.md`: a proposta mostra a razão só
+  sob o agrupamento, e ao lado de cada nome mostra a evidência medida. O RF-14 lê-se assim.
+- 🟢 O número de pares da comparação cresce com o quadrado dos nomes. Decidido no plano, D-16: só
+  se comparam pares que partilhem uma palavra, o que preserva o placar da prova.
 
 ## 11. Histórico de alterações
 
@@ -381,3 +475,6 @@ para contestação antes do plano:
 |------|-----------|-------|
 | 2026-09-21 | Versão inicial gerada por `/reversa-requirements`, a partir da apuração das 18 anomalias do `afla` | reversa |
 | 2026-09-21 | Sessão de esclarecimento por formulário escrito, onze perguntas respondidas: sufixo numérico amplo na RN-01, RN-03 generalizada, RF-13 mantido como Must com prova de viabilidade antes do plano, ciclo derivado do sufixo, e três regras novas (RN-11, RN-12) com os RF-20 e RF-21. Origem: `perguntas/respostas/respostas-fases-e-ciclo-2026-09-21.md` | reversa, sobre respostas de iago |
+| 2026-09-21 | Segunda rodada de esclarecimento, oito perguntas, todas pela opção recomendada, por decisão dada em bloco na conversa: separador do sufixo fixado na RN-01, registro independente na RN-02, RN-07 confirmada, RN-11 estendida a fase de ciclo e a etapa aprovada, RN-12 sobre a base sem sufixo, RN-13 e RF-22 novos para a etapa na tela, e nome e formato do comando no RF-16. Dois reparos de fato sobre o `afla` e o `DelphiSga`. Origem: `perguntas/respostas/respostas-etapas-e-alcance-2026-09-21.md` | reversa, sobre decisão de iago |
+| 2026-09-21 | Prova de viabilidade do motor executada e registrada em `prova-de-viabilidade.md`. O RF-13 deixou a pergunta única de três respostas, reprovada com 6 de 14, e passou a duas perguntas de duas respostas, natureza e comparação, com 14 de 14 e 7 de 9; foi a 🟢. Duas questões de desenho ficaram nas lacunas, para o plano | reversa |
+| 2026-09-21 | As duas questões de desenho das lacunas foram resolvidas pelo `/reversa-plan`, em D-16 e D-17 do `roadmap.md` | reversa |

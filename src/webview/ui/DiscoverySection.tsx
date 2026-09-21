@@ -21,10 +21,15 @@ import { brasiliaInstant } from '../domain/instants.ts'
 import {
   checkpointMark,
   checkpointStateMark,
+  currentStageSentence,
+  cyclePhaseMarks,
+  cycleSentence,
   extractionLabel,
   nonAgentEntries,
   phaseMark,
   provenanceText,
+  stagesLine,
+  undeclaredClosureSentence,
 } from '../domain/labels.ts'
 import { CollapsibleSection } from './CollapsibleSection.tsx'
 
@@ -84,6 +89,14 @@ function extracaoEncerrada(props: DiscoverySectionProps): boolean {
  */
 export function DiscoverySection(props: DiscoverySectionProps): ReactNode {
   const { discovery } = props.process
+  // Feature 015. Every one of these is null over a host older than the
+  // feature and over a project with no cycle and no approved stage, and the
+  // card is then exactly the one it was.
+  const semDeclaracao = undeclaredClosureSentence(props.discoveryState)
+  const ciclo = cycleSentence(props.discoveryState)
+  const fasesDoCiclo = cyclePhaseMarks(props.discoveryState)
+  const etapas = stagesLine(props.discoveryState)
+  const etapaEmCurso = currentStageSentence(props.discoveryState)
 
   return (
     <CollapsibleSection
@@ -101,25 +114,62 @@ export function DiscoverySection(props: DiscoverySectionProps): ReactNode {
           canônicas seguem abaixo, como sempre.
         </p>
       )}
+      {semDeclaracao === null ? null : (
+        <p data-part="discovery-closed-undeclared" className="muted">
+          {semDeclaracao}
+        </p>
+      )}
       {bornGreenfield(props) ? (
         <p data-part="discovery-greenfield" className="muted">
           Projeto nascido por /reversa-new, ainda sem extração: as fases seguem pendentes até que
           /reversa rode sobre o código novo.
         </p>
       ) : null}
+      {ciclo === null ? null : (
+        <p data-part="discovery-cycle" className="muted">
+          {ciclo}
+        </p>
+      )}
       <ul className="rows">
-        {discovery.phases.map((phase) => {
-          const mark = phaseMark(phase)
-          return (
-            <li data-phase={phase.name} data-status={phase.status} key={phase.name}>
-              {mark.label.text}{' '}
-              <span data-part="phase-status" className="status" data-status={phase.status}>
-                {mark.status}
-              </span>
-            </li>
-          )
-        })}
+        {fasesDoCiclo === null
+          ? discovery.phases.map((phase) => {
+              const mark = phaseMark(phase)
+              return (
+                <li data-phase={phase.name} data-status={phase.status} key={phase.name}>
+                  {mark.label.text}{' '}
+                  <span data-part="phase-status" className="status" data-status={phase.status}>
+                    {mark.status}
+                  </span>
+                </li>
+              )
+            })
+          : fasesDoCiclo.map((mark) => (
+              <li data-phase={mark.name} data-status={mark.rawStatus} key={mark.name}>
+                {mark.label.text}{' '}
+                <span data-part="phase-status" className="status" data-status={mark.rawStatus}>
+                  {mark.status}
+                </span>
+                {mark.raw === null ? null : (
+                  <>
+                    {' '}
+                    <span data-part="phase-raw" className="muted">
+                      {mark.raw}
+                    </span>
+                  </>
+                )}
+              </li>
+            ))}
       </ul>
+      {etapas === null ? null : (
+        <p data-part="discovery-stages" className="muted">
+          {etapas}
+        </p>
+      )}
+      {etapaEmCurso === null ? null : (
+        <p data-part="discovery-stage-current" className="muted">
+          {etapaEmCurso}
+        </p>
+      )}
       <ul className="rows">
         {props.discoveryState === undefined
           ? discovery.checkpoints.map((checkpoint) => {

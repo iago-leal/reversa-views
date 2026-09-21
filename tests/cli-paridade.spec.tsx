@@ -27,11 +27,19 @@ import type { SetProcessData } from '../src/host/protocol.ts'
 import { composeAnomalies } from '../src/webview/domain/anomalies-view.ts'
 import { blockingReasons } from '../src/webview/domain/blocking.ts'
 import { readingIntegrity } from '../src/webview/domain/integrity.ts'
-import { stageLabel } from '../src/webview/domain/labels.ts'
+import {
+  currentStageSentence,
+  cycleSentence,
+  stageLabel,
+  stagesLine,
+  undeclaredClosureSentence,
+} from '../src/webview/domain/labels.ts'
 import { collapsibleSections, sectionOrder } from '../src/webview/domain/sections.ts'
 import type { EffectiveEntry } from '../src/webview/domain/types.ts'
 import { EMPTY_PREFERENCES } from '../src/webview/domain/types.ts'
 import { App } from '../src/webview/ui/App.tsx'
+import { lerParaDesenhar } from './helpers/fases-carga.ts'
+import { amostra, mapaComEtapas } from './helpers/fases-leitura.ts'
 import { actionsMd, payloadFixture, processFixture } from './helpers/reversa-fixtures.ts'
 
 const OBSERVANDO: Observacao = { ativa: true, razaoDaDegradacao: null, ultimaMudanca: null }
@@ -203,6 +211,68 @@ describe('os mesmos fatos sobre a mesma carga (RF-02)', () => {
   it('a raiz lida pela sonda é a mesma', () => {
     expect(doPainel).toContain(BLOQUEADA.probe.workspace)
     expect(doTerminal).toContain(BLOQUEADA.probe.workspace)
+  })
+})
+
+describe('as fases fora do cânone dizem o mesmo dos dois lados (feature 015, RF-10, RF-20, RF-22)', () => {
+  const QUATRO_ETAPAS = mapaComEtapas('reconciliacao', 'verificacao-regressao', 'saneamento', 'auditoria-cruzada')
+
+  /** O painel como texto, sem marcação, para comparar frase com frase. */
+  function textoDoPainel(carga: SetProcessData): string {
+    return painel(carga).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ')
+  }
+
+  it('o ciclo: a mesma frase, e as cinco fases na situação do ciclo com o nome bruto', () => {
+    const { carga, eixo } = lerParaDesenhar(amostra('ciclo-tres-com-etapas'), QUATRO_ETAPAS)
+    const doTerminal = terminal(carga).map(limpa)
+    const frase = cycleSentence(eixo) ?? ''
+
+    expect(frase).toContain('Ciclo 3')
+    expect(textoDoPainel(carga)).toContain(frase)
+    expect(doTerminal).toContain(frase)
+    expect(doTerminal).toContain('Reconhecimento · concluída · reconhecimento-c3')
+    expect(doTerminal).toContain('Escavação · pendente · escavacao-c3')
+    expect(painel(carga)).toContain('<li data-phase="escavacao" data-status="pending"')
+  })
+
+  it('as etapas: a mesma linha, com a menção ao mapa', () => {
+    const { carga, eixo } = lerParaDesenhar(amostra('ciclo-tres-com-etapas'), QUATRO_ETAPAS)
+    const linha = stagesLine(eixo) ?? ''
+
+    expect(linha).toContain('mapa de equivalências')
+    expect(textoDoPainel(carga)).toContain(linha)
+    // A linha é mais larga que o quadro, e o terminal a quebra sem cortar
+    // palavra: o que se compara é o texto, e não a linha.
+    expect(terminal(carga).map(limpa).join(' ')).toContain(linha)
+  })
+
+  it('a etapa em curso: a mesma frase, e nenhuma fase corrente em nenhum dos dois', () => {
+    const { carga, eixo } = lerParaDesenhar(amostra('etapa-em-curso'), mapaComEtapas('re-extracao'))
+    const frase = currentStageSentence(eixo) ?? ''
+
+    expect(frase).toContain('re-extracao-005')
+    expect(textoDoPainel(carga)).toContain(frase)
+    expect(terminal(carga).map(limpa)).toContain(frase)
+    expect(painel(carga)).not.toMatch(/data-phase="[^"]+" data-status="current"/)
+    expect(terminal(carga).map(limpa).some((linha) => /^(Reconhecimento|Escavação|Interpretação|Geração|Revisão) · corrente/.test(linha))).toBe(false)
+  })
+
+  it('o encerramento sem declaração: a mesma frase, distinta da do declarado', () => {
+    const { carga, eixo } = lerParaDesenhar(amostra('encerrada-sem-declaracao'))
+    const frase = undeclaredClosureSentence(eixo) ?? ''
+
+    expect(frase).toContain('sem declarar o fim')
+    expect(textoDoPainel(carga)).toContain(frase)
+    expect(terminal(carga).map(limpa)).toContain(frase)
+    expect(terminal(carga).join(' ')).not.toContain('declarou o fim na fase')
+  })
+
+  it('a anomalia nova aparece nos dois, pela composição de sempre', () => {
+    const { carga } = lerParaDesenhar(amostra('ciclo-tres-com-etapas'), QUATRO_ETAPAS)
+
+    expect(composeAnomalies(carga).map((a) => a.code)).toContain('encerramento-com-pendencia')
+    expect(painel(carga)).toContain('encerramento-com-pendencia')
+    expect(terminal(carga).join(' ')).toContain('encerramento-com-pendencia')
   })
 })
 

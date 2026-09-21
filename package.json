@@ -79,7 +79,11 @@
     "prompt:harness": "node scripts/prompt-harness.js",
     "compile:cli": "npm run gerar:carimbo && tsc -p tsconfig.cli.json",
     "prepainel": "npm run compile:cli",
-    "painel": "node scripts/painel.js"
+    "painel": "node scripts/painel.js",
+    "precontar:anomalias": "npm run compile:cli",
+    "contar:anomalias": "node scripts/contar-anomalias.js",
+    "preaprender:equivalencias": "npm run compile:cli",
+    "prepromover:equivalencias": "npm run compile:cli"
   },
   "devDependencies": {
     "@primer/primitives": "11.10.0",
