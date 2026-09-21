@@ -1,15 +1,13 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/014-cli-do-processo",
-  "feature-id": "014",
-  "short-name": "cli-do-processo",
-  "started-at": "2026-09-21T00:53:36Z",
-  "current-stage": "to-do",
+  "feature-dir": "_reversa_forward/015-fases-fora-do-canone",
+  "feature-id": "015",
+  "short-name": "fases-fora-do-canone",
+  "started-at": "2026-09-21T18:56:59Z",
+  "current-stage": "clarify",
   "stages-completed": [
     "requirements",
-    "clarify",
-    "plan",
-    "to-do"
+    "clarify"
   ],
   "paused-features": []
 }
