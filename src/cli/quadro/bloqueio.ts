@@ -15,6 +15,8 @@
 import { blockingReasons } from '../../webview/domain/blocking.ts'
 import type { SetProcessData } from '../../host/protocol.ts'
 import type { ItemDaSecao, SecaoDesenhada } from '../tipos.ts'
+import { GLIFOS, juntar } from './glifos.ts'
+import type { Glifos } from './glifos.ts'
 
 /** Como a faixa se chama no quadro, quando há razão para ela existir. */
 export const TITULO_DO_BLOQUEIO = 'Aguardando decisão humana'
@@ -26,13 +28,20 @@ export const TITULO_DO_BLOQUEIO = 'Aguardando decisão humana'
  * falha, e NÃO é cartão: a RN-03 proíbe ação global que esconda o que aguarda
  * decisão do usuário, e `recolhivel: false` é essa proibição em código.
  * @param carga - a leitura que o host entregou.
+ * @param glifos - o jogo em uso, que decide o separador de campos.
  * @returns a faixa; sem razão alguma, ela vem sem item e sem corpo.
  */
-export function faixaDeBloqueio(carga: SetProcessData): SecaoDesenhada {
+export function faixaDeBloqueio(
+  carga: SetProcessData,
+  glifos: Glifos = GLIFOS.unicode,
+): SecaoDesenhada {
   const razoes = blockingReasons(carga.process, carga.bugs, carga.greenfield)
 
   const itens: ItemDaSecao[] = razoes.map((razao) => ({
-    texto: [razao.text, razao.artifact, razao.command].filter((parte) => parte !== null).join(' · '),
+    // Feature 016, D-14: a razão e o comando são o dado principal, porque o
+    // comando é o que a pessoa vai fazer; o artefato desce para linha própria,
+    // pelo campo `artefato`, como em toda seção.
+    texto: juntar([razao.text, razao.command], glifos),
     artefato: razao.artifact,
     alerta: true,
   }))

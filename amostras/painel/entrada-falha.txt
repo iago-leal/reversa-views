@@ -1,0 +1,20 @@
+[38;2;215;119;87m╭─ [0m[1;38;2;215;119;87mReversa[0m[38;2;215;119;87m ────────────────────────────────────────────────────────────────────────────────────────╮[0m
+[38;2;215;119;87m│ [0mProjeto: não declarado[38;2;215;119;87m                                                                           │[0m
+[38;2;215;119;87m│ [0mRaiz observada: /w/reversa-views[38;2;215;119;87m                                                                 │[0m
+[38;2;215;119;87m│ [0mLido em: não declarado[38;2;215;119;87m                                                                           │[0m
+[38;2;215;119;87m╰──────────────────────────────────────────────────────────────────────────────────────────────────╯[0m
+
+[38;2;255;107;128m╭─ Não foi possível ler o processo ────────────────────────────────────────────────────────────────╮[0m
+[38;2;255;107;128m│ [0mA leitura falhou e não há o que mostrar. A mensagem recebida foi:[38;2;255;107;128m                                │[0m
+[38;2;255;107;128m│ [0ma leitura do estado do processo falhou: JSON inválido.[38;2;255;107;128m                                           │[0m
+[38;2;255;107;128m╰──────────────────────────────────────────────────────────────────────────────────────────────────╯[0m
+
+  [38;2;215;119;87m▾ [0m[1mVersões e construção[0m
+[38;2;215;119;87m❯ [0m  [1mReversa: não declarado[0m
+    Modelo herdado: não declarado
+    Extensão: não declarado
+    Construída de: não declarado
+    A conferência de atualização está desligada nesta execução: nenhuma conexão foi aberta.
+    Leitura de momento não registrado: esta é a primeira leitura desta sessão.
+
+[38;2;215;119;87m●[0m[38;2;153;153;153m Leitura de momento não registrado:…  j k mover · Enter abrir · ? ajuda · q sair[0m  linhas 1–19 de 19

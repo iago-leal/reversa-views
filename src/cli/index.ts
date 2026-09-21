@@ -22,6 +22,7 @@ import {
 } from '../host/build.ts'
 import { readWorkspace } from '../host/reading.ts'
 import type { BuildStamp } from '../host/session.ts'
+import { apresentacaoDoAmbiente } from './ambiente.ts'
 import { CODIGOS, lerArgumentos } from './argumentos.ts'
 import type { Configuracao } from './argumentos.ts'
 import { conferir } from './conferencia.ts'
@@ -29,9 +30,10 @@ import { documentoDeDados, textoDeDados } from './dados.ts'
 import { rodarLaco } from './laco.ts'
 import { codigoDaLeitura, textoDaPassada } from './passada.ts'
 import { telaDeEntrada } from './quadro/entrada.ts'
+import { linha, trecho } from './quadro/trechos.ts'
 import { lerSessao } from './sessao.ts'
 import type { DependenciasDaSessao } from './sessao.ts'
-import { criarTerminal } from './terminal.ts'
+import { criarTerminal, vestirLinha } from './terminal.ts'
 import { textoDaRecusa, textoDeUso } from './uso.ts'
 
 /** O carimbo desta construção, o mesmo que o host de verdade passa (RF-22). */
@@ -82,9 +84,20 @@ export async function principal(argumentos: readonly string[]): Promise<number> 
     // três situações de entrada (RF-04). Ela vai para o canal de erro, e nada
     // de leitura é impresso.
     if (leitura.motivo === 'raiz-inexistente') {
+      //
+      // Ela termina ANTES de existir quadro, e por isso não tem moldura: a
+      // moldura é da interface viva. O que ela ganha é o título no papel de
+      // falha, quando o canal de erro é um terminal com cor; fora disso sai o
+      // texto de sempre, sem sequência alguma (feature 016, RF-09, D-22).
       const tela = telaDeEntrada('raiz-inexistente', { caminho: leitura.caminho })
-      reclamar(tela.titulo)
-      for (const linha of tela.corpo) reclamar(linha)
+      const { apresentacao } = apresentacaoDoAmbiente({
+        ambiente: process.env,
+        saidaEhTerminal: process.stderr.isTTY === true,
+        semCor: argumentos.includes('--sem-cor'),
+        tema: null,
+      })
+      reclamar(vestirLinha(linha([trecho(tela.titulo, 'falha', apresentacao.glifos)]), apresentacao))
+      for (const texto of tela.corpo) reclamar(texto)
     } else {
       for (const linha of textoDaRecusa(leitura.mensagem)) reclamar(linha)
     }
@@ -92,6 +105,9 @@ export async function principal(argumentos: readonly string[]): Promise<number> 
   }
 
   const { config } = leitura
+  // O aviso de tema sai uma vez, no canal de erro, antes de qualquer tela: a
+  // variável inválida não impede a ferramenta de abrir (feature 016, RF-21).
+  if (leitura.aviso !== null) reclamar(leitura.aviso)
   return config.modo === 'vivo' ? vivo(config) : umaPassada(config)
 }
 
@@ -120,6 +136,7 @@ async function umaPassada(config: Configuracao): Promise<number> {
       entrada: comDesfecho,
       largura: process.stdout.columns,
       conferenciaLigada: config.conferir,
+      apresentacao: config.apresentacao,
     }),
   )
   return codigoDaLeitura(entrada, CODIGOS)
@@ -133,7 +150,7 @@ async function umaPassada(config: Configuracao): Promise<number> {
 async function vivo(config: Configuracao): Promise<number> {
   const terminal = criarTerminal({
     fluxos: { entrada: process.stdin, saida: process.stdout },
-    cor: config.cor,
+    apresentacao: config.apresentacao,
   })
 
   return rodarLaco({
@@ -143,5 +160,6 @@ async function vivo(config: Configuracao): Promise<number> {
     conferenciaLigada: config.conferir,
     conferir: () => (config.conferir ? conferir({ ligada: true }) : Promise.resolve(null)),
     mundoDoEditor: { ambiente: process.env },
+    glifos: config.apresentacao.glifos,
   })
 }

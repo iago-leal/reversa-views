@@ -81,6 +81,26 @@ export function recortar(texto: string, largura: number, continuacao = ''): stri
 }
 
 /**
+ * Recortar um texto a UMA linha, dizendo que algo ficou de fora.
+ *
+ * É o recorte da linha de estado, que não pode quebrar em duas: o que não
+ * cabe some atrás das reticências, que chegam por parâmetro porque o jogo de
+ * glifos é quem as decide. Conta pontos de código, como `recortar`.
+ * @param texto - o que desenhar.
+ * @param largura - quantas colunas há.
+ * @param reticencias - o que pôr no lugar do que não coube.
+ * @returns uma linha, nunca maior que a largura.
+ */
+export function truncar(texto: string, largura: number, reticencias: string): string {
+  if (largura <= 0) return ''
+  const pontos = [...texto]
+  if (pontos.length <= largura) return texto
+  const marca = [...reticencias]
+  if (marca.length >= largura) return marca.slice(0, largura).join('')
+  return pontos.slice(0, largura - marca.length).join('').trimEnd() + reticencias
+}
+
+/**
  * Onde a janela começa para que a linha selecionada esteja dentro dela.
  *
  * Ela move o mínimo: uma seleção já visível não desloca nada, que é o que
@@ -89,6 +109,7 @@ export function recortar(texto: string, largura: number, continuacao = ''): stri
  * @param primeira - o deslocamento corrente.
  * @param alturaVisivel - quantas linhas a janela mostra.
  * @param alturaTotal - quantas linhas o quadro tem.
+ * @param bloco - quantas linhas, a partir do índice, precisam aparecer juntas.
  * @returns o deslocamento novo.
  */
 export function ajustarDeslocamento(
@@ -96,12 +117,17 @@ export function ajustarDeslocamento(
   primeira: number,
   alturaVisivel: number,
   alturaTotal: number,
+  bloco = 1,
 ): number {
   const fundo = Math.max(0, alturaTotal - alturaVisivel)
   const atual = Math.min(Math.max(0, primeira), fundo)
   if (indice === null || alturaVisivel <= 0) return atual
   if (indice < atual) return indice
-  if (indice >= atual + alturaVisivel) return Math.min(fundo, indice - alturaVisivel + 1)
+  // O bloco é o item com o dado secundário dele: é o caminho que diz o que a
+  // confirmação abre, e selecionar o último item visível o deixaria de fora.
+  // Bloco maior que a janela cede à linha principal, que nunca sai da tela.
+  const ultima = indice + Math.min(Math.max(1, bloco), alturaVisivel) - 1
+  if (ultima >= atual + alturaVisivel) return Math.min(fundo, ultima - alturaVisivel + 1)
   return atual
 }
 

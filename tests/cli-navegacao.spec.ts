@@ -10,7 +10,10 @@
 import { describe, expect, it } from 'vitest'
 import type { ContextoDeNavegacao } from '../src/cli/navegacao.ts'
 import { estadoInicial, navegar } from '../src/cli/navegacao.ts'
+import { SECAO_DE_VERSOES } from '../src/cli/tipos.ts'
 import type { EstadoDeNavegacao, TeclaNomeada } from '../src/cli/tipos.ts'
+import { ajustarDeslocamento } from '../src/cli/quadro/medidas.ts'
+import { secoesDoTerminal } from '../src/cli/quadro/index.ts'
 import { sectionOrder } from '../src/webview/domain/sections.ts'
 import type { SectionName } from '../src/webview/domain/types.ts'
 import { COLLAPSIBLE_SECTIONS } from '../src/webview/domain/types.ts'
@@ -127,8 +130,11 @@ describe('as duas ações globais', () => {
   })
 
   it('`fechar-tudo` fecha os cartões, e a faixa de bloqueio não é cartão', () => {
+    // Disposição (feature 016, RF-18): a ação global alcança também a seção
+    // que é só do terminal. Os cartões continuam saindo da lista do painel, e
+    // a faixa de bloqueio continua de fora, que é a regra que o caso prende.
     const estado = apos(inicial(), 'fechar-tudo')
-    expect([...estado.secoesFechadas].sort()).toEqual([...COLLAPSIBLE_SECTIONS].sort())
+    expect([...estado.secoesFechadas].sort()).toEqual([...COLLAPSIBLE_SECTIONS, SECAO_DE_VERSOES].sort())
     expect(estado.secoesFechadas.has('blocking')).toBe(false)
   })
 })
@@ -200,5 +206,93 @@ describe('a máquina não guarda nada', () => {
     const antes = inicial()
     navegar(antes, 'fechar-tudo', contexto())
     expect(antes.secoesFechadas.size).toBe(0)
+  })
+})
+
+describe('a décima segunda seção, que é só do terminal (feature 016, RF-18, D-15)', () => {
+  /** O contexto como o compositor o entrega: as onze, e a de versões ao fim. */
+  function comVersoes(partes: Partial<ContextoDeNavegacao> = {}): ContextoDeNavegacao {
+    return {
+      secoes: secoesDoTerminal(),
+      itens: new Map(secoesDoTerminal().map((nome) => [nome, 2] as const)),
+      alturaTotal: 100,
+      alturaVisivel: 23,
+      ...partes,
+    }
+  }
+
+  it('a ordem navegável é a do painel, intocada, com a seção de versões depois', () => {
+    expect(secoesDoTerminal().slice(0, -1)).toEqual([...sectionOrder()])
+    expect(secoesDoTerminal().at(-1)).toBe(SECAO_DE_VERSOES)
+    expect(secoesDoTerminal()).toHaveLength(12)
+  })
+
+  it('o salto de seção passa pelas doze e volta à primeira', () => {
+    let estado = estadoInicial([], comVersoes())
+    const visitadas = [estado.secaoSelecionada]
+    for (let passo = 0; passo < 12; passo += 1) {
+      estado = navegar(estado, 'proxima-secao', comVersoes()).estado
+      visitadas.push(estado.secaoSelecionada)
+    }
+    expect(visitadas.slice(0, 12)).toEqual([...secoesDoTerminal()])
+    expect(visitadas[12]).toBe(secoesDoTerminal()[0])
+  })
+
+  it('o salto para trás, da primeira, cai na de versões', () => {
+    const estado = navegar(estadoInicial([], comVersoes()), 'secao-anterior', comVersoes()).estado
+    expect(estado.secaoSelecionada).toBe(SECAO_DE_VERSOES)
+  })
+
+  it('ela se fecha e se abre pelas teclas de sempre, e `abrir-tudo` a alcança', () => {
+    const nela = { ...estadoInicial([], comVersoes()), secaoSelecionada: SECAO_DE_VERSOES }
+    const fechada = navegar(nela, 'fechar-secao', comVersoes()).estado
+    expect(fechada.secoesFechadas.has(SECAO_DE_VERSOES)).toBe(true)
+    expect(navegar(fechada, 'abrir-secao', comVersoes()).estado.secoesFechadas.has(SECAO_DE_VERSOES)).toBe(false)
+    expect(navegar(fechada, 'abrir-tudo', comVersoes()).estado.secoesFechadas.size).toBe(0)
+  })
+
+  it('`fim` leva ao último item dela', () => {
+    const estado = navegar(estadoInicial([], comVersoes()), 'fim', comVersoes()).estado
+    expect(estado.secaoSelecionada).toBe(SECAO_DE_VERSOES)
+    expect(estado.itemSelecionado).toBe(1)
+  })
+})
+
+describe('a janela uma linha menor, por causa da linha de estado (feature 016, D-17, D-24)', () => {
+  it('`fim` desloca até o fundo da janela ÚTIL, e o fim do quadro fica alcançável', () => {
+    const cheia = contexto({ alturaTotal: 100, alturaVisivel: 24 })
+    const util = contexto({ alturaTotal: 100, alturaVisivel: 23 })
+    expect(navegar(inicial(), 'fim', cheia).estado.primeiraLinhaVisivel).toBe(76)
+    expect(navegar(inicial(), 'fim', util).estado.primeiraLinhaVisivel).toBe(77)
+  })
+})
+
+describe('o ajuste de deslocamento por bloco (feature 016, D-19)', () => {
+  it('sem bloco declarado, nenhuma chamada de antes muda de resultado', () => {
+    for (const [indice, primeira] of [[0, 0], [9, 0], [10, 0], [50, 45], [99, 0]] as const) {
+      expect(ajustarDeslocamento(indice, primeira, 10, 100)).toBe(
+        ajustarDeslocamento(indice, primeira, 10, 100, 1),
+      )
+    }
+    expect(ajustarDeslocamento(10, 0, 10, 100)).toBe(1)
+  })
+
+  it('o último item visível rola o bastante para mostrar também o dado secundário dele', () => {
+    expect(ajustarDeslocamento(9, 0, 10, 100, 2)).toBe(1)
+    expect(ajustarDeslocamento(9, 0, 10, 100, 3)).toBe(2)
+  })
+
+  it('bloco que já cabe na janela não desloca nada', () => {
+    expect(ajustarDeslocamento(4, 0, 10, 100, 3)).toBe(0)
+  })
+
+  it('bloco maior que a janela cede à linha principal, que nunca sai da tela', () => {
+    const novo = ajustarDeslocamento(20, 0, 5, 100, 9)
+    expect(novo).toBeLessThanOrEqual(20)
+    expect(novo + 5).toBeGreaterThan(20)
+  })
+
+  it('o fundo do quadro continua sendo o limite', () => {
+    expect(ajustarDeslocamento(99, 0, 10, 100, 4)).toBe(90)
   })
 })

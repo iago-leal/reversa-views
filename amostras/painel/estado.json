@@ -1,0 +1,628 @@
+{
+  "carga": {
+    "process": {
+      "installed": true,
+      "discovery": {
+        "version": "1.3.3",
+        "project": "reversa-views",
+        "userName": null,
+        "chatLanguage": null,
+        "docLanguage": null,
+        "answerMode": null,
+        "docLevel": null,
+        "outputFolder": "_reversa_sdd",
+        "forwardFolder": "_reversa_forward",
+        "phase": "escavacao",
+        "completed": [
+          "reconhecimento"
+        ],
+        "pending": [
+          "interpretacao",
+          "geracao",
+          "revisao"
+        ],
+        "engines": [
+          "claude-code"
+        ],
+        "agents": [
+          "reversa"
+        ],
+        "createdFiles": [],
+        "phases": [
+          {
+            "name": "reconhecimento",
+            "status": "done"
+          },
+          {
+            "name": "escavacao",
+            "status": "current"
+          },
+          {
+            "name": "interpretacao",
+            "status": "pending"
+          },
+          {
+            "name": "geracao",
+            "status": "pending"
+          },
+          {
+            "name": "revisao",
+            "status": "pending"
+          }
+        ],
+        "checkpoints": [
+          {
+            "agent": "reversa-explorer",
+            "completedAt": "2026-09-09T10:00:00Z",
+            "inProgress": false,
+            "files": [
+              "a.md"
+            ],
+            "modulesAnalyzed": [],
+            "modulesPending": [],
+            "extra": {}
+          },
+          {
+            "agent": "reversa-archaeologist",
+            "completedAt": null,
+            "inProgress": true,
+            "files": [],
+            "modulesAnalyzed": [],
+            "modulesPending": [],
+            "extra": {}
+          }
+        ],
+        "anomalies": []
+      },
+      "policy": {
+        "version": 1,
+        "allowLegacyEdits": false,
+        "allowedPaths": [],
+        "cause": null,
+        "folders": [
+          ".reversa",
+          "_reversa_sdd",
+          "_reversa_docs",
+          "_reversa_forward",
+          "_reversa_bugs",
+          "_reversa_refactor"
+        ]
+      },
+      "writableFolders": [
+        ".reversa",
+        "_reversa_sdd",
+        "_reversa_docs",
+        "_reversa_forward",
+        "_reversa_bugs",
+        "_reversa_refactor"
+      ],
+      "impact": {
+        "files": [],
+        "cenario": "legado",
+        "bySeverity": [
+          {
+            "key": "CRITICAL",
+            "count": 0,
+            "canonical": true
+          },
+          {
+            "key": "HIGH",
+            "count": 0,
+            "canonical": true
+          },
+          {
+            "key": "MEDIUM",
+            "count": 0,
+            "canonical": true
+          },
+          {
+            "key": "LOW",
+            "count": 0,
+            "canonical": true
+          }
+        ],
+        "byType": [
+          {
+            "key": "regra-alterada",
+            "count": 0,
+            "canonical": true
+          },
+          {
+            "key": "regra-removida",
+            "count": 0,
+            "canonical": true
+          },
+          {
+            "key": "regra-nova",
+            "count": 0,
+            "canonical": true
+          },
+          {
+            "key": "componente-novo",
+            "count": 0,
+            "canonical": true
+          },
+          {
+            "key": "componente-extinto",
+            "count": 0,
+            "canonical": true
+          },
+          {
+            "key": "delta-de-dados",
+            "count": 0,
+            "canonical": true
+          },
+          {
+            "key": "delta-de-contrato-externo",
+            "count": 0,
+            "canonical": true
+          }
+        ],
+        "anomalies": []
+      },
+      "watch": {
+        "items": [],
+        "observacoes": [],
+        "arquivadas": [],
+        "historico": "",
+        "anomalies": []
+      },
+      "migration": {
+        "present": false,
+        "schemaVersion": null,
+        "startedAt": null,
+        "lastCheckpoint": null,
+        "completedAgents": [],
+        "pendingAgents": [],
+        "pendingDecisions": [],
+        "artifacts": {},
+        "auto": false,
+        "engine": null,
+        "reversaVersion": null,
+        "briefPath": null,
+        "currentAgent": {
+          "agent": null,
+          "phase": null,
+          "status": null,
+          "topologyApproved": false,
+          "screenModeApproved": false
+        },
+        "queue": [
+          {
+            "agent": "paradigm_advisor",
+            "status": "pending"
+          },
+          {
+            "agent": "curator",
+            "status": "pending"
+          },
+          {
+            "agent": "strategist",
+            "status": "pending"
+          },
+          {
+            "agent": "designer",
+            "status": "pending"
+          },
+          {
+            "agent": "screen_translator",
+            "status": "pending"
+          },
+          {
+            "agent": "inspector",
+            "status": "pending"
+          }
+        ],
+        "awaitingHuman": false,
+        "anomalies": []
+      },
+      "ideation": {
+        "present": false,
+        "sessionDir": null,
+        "sessionId": null,
+        "shortName": null,
+        "idea": null,
+        "context": null,
+        "startedAt": null,
+        "currentStage": null,
+        "stage": null,
+        "anomalies": []
+      },
+      "migrationStatePath": "_reversa_sdd/migration/.state.json",
+      "forward": {
+        "featureDir": "_reversa_forward/003-painel-do-processo",
+        "featureId": "003",
+        "shortName": "painel-do-processo",
+        "startedAt": "2026-09-09T14:06:13Z",
+        "doubts": 2,
+        "actions": {
+          "total": 5,
+          "fechadas": 3,
+          "abertas": 2,
+          "emendas": 0,
+          "hasOpen": true,
+          "anomalies": []
+        },
+        "pausedFeatures": [],
+        "addendum": null,
+        "stage": "coding-em-progresso",
+        "anomalies": []
+      },
+      "progress": {
+        "events": [],
+        "byAction": [],
+        "anomalies": []
+      },
+      "anomalies": []
+    },
+    "probe": {
+      "workspace": "/w/reversa-views",
+      "featureDir": "_reversa_forward/003-painel-do-processo",
+      "sessionDir": null,
+      "refusals": [],
+      "truncated": []
+    },
+    "readAt": "2026-09-09T15:00:00Z",
+    "entry": "installed",
+    "root": "/w/reversa-views",
+    "ignoredRoots": [],
+    "inheritedRevision": "420305daa6cdd10858b720a34cb8db67d8e5c5e9",
+    "decomposition": {
+      "lida": true,
+      "origem": "tabela",
+      "acoes": [
+        {
+          "id": "T001",
+          "descricao": "feito",
+          "fase": "Fase 1, Preparação",
+          "emenda": false,
+          "fechada": true,
+          "arquivoAlvo": "src/x1.ts"
+        },
+        {
+          "id": "T002",
+          "descricao": "feito",
+          "fase": "Fase 1, Preparação",
+          "emenda": false,
+          "fechada": true,
+          "arquivoAlvo": "src/x2.ts"
+        },
+        {
+          "id": "T003",
+          "descricao": "feito",
+          "fase": "Fase 1, Preparação",
+          "emenda": false,
+          "fechada": true,
+          "arquivoAlvo": "src/x3.ts"
+        },
+        {
+          "id": "T004",
+          "descricao": "aberto",
+          "fase": "Fase 1, Preparação",
+          "emenda": false,
+          "fechada": false,
+          "arquivoAlvo": "src/x4.ts"
+        },
+        {
+          "id": "T005",
+          "descricao": "aberto",
+          "fase": "Fase 1, Preparação",
+          "emenda": false,
+          "fechada": false,
+          "arquivoAlvo": "src/x5.ts"
+        }
+      ],
+      "divergencia": null
+    },
+    "history": {
+      "entradas": [
+        {
+          "pasta": "_reversa_forward/002-ponte-e-host",
+          "id": "002",
+          "nomeCurto": "ponte-e-host",
+          "situacao": "em-aberto",
+          "marca": "pausada",
+          "acoes": {
+            "total": 32,
+            "fechadas": 30,
+            "abertas": 2,
+            "emendas": 0
+          },
+          "adendo": null,
+          "resumo": null,
+          "ultimoEvento": "2026-09-09T14:06:13Z"
+        },
+        {
+          "pasta": "_reversa_forward/001-leitura-do-processo",
+          "id": "001",
+          "nomeCurto": "leitura-do-processo",
+          "situacao": "convergida",
+          "marca": "nenhuma",
+          "acoes": {
+            "total": 21,
+            "fechadas": 21,
+            "abertas": 0,
+            "emendas": 0
+          },
+          "adendo": "_reversa_sdd/addenda/001-leitura-do-processo.md",
+          "resumo": "A feature entrega a camada de leitura do processo.",
+          "ultimoEvento": "2026-09-09T10:00:00Z"
+        }
+      ],
+      "truncado": false,
+      "total": 2
+    },
+    "extensionVersion": "0.6.1",
+    "builtFromCommit": "a23711d481021a978720c0bc478b6dabed94fec3",
+    "builtFromRoot": "/home/alguem/dev/reversa-views",
+    "bugs": {
+      "presente": true,
+      "contextos": [
+        {
+          "contexto": "painel-do-processo",
+          "pasta": "_reversa_bugs/painel-do-processo",
+          "bugs": [
+            {
+              "pasta": "_reversa_bugs/painel-do-processo/bugs/BUG-20260910-74UL",
+              "arquivo": "_reversa_bugs/painel-do-processo/bugs/BUG-20260910-74UL/bug.md",
+              "apelido": 3,
+              "titulo": "Painel conta uma dúvida na feature 007 por menção ao marcador",
+              "estado": "resolved",
+              "estadoBruto": "resolved",
+              "fase": "delivering",
+              "faseBruta": "delivering",
+              "severidade": "low",
+              "severidadeBruta": "low",
+              "prioridade": "P2",
+              "prioridadeBruta": "P2",
+              "registrado": "2026-09-10",
+              "alterado": "2026-09-10",
+              "travado": true,
+              "encerrado": "2026-09-10",
+              "bloqueado": false,
+              "inconsistencia": null,
+              "id": "BUG-20260910-74UL"
+            },
+            {
+              "pasta": "_reversa_bugs/painel-do-processo/bugs/BUG-20260909-VHII",
+              "arquivo": "_reversa_bugs/painel-do-processo/bugs/BUG-20260909-VHII/bug.md",
+              "apelido": 2,
+              "titulo": "Extensão instalada anterior à feature 007 não declara procedência",
+              "estado": "resolved",
+              "estadoBruto": "resolved",
+              "fase": "delivering",
+              "faseBruta": "delivering",
+              "severidade": "medium",
+              "severidadeBruta": "medium",
+              "prioridade": "P1",
+              "prioridadeBruta": "P1",
+              "registrado": "2026-09-09",
+              "alterado": "2026-09-10",
+              "travado": true,
+              "encerrado": "2026-09-10",
+              "bloqueado": false,
+              "inconsistencia": null,
+              "id": "BUG-20260909-VHII"
+            },
+            {
+              "pasta": "_reversa_bugs/painel-do-processo/bugs/BUG-20260909-FJBD",
+              "arquivo": "_reversa_bugs/painel-do-processo/bugs/BUG-20260909-FJBD/bug.md",
+              "apelido": 1,
+              "titulo": "Cabeçalho declara leitura degradada por anomalia cenario-ambiguo",
+              "estado": "resolved",
+              "estadoBruto": "resolved",
+              "fase": "delivering",
+              "faseBruta": "delivering",
+              "severidade": "low",
+              "severidadeBruta": "low",
+              "prioridade": "P2",
+              "prioridadeBruta": "P2",
+              "registrado": "2026-09-09",
+              "alterado": "2026-09-10",
+              "travado": true,
+              "encerrado": "2026-09-10",
+              "bloqueado": false,
+              "inconsistencia": null,
+              "id": "BUG-20260909-FJBD"
+            }
+          ],
+          "contagem": {
+            "total": 3,
+            "abertos": 0,
+            "ativos": 0,
+            "resolvidos": 3,
+            "restritos": 0
+          },
+          "ultimoMovimento": "2026-09-10"
+        }
+      ],
+      "contagem": {
+        "total": 3,
+        "abertos": 0,
+        "ativos": 0,
+        "resolvidos": 3,
+        "restritos": 0
+      },
+      "lidos": 3,
+      "truncado": false,
+      "anomalias": []
+    },
+    "greenfield": {
+      "cenario": "greenfield",
+      "estagio": "especificado",
+      "artefatos": {
+        "brief": true,
+        "ideacao": true,
+        "personas": true,
+        "prd": true,
+        "specs": 5
+      },
+      "caminhos": {
+        "brief": "_reversa_sdd/newproject-brief.md",
+        "ideacao": "_reversa_sdd/ideation.md",
+        "personas": "_reversa_sdd/personas.md",
+        "prd": "_reversa_sdd/prd.md"
+      },
+      "metadado": {
+        "modo": "guiado",
+        "estagio": "done",
+        "iniciadoEm": "2026-09-09T10:31:12Z",
+        "ultimoCheckpointEm": "2026-09-09T11:03:11Z",
+        "concluidos": [
+          "ideator",
+          "researcher",
+          "drafter",
+          "spec-sdd"
+        ],
+        "brief": "criar uma extensao para o VSCode com o intuito de visualizarmos o pipeline do reversa."
+      },
+      "resumo": "Criar uma extensão para o VSCode com o intuito de visualizarmos o pipeline do Reversa.",
+      "panorama": {
+        "componentes": [
+          {
+            "spec": "_reversa_sdd/sdd/leitura-do-processo.md",
+            "situacao": "convergida",
+            "marca": "nenhuma",
+            "pastas": [
+              "_reversa_forward/001-leitura-do-processo"
+            ],
+            "adendo": "_reversa_sdd/addenda/001-leitura-do-processo.md",
+            "acoes": {
+              "total": 20,
+              "fechadas": 20,
+              "abertas": 0,
+              "emendas": 0
+            },
+            "nome": "leitura-do-processo"
+          },
+          {
+            "spec": "_reversa_sdd/sdd/ponte-e-host.md",
+            "situacao": "convergida",
+            "marca": "nenhuma",
+            "pastas": [
+              "_reversa_forward/002-ponte-e-host"
+            ],
+            "adendo": "_reversa_sdd/addenda/002-ponte-e-host.md",
+            "acoes": {
+              "total": 20,
+              "fechadas": 20,
+              "abertas": 0,
+              "emendas": 0
+            },
+            "nome": "ponte-e-host"
+          },
+          {
+            "spec": "_reversa_sdd/sdd/painel-do-processo.md",
+            "situacao": "convergida",
+            "marca": "nenhuma",
+            "pastas": [
+              "_reversa_forward/003-painel-do-processo"
+            ],
+            "adendo": "_reversa_sdd/addenda/003-painel-do-processo.md",
+            "acoes": {
+              "total": 20,
+              "fechadas": 20,
+              "abertas": 0,
+              "emendas": 0
+            },
+            "nome": "painel-do-processo"
+          },
+          {
+            "spec": "_reversa_sdd/sdd/heranca-e-sincronia.md",
+            "situacao": "convergida",
+            "marca": "nenhuma",
+            "pastas": [
+              "_reversa_forward/004-heranca-e-sincronia"
+            ],
+            "adendo": "_reversa_sdd/addenda/004-heranca-e-sincronia.md",
+            "acoes": {
+              "total": 20,
+              "fechadas": 20,
+              "abertas": 0,
+              "emendas": 0
+            },
+            "nome": "heranca-e-sincronia"
+          },
+          {
+            "spec": "_reversa_sdd/sdd/empacotamento-e-verificacao.md",
+            "situacao": "convergida",
+            "marca": "nenhuma",
+            "pastas": [
+              "_reversa_forward/005-empacotamento-e-verificacao"
+            ],
+            "adendo": "_reversa_sdd/addenda/005-empacotamento-e-verificacao.md",
+            "acoes": {
+              "total": 20,
+              "fechadas": 20,
+              "abertas": 0,
+              "emendas": 0
+            },
+            "nome": "empacotamento-e-verificacao"
+          }
+        ],
+        "foraDoPlano": [
+          {
+            "pasta": "_reversa_forward/009-greenfield-e-features-do-prd",
+            "id": "009",
+            "situacao": "em-aberto",
+            "marca": "ativa",
+            "nomeCurto": "greenfield-e-features-do-prd"
+          },
+          {
+            "pasta": "_reversa_forward/008-cronologia-do-ciclo-bugs",
+            "id": "008",
+            "situacao": "convergida",
+            "marca": "nenhuma",
+            "nomeCurto": "cronologia-do-ciclo-bugs"
+          },
+          {
+            "pasta": "_reversa_forward/007-atualizacao-e-progresso",
+            "id": "007",
+            "situacao": "convergida",
+            "marca": "nenhuma",
+            "nomeCurto": "atualizacao-e-progresso"
+          },
+          {
+            "pasta": "_reversa_forward/006-cartoes-e-cronologia",
+            "id": "006",
+            "situacao": "convergida",
+            "marca": "nenhuma",
+            "nomeCurto": "cartoes-e-cronologia"
+          }
+        ],
+        "escopo": [
+          {
+            "grupo": "Núcleo, o que responde \"onde estou e o que faço agora\"",
+            "detalhe": "projeto, versão do framework, pastas de saída e forward resolvidas.",
+            "selo": "🟡",
+            "nome": "Identidade da instalação"
+          },
+          {
+            "grupo": "Núcleo, o que responde \"onde estou e o que faço agora\"",
+            "detalhe": "destaque do que aguarda decisão sua.",
+            "selo": "🟡",
+            "nome": "Bloqueio humano"
+          },
+          {
+            "grupo": "Diagnóstico, o que impede o painel de mentir em silêncio",
+            "detalhe": "toda degradação que o modelo encontrou ao ler.",
+            "selo": "🟡",
+            "nome": "Anomalias"
+          },
+          {
+            "grupo": "Comportamento",
+            "detalhe": null,
+            "selo": "🟡",
+            "nome": "Leitura automática na ativação, sem comando prévio nem configuração de caminho."
+          }
+        ],
+        "escopoEncontrado": true,
+        "totalDeSpecs": 5,
+        "truncado": false,
+        "convergidos": 5
+      },
+      "anomalias": [],
+      "truncados": []
+    }
+  }
+}

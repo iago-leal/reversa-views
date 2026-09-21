@@ -252,3 +252,79 @@ describe('nenhuma regra de apresentação nasce no quadro (T039, D-14)', () => {
     expect(importam.length).toBeGreaterThan(0)
   })
 })
+
+describe('o valor de cor mora num módulo só (feature 016, RF-01, RF-16)', () => {
+  /**
+   * As grafias em que um valor de cor se escreve: a tripla de 24 bits, a cor
+   * em hexadecimal, o campo de tom com o valor ao lado, e o código de cor do
+   * jogo de dezesseis dentro de um literal de texto. O módulo de terminal
+   * conhece o PREFIXO da sequência, `38;2` e `38;5`, que diz como uma cor se
+   * escreve e não que cor ela é, e por isso não casa.
+   */
+  const VALOR_DE_COR = new RegExp(
+    [
+      String.raw`\[\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\]`,
+      String.raw`#[0-9a-f]{6}\b`,
+      String.raw`(vinteEQuatroBits|duzentasECinquentaESeis)\s*:\s*[\[\d]`,
+      String.raw`['"\x60;\[](3[0-7]|9[0-7])(m|['"\x60])`,
+    ].join('|'),
+    'i',
+  )
+
+  it('aparece em `paleta.ts` e em nenhum outro arquivo', () => {
+    const comValor = fontes()
+      .filter((fonte) => VALOR_DE_COR.test(semComentarios(fonte.texto)))
+      .map((fonte) => fonte.caminho)
+    expect(comValor).toEqual(['src/cli/paleta.ts'])
+  })
+
+  it('a guarda reconhece cada grafia', () => {
+    const amostras = [
+      'const tom = [217, 119, 87]',
+      "const tom = '#d97757'",
+      'duzentasECinquentaESeis: 173',
+      "const amarelo = '33'",
+      "'\\u001b[1;93m'",
+    ]
+    for (const amostra of amostras) {
+      expect(VALOR_DE_COR.test(amostra), `a guarda não reconhece: ${amostra}`).toBe(true)
+    }
+  })
+
+  it('a guarda não confunde o prefixo da sequência com uma cor', () => {
+    for (const amostra of ["const P = '38;2'", "const P = '38;5'", "const PESO = '1'"]) {
+      expect(VALOR_DE_COR.test(amostra), `a guarda reprova o que não é cor: ${amostra}`).toBe(false)
+    }
+  })
+})
+
+describe('a identidade da referência não entra nos fontes (feature 016, RN-07, RF-22, D-25)', () => {
+  /**
+   * O produto de referência, o fabricante dele e o mascote.
+   *
+   * A lista é declarada aqui e só aqui: num módulo de `src/cli/` ela poria os
+   * nomes justamente onde a regra os proíbe. A suíte se exclui da busca por
+   * construção, porque varre `src/cli/` e mora em `tests/`. Documentação fica
+   * de fora de propósito: nomear a referência em documento é escolha consciente.
+   */
+  const NOMES_VIGIADOS = ['Claude Code', 'Anthropic', 'Clawd']
+
+  /** Os nomes que um texto carrega, sem distinção de caixa. */
+  function nomesEm(texto: string): string[] {
+    const minusculo = texto.toLowerCase()
+    return NOMES_VIGIADOS.filter((nome) => minusculo.includes(nome.toLowerCase()))
+  }
+
+  it('nenhum fonte da ferramenta carrega um nome vigiado, nem em comentário', () => {
+    const comNome = fontes()
+      .filter((fonte) => nomesEm(fonte.texto).length > 0)
+      .map((fonte) => `${fonte.caminho}: ${nomesEm(fonte.texto).join(', ')}`)
+    expect(comNome).toEqual([])
+  })
+
+  it('a guarda reprova um texto que contém um dos nomes, em qualquer caixa', () => {
+    expect(nomesEm("const saudacao = 'bem-vindo ao CLAUDE CODE'")).toEqual(['Claude Code'])
+    expect(nomesEm('// o mascote clawd acena')).toEqual(['Clawd'])
+    expect(nomesEm('const saudacao = "bem-vindo ao painel"')).toEqual([])
+  })
+})

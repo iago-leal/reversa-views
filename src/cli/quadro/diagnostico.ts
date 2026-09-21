@@ -16,6 +16,8 @@
 import { composeAnomalies } from '../../webview/domain/anomalies-view.ts'
 import type { SetProcessData } from '../../host/protocol.ts'
 import type { ItemDaSecao, SecaoDesenhada } from '../tipos.ts'
+import { GLIFOS, juntar } from './glifos.ts'
+import type { Glifos } from './glifos.ts'
 
 /**
  * A política de escrita em vigor, e as pastas em que o Reversa pode escrever.
@@ -54,15 +56,17 @@ export function secaoDePolitica(carga: SetProcessData): SecaoDesenhada {
  * isso, e esconder linha atrás de um gesto que o teclado teria de inventar
  * custaria mais do que mostra.
  * @param carga - a leitura que o host entregou.
+ * @param glifos - o jogo em uso, que decide o separador de campos (feature 016, D-12).
  * @returns a seção das anomalias.
  */
-export function secaoDeAnomalias(carga: SetProcessData): SecaoDesenhada {
+export function secaoDeAnomalias(
+  carga: SetProcessData,
+  glifos: Glifos = GLIFOS.unicode,
+): SecaoDesenhada {
   const anomalias = composeAnomalies(carga)
 
   const itens: ItemDaSecao[] = anomalias.map((anomalia) => ({
-    texto: [anomalia.file, anomalia.code, anomalia.detail]
-      .filter((parte) => parte !== undefined && parte !== null && parte !== '')
-      .join(' · '),
+    texto: juntar([anomalia.file, anomalia.code, anomalia.detail], glifos),
     artefato: null,
     alerta: true,
   }))

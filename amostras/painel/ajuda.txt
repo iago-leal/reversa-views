@@ -1,0 +1,18 @@
+[38;2;215;119;87m╭─ [0m[1mTeclas[0m[38;2;215;119;87m ─────────────────────────────────────────────────────────────────────────────────────────╮[0m
+[38;2;215;119;87m│ [0m[1;38;2;215;119;87m↑ ↓  k j       [0m   Move a seleção entre as linhas navegáveis[38;2;215;119;87m                                      │[0m
+[38;2;215;119;87m│ [0m[1;38;2;215;119;87m← →  h l       [0m   Fecha e abre a seção sob a seleção[38;2;215;119;87m                                             │[0m
+[38;2;215;119;87m│ [0m[1;38;2;215;119;87mEnter          [0m   Abre no editor o artefato da linha selecionada[38;2;215;119;87m                                 │[0m
+[38;2;215;119;87m│ [0m[1;38;2;215;119;87mTab / Shift+Tab[0m   Salta para a próxima seção e para a anterior[38;2;215;119;87m                                   │[0m
+[38;2;215;119;87m│ [0m[1;38;2;215;119;87mr              [0m   Relê agora, sem esperar a observação[38;2;215;119;87m                                           │[0m
+[38;2;215;119;87m│ [0m[1;38;2;215;119;87ma              [0m   Abre todas as seções[38;2;215;119;87m                                                           │[0m
+[38;2;215;119;87m│ [0m[1;38;2;215;119;87mz              [0m   Fecha todas as seções[38;2;215;119;87m                                                          │[0m
+[38;2;215;119;87m│ [0m[1;38;2;215;119;87m?              [0m   Mostra e esconde esta ajuda[38;2;215;119;87m                                                    │[0m
+[38;2;215;119;87m│ [0m[1;38;2;215;119;87mg / G          [0m   Vai ao topo e ao fim do quadro[38;2;215;119;87m                                                 │[0m
+[38;2;215;119;87m│ [0m[1;38;2;215;119;87mq / Esc        [0m   Sai, restaurando o terminal[38;2;215;119;87m                                                    │[0m
+[38;2;215;119;87m│ [0m[1;38;2;215;119;87mCtrl+C         [0m   Sai, restaurando o terminal[38;2;215;119;87m                                                    │[0m
+[38;2;215;119;87m│ [0m[1;38;2;215;119;87mCtrl+Z         [0m   Suspende para o shell e retoma inteiro ao fg[38;2;215;119;87m                                   │[0m
+[38;2;215;119;87m│                                                                                                  │[0m
+[38;2;215;119;87m│ [0m[38;2;153;153;153mNenhuma tecla escreve arquivo, edita o processo do Reversa ou dispara agente.[0m[38;2;215;119;87m                    │[0m
+[38;2;215;119;87m│ [0m[38;2;153;153;153m? esconde esta ajuda e devolve o quadro.[0m[38;2;215;119;87m                                                         │[0m
+[38;2;215;119;87m╰──────────────────────────────────────────────────────────────────────────────────────────────────╯[0m
+[38;2;215;119;87m●[0m[38;2;153;153;153m Leitura de 09/09/2026 12:00 (Brasí…  j k mover · Enter abrir · ? ajuda · q sair[0m  linhas 1–17 de 17

@@ -19,7 +19,8 @@ import type { UpdateStatus } from '../host/protocol.ts'
 import type { EffectiveEntry } from '../webview/domain/types.ts'
 import { sectionOrder } from '../webview/domain/sections.ts'
 import { linhasDoQuadro } from './quadro/index.ts'
-import type { Observacao, Procedencia } from './tipos.ts'
+import { vestirLinha } from './terminal.ts'
+import type { Apresentacao, Observacao, Procedencia } from './tipos.ts'
 
 /** A largura usada quando o destino não declara a sua. */
 export const LARGURA_PADRAO = 80
@@ -35,7 +36,16 @@ export interface PedidoDaPassada {
   conferenciaLigada: boolean
   /** Por que esta leitura existe; numa passada é sempre a primeira. */
   procedencia?: Procedencia
+  /**
+   * O que o destino comporta (feature 016, RF-19). Diante de um terminal com
+   * cor, o MESMO texto sai vestido com a paleta; redirecionado, sai cru. Sem
+   * nada declarado, sai cru e com glifos Unicode, como a 014 o imprimia.
+   */
+  apresentacao?: Apresentacao
 }
+
+/** A apresentação de quem não declarou nenhuma. */
+const CRUA: Apresentacao = { grau: 'nenhuma', tema: 'escuro', glifos: 'unicode' }
 
 /**
  * O texto inteiro de uma passada.
@@ -44,6 +54,7 @@ export interface PedidoDaPassada {
  */
 export function textoDaPassada(pedido: PedidoDaPassada): string {
   const largura = pedido.largura ?? LARGURA_PADRAO
+  const apresentacao = pedido.apresentacao ?? CRUA
 
   const linhas = linhasDoQuadro({
     entrada: pedido.entrada,
@@ -62,9 +73,14 @@ export function textoDaPassada(pedido: PedidoDaPassada): string {
     procedencia: pedido.procedencia ?? 'primeira',
     conferenciaLigada: pedido.conferenciaLigada,
     cursor: false,
+    // Moldura e linha de estado pertencem à interface viva; a paleta pertence
+    // a qualquer terminal. A disposição é uma só, e é a deste mesmo compositor.
+    apresentacao: { molduras: false, glifos: apresentacao.glifos },
   })
 
-  return `${linhas.map((linha) => linha.texto).join('\n')}\n`
+  // Nenhuma sequência nasce aqui: quem veste é o módulo de terminal, e com o
+  // degrau "nenhuma" ele devolve o texto cru, byte a byte o do redirecionado.
+  return `${linhas.map((linha) => vestirLinha(linha, apresentacao)).join('\n')}\n`
 }
 
 /**

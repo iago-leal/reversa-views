@@ -83,7 +83,9 @@
     "precontar:anomalias": "npm run compile:cli",
     "contar:anomalias": "node scripts/contar-anomalias.js",
     "preaprender:equivalencias": "npm run compile:cli",
-    "prepromover:equivalencias": "npm run compile:cli"
+    "prepromover:equivalencias": "npm run compile:cli",
+    "preamostras:painel": "npm run compile:cli",
+    "amostras:painel": "node scripts/amostras-do-painel.js"
   },
   "devDependencies": {
     "@primer/primitives": "11.10.0",

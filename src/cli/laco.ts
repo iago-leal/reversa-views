@@ -21,7 +21,7 @@
 
 import type { UpdateStatus } from '../host/protocol.ts'
 import { readingIntegrity } from '../webview/domain/integrity.ts'
-import { effectiveCollapsed, sectionOrder } from '../webview/domain/sections.ts'
+import { effectiveCollapsed } from '../webview/domain/sections.ts'
 import { EMPTY_PREFERENCES } from '../webview/domain/types.ts'
 import type { EffectiveEntry, SectionName } from '../webview/domain/types.ts'
 import { abrirNoEditor, fraseDaAbertura } from './editor.ts'
@@ -30,18 +30,28 @@ import { estadoInicial, navegar } from './navegacao.ts'
 import { observar, pastasQueImportam } from './observacao.ts'
 import type { MundoDaObservacao, Vigia } from './observacao.ts'
 import {
+  alturaUtil,
   artefatoSelecionado,
+  blocoDaSelecao,
   comporQuadro,
   contextoDeNavegacao,
   indiceDaSelecao,
+  secoesDoTerminal,
 } from './quadro/index.ts'
 import type { EntradaDoQuadro } from './quadro/index.ts'
 import { ajustarDeslocamento } from './quadro/medidas.ts'
+import { linha, trecho } from './quadro/trechos.ts'
 import { lerSessao } from './sessao.ts'
 import type { DependenciasDaSessao } from './sessao.ts'
 import { reconhecerTecla } from './teclas.ts'
 import type { Terminal } from './terminal.ts'
-import type { EstadoDeNavegacao, Observacao, Procedencia } from './tipos.ts'
+import type {
+  EstadoDeNavegacao,
+  JogoDeGlifos,
+  Observacao,
+  Procedencia,
+  SecaoDoTerminal,
+} from './tipos.ts'
 
 /** A fatia do processo de que o laço precisa, para que ela seja substituível. */
 export interface ProcessoDoLaco {
@@ -67,6 +77,8 @@ export interface PedidoDoLaco {
    */
   conferir: () => Promise<UpdateStatus | null>
   mundoDoEditor: MundoDoEditor
+  /** O jogo de glifos que o ambiente comporta; Unicode quando nada é dito. */
+  glifos?: JogoDeGlifos
   mundoDaObservacao?: MundoDaObservacao
   processo?: ProcessoDoLaco
 }
@@ -89,9 +101,13 @@ export async function rodarLaco(pedido: PedidoDoLaco): Promise<number> {
   let recado: string | null = null
   // O estado nasce da mesma decisão que o painel toma, e não de um contexto
   // medido: medir exigiria compor o quadro, e compor o quadro exige o estado.
+  // A seção que é só do terminal nasce ABERTA, por não constar do que o painel
+  // decide fechar: ela está ao fim do quadro, onde não custa a primeira tela,
+  // e o desfecho da conferência de atualização, que mora nela, não deve
+  // depender de gesto para ser visto (feature 016, D-15).
   let estado: EstadoDeNavegacao = estadoInicial(colapsoInicial(entrada), {
-    secoes: sectionOrder(),
-    itens: new Map<SectionName, number>(),
+    secoes: secoesDoTerminal(),
+    itens: new Map<SecaoDoTerminal, number>(),
     alturaTotal: 0,
     alturaVisivel: 0,
   })
@@ -103,11 +119,14 @@ export async function rodarLaco(pedido: PedidoDoLaco): Promise<number> {
       entrada,
       estado,
       largura,
-      // Uma linha fica para o recado da barra de estado, quando há um.
+      // Uma linha fica para o recado do editor, quando há um. A da linha de
+      // estado não é descontada aqui: quem a desconta é `alturaUtil`, e é de
+      // lá, e só de lá, que sai a altura útil (feature 016, D-17).
       altura: Math.max(1, altura - (recado === null ? 0 : 1)),
       observacao,
       procedencia,
       conferenciaLigada: pedido.conferenciaLigada,
+      apresentacao: { molduras: true, glifos: pedido.glifos ?? 'unicode' },
     }
   }
 
@@ -129,12 +148,19 @@ export async function rodarLaco(pedido: PedidoDoLaco): Promise<number> {
       primeiraLinhaVisivel: ajustarDeslocamento(
         indiceDaSelecao(antes),
         estado.primeiraLinhaVisivel,
-        antes.altura,
+        alturaUtil(antes),
         contextoDeNavegacao(antes).alturaTotal,
+        // O bloco é o item com o dado secundário dele: é o caminho que diz o
+        // que a confirmação abre, e ele mora na linha de baixo (D-19).
+        blocoDaSelecao(antes),
       ),
     }
     const quadro = comporQuadro(pedidoDoQuadro())
-    if (recado !== null) quadro.linhas.push({ texto: recado, enfase: 'alerta', artefato: null })
+    // O recado fica em linha própria, ACIMA da linha de estado, como sempre
+    // esteve acima do fim da janela: a dança do editor não muda.
+    if (recado !== null) {
+      quadro.linhas.push(linha([trecho(recado, 'atencao', pedido.glifos ?? 'unicode')]))
+    }
     terminal.desenhar(quadro)
   }
 

@@ -1,0 +1,23 @@
+[38;2;215;119;87m╭─ [0m[1;38;2;215;119;87mReversa[0m[38;2;215;119;87m ────────────────────────────────────────────────────────────────────────────────────────╮[0m
+[38;2;215;119;87m│ [0mProjeto: não declarado[38;2;215;119;87m                                                                           │[0m
+[38;2;215;119;87m│ [0mRaiz observada: /w/reversa-views[38;2;215;119;87m                                                                 │[0m
+[38;2;215;119;87m│ [0mLido em: não declarado[38;2;215;119;87m                                                                           │[0m
+[38;2;215;119;87m╰──────────────────────────────────────────────────────────────────────────────────────────────────╯[0m
+
+[38;2;80;80;80m╭─ [0m[1mReversa não instalado aqui[0m[38;2;80;80;80m ─────────────────────────────────────────────────────────────────────╮[0m
+[38;2;80;80;80m│ [0mO Reversa é um framework de engenharia reversa que documenta um sistema existente e conduz a[38;2;80;80;80m     │[0m
+[38;2;80;80;80m│ [0m  evolução dele a partir dessa documentação. Ele guarda o estado do processo em arquivos dentro[38;2;80;80;80m  │[0m
+[38;2;80;80;80m│ [0m  do projeto, e é isso que esta ferramenta lê.[38;2;80;80;80m                                                   │[0m
+[38;2;80;80;80m│ [0mPara instalar na raiz observada, rode: npx reversa init[38;2;80;80;80m                                          │[0m
+[38;2;80;80;80m│ [0mIsto não é erro: a leitura ocorreu e a ferramenta termina bem.[38;2;80;80;80m                                   │[0m
+[38;2;80;80;80m╰──────────────────────────────────────────────────────────────────────────────────────────────────╯[0m
+
+  [38;2;215;119;87m▾ [0m[1mVersões e construção[0m
+[38;2;215;119;87m❯ [0m  [1mReversa: não declarado[0m
+    Modelo herdado: não declarado
+    Extensão: não declarado
+    Construída de: não declarado
+    A conferência de atualização está desligada nesta execução: nenhuma conexão foi aberta.
+    Leitura de momento não registrado: esta é a primeira leitura desta sessão.
+
+[38;2;215;119;87m●[0m[38;2;153;153;153m Leitura de momento não registrado:…  j k mover · Enter abrir · ? ajuda · q sair[0m  linhas 1–22 de 22

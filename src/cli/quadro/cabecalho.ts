@@ -1,79 +1,73 @@
 /**
  * O cabeçalho: onde a ferramenta diz o que leu, quando e de onde (RN-06,
- * RF-22, RF-23).
+ * RF-22 da 014; RF-02 da 016).
  *
- * Os mesmos itens do cabeçalho do painel, na mesma ordem e com os mesmos
- * rótulos: projeto, versão do Reversa, revisão do modelo herdado, versão da
- * extensão, construção de origem, raiz observada, instante da leitura, o
- * desfecho da conferência e a declaração de integridade.
+ * Desde a feature 016 ele é um NÚCLEO de quatro fatos, projeto, raiz
+ * observada, instante da leitura e integridade, que vai dentro de uma moldura
+ * e é a primeira coisa que o olho encontra. Os outros fatos que o cabeçalho
+ * afirmava não sumiram: desceram para a seção "Versões e construção", ao fim
+ * do quadro, com os mesmos rótulos e as mesmas funções de origem, e a
+ * procedência da leitura foi para a linha de estado.
  *
- * Nenhum texto é decidido aqui. O instante sai de `brasiliaInstant`, a revisão
- * de `revisionLabel`, a frase do desfecho de `updateLabel` e a integridade de
- * `readingIntegrity`: um cabeçalho que escolhesse as próprias palavras seria
- * uma segunda autoridade sobre o mesmo fato.
+ * Nenhum texto é decidido aqui. O instante sai de `brasiliaInstant` e a
+ * integridade de `readingIntegrity`: um cabeçalho que escolhesse as próprias
+ * palavras seria uma segunda autoridade sobre o mesmo fato.
  * @module cli/quadro/cabecalho
  */
 
 import { brasiliaInstant } from '../../webview/domain/instants.ts'
-import { revisionLabel, updateLabel } from '../../webview/domain/labels.ts'
 import { readingIntegrity } from '../../webview/domain/integrity.ts'
 import type { EffectiveEntry } from '../../webview/domain/types.ts'
 
-/** O que um item diz quando a leitura não tem valor para ele. */
-const AUSENTE = 'não declarado'
+/** Como a ferramenta se chama, que é o título da moldura do núcleo. */
+export const NOME_DA_FERRAMENTA = 'Reversa'
 
-/** Um par rótulo e valor, nunca em branco. */
-function par(rotulo: string, valor: string | null | undefined): string {
+/** O que um item diz quando a leitura não tem valor para ele. */
+export const AUSENTE = 'não declarado'
+
+/**
+ * Um par rótulo e valor, nunca em branco.
+ * @param rotulo - o nome do fato.
+ * @param valor - o valor lido, quando há.
+ * @returns a linha, com a declaração de ausência no lugar do que falta.
+ */
+export function par(rotulo: string, valor: string | null | undefined): string {
   return `${rotulo}: ${valor === null || valor === undefined || valor === '' ? AUSENTE : valor}`
 }
 
+/** O núcleo do cabeçalho. */
+export interface NucleoDoCabecalho {
+  /** Projeto, raiz observada e instante da leitura, nessa ordem. */
+  fatos: string[]
+  /** A declaração de integridade; nula quando não houve leitura a declarar. */
+  integridade: string | null
+  /** Se a leitura degradou, para que o compositor escolha o papel da linha. */
+  degradada: boolean
+}
+
 /**
- * As linhas do cabeçalho.
+ * O núcleo do cabeçalho.
  * @param entrada - o estado de entrada corrente.
- * @param conferenciaLigada - se a consulta à origem foi feita nesta execução.
- * @returns as linhas, em texto cru, sem largura aplicada.
+ * @returns os quatro fatos, em texto cru, sem largura aplicada.
  */
-export function linhasDoCabecalho(
-  entrada: EffectiveEntry,
-  conferenciaLigada: boolean,
-): string[] {
+export function nucleoDoCabecalho(entrada: EffectiveEntry): NucleoDoCabecalho {
   const carga = entrada.loaded
-  const descoberta = carga?.process.discovery ?? null
   const lido = brasiliaInstant(carga?.readAt ?? null)
 
-  const linhas = [
-    'Reversa',
-    par('Projeto', descoberta?.project ?? null),
-    par('Reversa', descoberta?.version ?? null),
-    par('Modelo herdado', revisionLabel(carga?.inheritedRevision)),
-    par('Extensão', carga?.extensionVersion ?? null),
-    par('Construída de', revisionLabel(carga?.builtFromCommit)),
+  const fatos = [
+    par('Projeto', carga?.process.discovery.project ?? null),
     par('Raiz observada', entrada.root),
     par('Lido em', carga === null ? null : lido.text),
   ]
 
-  if (carga !== null) {
-    const integridade = readingIntegrity(carga)
-    linhas.push(
-      integridade.degraded
-        ? `Leitura degradada: ${integridade.anomalies} anomalias, ${integridade.refusals} recusas, ${integridade.truncated} truncamentos.`
-        : 'Leitura íntegra.',
-    )
-  }
+  if (carga === null) return { fatos, integridade: null, degradada: false }
 
-  // O desfecho é uma LINHA, e a ausência dele não desenha linha alguma: o
-  // painel segue a mesma regra, e declarar "em dia" sobre uma consulta que não
-  // houve seria afirmar o que ninguém perguntou.
-  if (entrada.update !== null) {
-    const desfecho = updateLabel(entrada.update, carga?.builtFromRoot ?? null)
-    linhas.push(
-      desfecho.command === null ? desfecho.text : `${desfecho.text} ${desfecho.command}`,
-    )
-  } else if (!conferenciaLigada) {
-    linhas.push(
-      'A conferência de atualização está desligada nesta execução: nenhuma conexão foi aberta.',
-    )
+  const integridade = readingIntegrity(carga)
+  return {
+    fatos,
+    integridade: integridade.degraded
+      ? `Leitura degradada: ${integridade.anomalies} anomalias, ${integridade.refusals} recusas, ${integridade.truncated} truncamentos.`
+      : 'Leitura íntegra.',
+    degradada: integridade.degraded,
   }
-
-  return linhas
 }

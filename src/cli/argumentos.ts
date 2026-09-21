@@ -13,6 +13,8 @@
  */
 
 import { isAbsolute, resolve } from 'node:path'
+import { apresentacaoDoAmbiente, eFundo, FUNDOS } from './ambiente.ts'
+import type { Apresentacao, Fundo } from './tipos.ts'
 
 /**
  * Os três códigos de saída do contrato.
@@ -35,6 +37,11 @@ export interface Configuracao {
   conferir: boolean
   /** Se o desenho pode usar cor; some fora do terminal e por declaração. */
   cor: boolean
+  /**
+   * O degrau de cor, o fundo e o jogo de glifos, pelo que o ambiente declara
+   * (feature 016). Invariante: `cor === (apresentacao.grau !== 'nenhuma')`.
+   */
+  apresentacao: Apresentacao
 }
 
 /** O que se sabe do mundo, apartado da decisão para que ela seja testável. */
@@ -47,7 +54,15 @@ export interface MundoDosArgumentos {
 
 /** Ou há configuração, ou há ajuda a imprimir, ou há recusa a nomear. */
 export type LeituraDeArgumentos =
-  | { kind: 'config'; config: Configuracao }
+  | {
+      kind: 'config'
+      config: Configuracao
+      /**
+       * O que dizer no canal de erro antes de começar, ou nulo (feature 016,
+       * RF-21). A leitura continua pura: devolve o aviso em vez de escrevê-lo.
+       */
+      aviso: string | null
+    }
   | { kind: 'ajuda'; codigo: number }
   | {
       kind: 'uso-incorreto'
@@ -118,8 +133,24 @@ export function lerArgumentos(
 ): LeituraDeArgumentos {
   const presentes: Bandeira[] = []
   let pedido: string | null = null
+  let tema: Fundo | null = null
 
   for (const argumento of argumentos) {
+    if (argumento.startsWith('--tema=')) {
+      // Valor que a ferramenta não conhece é uso incorreto, nomeando o valor,
+      // e nada é lido pela metade. A VARIÁVEL com o mesmo defeito só avisa:
+      // recusá-la impediria a ferramenta de abrir por um arquivo de inicialização.
+      const valor = argumento.slice('--tema='.length)
+      if (!eFundo(valor)) {
+        return recusa(
+          valor === ''
+            ? 'a bandeira --tema= chegou sem valor.'
+            : `tema não reconhecido: ${valor}. Os valores são ${FUNDOS.join(' e ')}.`,
+        )
+      }
+      tema = valor
+      continue
+    }
     if (argumento.startsWith('--workspace=')) {
       pedido = argumento.slice('--workspace='.length)
       if (pedido === '') {
@@ -148,6 +179,12 @@ export function lerArgumentos(
   }
 
   const modo = escolherModo(presentes, mundo.saidaEhTerminal)
+  const { apresentacao, aviso } = apresentacaoDoAmbiente({
+    ambiente: mundo.ambiente,
+    saidaEhTerminal: mundo.saidaEhTerminal,
+    semCor: presentes.includes('--sem-cor'),
+    tema,
+  })
 
   return {
     kind: 'config',
@@ -157,11 +194,10 @@ export function lerArgumentos(
       conferir:
         !presentes.includes('--sem-conferir') &&
         !declarada(mundo.ambiente, 'REVERSA_VIEWS_SEM_CONFERIR'),
-      cor:
-        mundo.saidaEhTerminal &&
-        !presentes.includes('--sem-cor') &&
-        !declarada(mundo.ambiente, 'NO_COLOR'),
+      cor: apresentacao.grau !== 'nenhuma',
+      apresentacao,
     },
+    aviso,
   }
 }
 

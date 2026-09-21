@@ -128,3 +128,81 @@ describe('a recusa nomeada (RF-25)', () => {
     expect(leitura.kind).toBe('uso-incorreto')
   })
 })
+
+describe('o tema, por bandeira e por variável (feature 016, T034, RF-20, RF-21, D-09)', () => {
+  // Acréscimo, e não reescrita: a configuração ganhou o campo `apresentacao` e
+  // a leitura ganhou o campo `aviso`. Nenhuma expectativa de antes mudou.
+
+  /** A leitura inteira, e não só a configuração, porque o aviso mora nela. */
+  function leitura(argumentos: string[], partes: Partial<MundoDosArgumentos> = {}) {
+    return lerArgumentos(argumentos, mundo(partes))
+  }
+
+  it('sem nada declarado, vale o fundo escuro', () => {
+    expect(config([]).apresentacao.tema).toBe('escuro')
+  })
+
+  it('a bandeira válida decide o fundo', () => {
+    expect(config(['--tema=claro']).apresentacao.tema).toBe('claro')
+    expect(config(['--tema=escuro']).apresentacao.tema).toBe('escuro')
+  })
+
+  it('a bandeira vence a variável', () => {
+    const lida = config(['--tema=escuro'], { ambiente: { REVERSA_VIEWS_TEMA: 'claro' } })
+    expect(lida.apresentacao.tema).toBe('escuro')
+  })
+
+  it('sem bandeira, vale a variável, e sem as duas vale o que `COLORFGBG` declara', () => {
+    expect(config([], { ambiente: { REVERSA_VIEWS_TEMA: 'claro' } }).apresentacao.tema).toBe('claro')
+    expect(config([], { ambiente: { COLORFGBG: '0;15' } }).apresentacao.tema).toBe('claro')
+  })
+
+  it('a bandeira inválida é uso incorreto, nomeia o valor, e nada é lido pela metade', () => {
+    const lida = leitura(['--tema=roxo'])
+    expect(lida.kind).toBe('uso-incorreto')
+    if (lida.kind !== 'uso-incorreto') return
+    expect(lida.codigo).toBe(CODIGOS.uso)
+    expect(lida.motivo).toBe('argumento')
+    expect(lida.mensagem).toContain('roxo')
+  })
+
+  it('a bandeira sem valor também é uso incorreto', () => {
+    const lida = leitura(['--tema='])
+    expect(lida.kind).toBe('uso-incorreto')
+  })
+
+  it('a variável inválida não impede a ferramenta de abrir: avisa, e a precedência segue', () => {
+    const lida = leitura([], { ambiente: { REVERSA_VIEWS_TEMA: 'roxo', COLORFGBG: '0;15' } })
+    expect(lida.kind).toBe('config')
+    if (lida.kind !== 'config') return
+    expect(lida.aviso).toContain('roxo')
+    expect(lida.config.apresentacao.tema).toBe('claro')
+  })
+
+  it('sem nada de errado, o aviso é nulo', () => {
+    const lida = leitura(['--tema=claro'])
+    expect(lida.kind === 'config' && lida.aviso).toBeNull()
+  })
+
+  it('`cor` e o degrau dizem a mesma coisa, em todo caso', () => {
+    const casos: [string[], Partial<MundoDosArgumentos>][] = [
+      [[], {}],
+      [['--sem-cor'], {}],
+      [[], { ambiente: { NO_COLOR: '' } }],
+      [[], { saidaEhTerminal: false }],
+      [[], { ambiente: { COLORTERM: 'truecolor' } }],
+      [[], { ambiente: { TERM: 'xterm-256color' } }],
+      [[], { ambiente: { TERM: 'dumb' } }],
+    ]
+    for (const [argumentos, partes] of casos) {
+      const lida = config(argumentos, partes)
+      expect(lida.cor, JSON.stringify([argumentos, partes])).toBe(lida.apresentacao.grau !== 'nenhuma')
+    }
+  })
+
+  it('o degrau e o jogo de glifos saem do ambiente, e não de bandeira', () => {
+    const lida = config([], { ambiente: { COLORTERM: 'truecolor', LANG: 'pt_BR.UTF-8' } })
+    expect(lida.apresentacao).toEqual({ grau: '24bits', tema: 'escuro', glifos: 'unicode' })
+    expect(config([], { ambiente: { LC_ALL: 'C' } }).apresentacao.glifos).toBe('sete-bits')
+  })
+})

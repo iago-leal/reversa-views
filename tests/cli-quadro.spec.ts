@@ -9,6 +9,14 @@
  * tudo, o recorte à largura sem cortar palavra, a rolagem, a ausência de
  * qualquer sequência de escape, as quatro situações de entrada com título e
  * corpo próprios, e a linha que declara de onde veio a leitura corrente.
+ *
+ * MUDANÇA DE DISPOSIÇÃO (feature 016, T026). O visual do painel trocou a
+ * ênfase por linha por trechos com papel, pôs um glifo antes do título de cada
+ * seção, levou o dado secundário para linha própria e emoldurou o cabeçalho, o
+ * bloqueio e a situação de entrada. Cada caso tocado por isso está marcado
+ * como "disposição" no próprio caso. Nenhuma expectativa de FATO, de ORDEM ou
+ * de AUSÊNCIA DE SEQUÊNCIA DE ESCAPE foi afrouxada: o que os casos afirmavam
+ * sobre o que a tela diz, continuam afirmando.
  */
 
 import { describe, expect, it } from 'vitest'
@@ -17,19 +25,26 @@ import type { ContextoDeNavegacao } from '../src/cli/navegacao.ts'
 import type { EntradaDoQuadro } from '../src/cli/quadro/index.ts'
 import {
   artefatoSelecionado,
+  blocoDaSelecao,
   comporQuadro,
   contextoDeNavegacao,
-  CURSOR,
+  indiceDaSelecao,
   linhasDoQuadro,
 } from '../src/cli/quadro/index.ts'
+import { GLIFOS } from '../src/cli/quadro/glifos.ts'
 import { situacaoDaEntrada, telaDeEntrada } from '../src/cli/quadro/entrada.ts'
 import { linhasDaProcedencia } from '../src/cli/quadro/procedencia.ts'
 import { TITULOS } from '../src/cli/quadro/secoes.ts'
 import type { EstadoDeNavegacao, Observacao } from '../src/cli/tipos.ts'
-import { ENFASES } from '../src/cli/tipos.ts'
+import { PAPEIS } from '../src/cli/tipos.ts'
 import { sectionOrder } from '../src/webview/domain/sections.ts'
 import type { EffectiveEntry } from '../src/webview/domain/types.ts'
-import { actionsMd, payloadFixture, processFixture } from './helpers/reversa-fixtures.ts'
+import {
+  actionsMd,
+  decompositionFixture,
+  payloadFixture,
+  processFixture,
+} from './helpers/reversa-fixtures.ts'
 
 /** A observação que instalou e nada ainda mudou. */
 const OBSERVANDO: Observacao = { ativa: true, razaoDaDegradacao: null, ultimaMudanca: null }
@@ -73,10 +88,23 @@ function contextoVazio(): ContextoDeNavegacao {
   }
 }
 
-/** Uma linha sem a marca do cursor, que ocupa o mesmo lugar do recuo. */
+/**
+ * Uma linha sem o que a interface viva põe antes do texto.
+ *
+ * Disposição (016): antes era só a marca do cursor; agora são a coluna do
+ * cursor, o glifo de seleção e o glifo que diz se a seção está aberta.
+ */
 function semCursor(texto: string): string {
-  return (texto.startsWith(CURSOR) ? texto.slice(CURSOR.length) : texto).trimStart()
+  const { selecao, secaoAberta, secaoFechada } = GLIFOS.unicode
+  let resto = texto.trimStart()
+  for (const glifo of [selecao, secaoAberta, secaoFechada]) {
+    if (resto.startsWith(`${glifo} `)) resto = resto.slice(glifo.length + 1).trimStart()
+  }
+  return resto
 }
+
+/** A apresentação da interface viva, que é onde há moldura. */
+const VIVA = { molduras: true, glifos: 'unicode' } as const
 
 /** O texto de todas as linhas, e não só o da janela visível. */
 function textos(partes: Partial<EntradaDoQuadro> = {}): string[] {
@@ -193,24 +221,35 @@ describe('a rolagem', () => {
 
 describe('a ênfase é abstrata (D-05)', () => {
   it('nenhuma linha carrega sequência de escape', () => {
-    for (const texto of textos()) {
-      expect(texto.includes('\u001b'), texto).toBe(false)
+    for (const apresentacao of [undefined, VIVA]) {
+      for (const texto of textos({ apresentacao })) {
+        expect(texto.includes('\u001b'), texto).toBe(false)
+      }
     }
   })
 
-  it('toda ênfase usada é uma das cinco nomeadas', () => {
-    for (const linha of linhasDoQuadro(pedido())) {
-      expect(ENFASES).toContain(linha.enfase)
+  it('todo papel usado é um dos nove nomeados (disposição: eram cinco ênfases por linha)', () => {
+    for (const linha of linhasDoQuadro(pedido({ apresentacao: VIVA }))) {
+      for (const trecho of linha.trechos ?? []) expect(PAPEIS).toContain(trecho.papel)
     }
   })
 
-  it('exatamente uma linha é a selecionada, e é dela que sai o artefato', () => {
+  it('os trechos de cada linha somam o texto dela, que é o que as suítes comparam', () => {
+    for (const apresentacao of [undefined, VIVA]) {
+      for (const linha of linhasDoQuadro(pedido({ apresentacao, largura: 72 }))) {
+        expect(linha.trechos.map((trecho) => trecho.texto).join('')).toBe(linha.texto)
+      }
+    }
+  })
+
+  it('exatamente uma linha é a selecionada, e é dela que sai o artefato (disposição: campo próprio)', () => {
     const contexto = contextoDeNavegacao(pedido())
     const estado = estadoInicial([], contexto)
     const linhas = linhasDoQuadro(pedido({ estado }))
-    expect(linhas.filter((linha) => linha.enfase === 'selecionada')).toHaveLength(1)
-    const selecionada = linhas.find((linha) => linha.enfase === 'selecionada')
+    expect(linhas.filter((linha) => linha.selecionada)).toHaveLength(1)
+    const selecionada = linhas.find((linha) => linha.selecionada)
     expect(artefatoSelecionado(pedido({ estado }))).toBe(selecionada?.artefato ?? null)
+    expect(indiceDaSelecao(pedido({ estado }))).toBe(linhas.findIndex((linha) => linha.selecionada))
   })
 })
 
@@ -343,5 +382,261 @@ describe('o diagnóstico (RF-07, RF-08)', () => {
 
   it('a leitura íntegra também se declara, em vez de calar', () => {
     expect(textos().join('\n')).toContain('Leitura íntegra')
+  })
+})
+
+/** Uma decomposição com ações fechadas, uma próxima e ações abertas, na seção aberta. */
+function naDecomposicao(item: number | null, partes: Partial<EntradaDoQuadro> = {}): EntradaDoQuadro {
+  const estado: EstadoDeNavegacao = {
+    ...estadoInicial([], contextoVazio()),
+    secaoSelecionada: 'decomposition',
+    itemSelecionado: item,
+  }
+  return pedido({ estado, apresentacao: VIVA, largura: 100, ...partes })
+}
+
+describe('o núcleo do cabeçalho em moldura (feature 016, RF-02, RF-18)', () => {
+  it('a moldura abre o quadro, com o nome da ferramenta no destaque', () => {
+    const linhas = linhasDoQuadro(pedido({ apresentacao: VIVA, largura: 100 }))
+    expect(linhas[0].texto.startsWith('╭─ Reversa ─')).toBe(true)
+    expect(linhas[0].trechos).toContainEqual({ texto: 'Reversa', papel: 'destaque' })
+    expect(linhas[0].trechos[0].papel).toBe('acento')
+  })
+
+  it('os quatro fatos estão dentro dela, e a moldura acompanha a largura sem ultrapassá-la', () => {
+    const linhas = textos({ apresentacao: VIVA, largura: 100 })
+    const fim = linhas.findIndex((texto) => texto.startsWith('╰'))
+    const dentro = linhas.slice(0, fim + 1)
+    for (const fato of ['Projeto:', 'Raiz observada: /w/reversa-views', 'Lido em:', 'Leitura íntegra.']) {
+      expect(dentro.some((texto) => texto.includes(fato)), fato).toBe(true)
+    }
+    for (const texto of dentro) expect([...texto].length).toBe(100)
+  })
+
+  it('a versão da extensão não está na moldura, e está na seção ao fim do quadro', () => {
+    const linhas = textos({ apresentacao: VIVA, largura: 100 })
+    const fim = linhas.findIndex((texto) => texto.startsWith('╰'))
+    expect(linhas.slice(0, fim + 1).join('\n')).not.toContain('Extensão')
+
+    const secao = linhas.findIndex((texto) => semCursor(texto).startsWith('Versões e construção'))
+    const ultimaDasOnze = linhas.findIndex((texto) => semCursor(texto).startsWith(TITULOS.probe))
+    expect(secao).toBeGreaterThan(ultimaDasOnze)
+    const depois = linhas.slice(secao).join('\n')
+    for (const rotulo of ['Reversa:', 'Modelo herdado:', 'Extensão: 0.6.1', 'Construída de:']) {
+      expect(depois).toContain(rotulo)
+    }
+    expect(depois).toContain('primeira leitura desta sessão')
+  })
+
+  it('a linha de integridade usa o papel de atenção quando a leitura degradou', () => {
+    const degradada = entrada({
+      loaded: payloadFixture({
+        probe: { ...payloadFixture().probe, truncated: ['_reversa_sdd/prd.md'] },
+      }),
+    })
+    const linha = linhasDoQuadro(pedido({ entrada: degradada, apresentacao: VIVA, largura: 100 })).find(
+      (desenhada) => desenhada.texto.includes('Leitura degradada'),
+    )
+    expect(linha?.trechos.some((trecho) => trecho.papel === 'atencao')).toBe(true)
+  })
+})
+
+describe('o bloqueio humano em moldura própria (feature 016, RF-03)', () => {
+  const bloqueado = entrada({
+    loaded: payloadFixture({
+      process: processFixture({ actionsMd: actionsMd(5, 0), addendaFiles: [] }),
+    }),
+  })
+
+  it('a moldura é de atenção, com o glifo de atenção no título, antes de qualquer seção', () => {
+    const linhas = linhasDoQuadro(pedido({ entrada: bloqueado, apresentacao: VIVA, largura: 100 }))
+    const borda = linhas.findIndex((linha) => linha.texto.includes(`! ${TITULOS.blocking}`))
+    const primeiraSecao = linhas.findIndex((linha) => semCursor(linha.texto).startsWith(TITULOS.forward))
+    expect(borda).toBeGreaterThanOrEqual(0)
+    expect(borda).toBeLessThan(primeiraSecao)
+    expect(linhas[borda].texto.startsWith('╭─')).toBe(true)
+    expect(linhas[borda].trechos[0].papel).toBe('atencao')
+  })
+
+  it('sem cor, as duas molduras se distinguem pelo título e pelo glifo de atenção', () => {
+    const bordas = textos({ entrada: bloqueado, apresentacao: VIVA, largura: 100 }).filter((texto) =>
+      texto.startsWith('╭─'),
+    )
+    expect(bordas.filter((texto) => texto.includes('!'))).toHaveLength(1)
+    expect(new Set(bordas.map((texto) => texto.replace(/─+╮$/, ''))).size).toBe(bordas.length)
+  })
+
+  it('a razão e o comando são os de antes, e o artefato desce para linha própria', () => {
+    const linhas = textos({ entrada: bloqueado, apresentacao: VIVA, largura: 100 })
+    expect(linhas.some((texto) => texto.includes('/reversa-sync'))).toBe(true)
+    expect(linhas.some((texto) => texto.includes('⎿'))).toBe(true)
+  })
+
+  it('sem bloqueio, a moldura não é desenhada e a frase permanece', () => {
+    const linhas = textos({ apresentacao: VIVA, largura: 100 })
+    expect(linhas.some((texto) => texto.includes(`! ${TITULOS.blocking}`))).toBe(false)
+    expect(linhas.some((texto) => texto.includes('Nada aguarda decisão humana.'))).toBe(true)
+  })
+})
+
+describe('os glifos de seção e de ação (feature 016, RF-04, RF-05, RF-07)', () => {
+  it('o glifo do título muda ao fechar e volta ao reabrir', () => {
+    const titulo = (alvo: EntradaDoQuadro): string =>
+      linhasDoQuadro(alvo).find((linha) => semCursor(linha.texto).startsWith(TITULOS.decomposition))?.texto ?? ''
+
+    const aberta = naDecomposicao(null)
+    const fechada = { ...aberta, estado: { ...aberta.estado, secoesFechadas: new Set(['decomposition'] as const) } }
+    expect(titulo(aberta)).toContain('▾')
+    expect(titulo(fechada)).toContain('▸')
+    expect(titulo({ ...fechada, estado: aberta.estado })).toContain('▾')
+  })
+
+  it('a contagem vai ao lado do título, no atenuado, e o título selecionado no destaque', () => {
+    const linha = linhasDoQuadro(naDecomposicao(null)).find((desenhada) => desenhada.selecionada)
+    expect(linha?.trechos).toContainEqual({ texto: TITULOS.decomposition, papel: 'destaque' })
+    expect(linha?.trechos).toContainEqual({ texto: ' (5)', papel: 'atenuado' })
+    expect(linha?.trechos[0]).toEqual({ texto: '❯ ', papel: 'acento' })
+  })
+
+  it('cada ação traz um de três glifos distintos, no papel do estado dela', () => {
+    const marcas = linhasDoQuadro(naDecomposicao(null))
+      .flatMap((linha) => linha.trechos ?? [])
+      .filter((trecho) => ['✓ ', '→ ', '· '].includes(trecho.texto))
+    expect(marcas.filter((m) => m.texto === '✓ ').every((m) => m.papel === 'concluido')).toBe(true)
+    expect(marcas.filter((m) => m.texto === '→ ')).toEqual([{ texto: '→ ', papel: 'atencao' }])
+    expect(marcas.filter((m) => m.texto === '· ').every((m) => m.papel === 'atenuado')).toBe(true)
+    expect(new Set(marcas.map((m) => m.texto)).size).toBe(3)
+  })
+
+  it('só o item selecionado traz o glifo de seleção, também sem cor alguma', () => {
+    const linhas = linhasDoQuadro(naDecomposicao(2))
+    const comGlifo = linhas.filter((linha) => linha.texto.trimStart().startsWith('❯'))
+    expect(comGlifo).toHaveLength(1)
+    expect(comGlifo[0].selecionada).toBe(true)
+    expect(comGlifo[0].texto).toMatch(/T00\d/)
+  })
+})
+
+describe('o dado secundário em linha própria (feature 016, RF-06, D-19)', () => {
+  it('a descrição termina antes do caminho, que vem abaixo, recuado, atrás do glifo de continuação', () => {
+    const linhas = linhasDoQuadro(naDecomposicao(0))
+    const indice = linhas.findIndex((linha) => linha.selecionada)
+    // A vista põe a próxima ação em primeiro lugar, e aqui ela é a T004.
+    expect(linhas[indice].texto).toContain('T004 aberto')
+    expect(linhas[indice].texto).not.toContain('src/x4.ts')
+    expect(linhas[indice + 1].texto).toMatch(/^\s+⎿ `?src\/x4\.ts/)
+    expect(linhas[indice + 1].trechos.every((trecho) => trecho.papel === 'atenuado' || trecho.texto.trim() === '')).toBe(true)
+  })
+
+  it('o artefato fica na linha principal, que é a que a confirmação lê', () => {
+    expect(artefatoSelecionado(naDecomposicao(0))).toContain('src/x4.ts')
+  })
+
+  it('o bloco da seleção conta a linha principal e as secundárias', () => {
+    expect(blocoDaSelecao(naDecomposicao(0))).toBe(2)
+    expect(blocoDaSelecao(naDecomposicao(null))).toBe(1)
+  })
+
+  it('a passada tem a mesma disposição: o caminho em linha própria, sem cursor e sem moldura', () => {
+    const linhas = textos({ cursor: false })
+    const acao = linhas.findIndex((texto) => texto.includes('T001 feito'))
+    expect(linhas[acao]).not.toContain('src/x1.ts')
+    expect(linhas[acao + 1]).toContain('⎿')
+    expect(linhas.some((texto) => /[╭╮╰╯│]/.test(texto))).toBe(false)
+  })
+})
+
+describe('a janela estreita e a cor desligada (feature 016, RF-12, RF-13)', () => {
+  it('a 59 colunas nenhuma moldura é desenhada, nenhuma linha estoura, e os quatro fatos ficam', () => {
+    const linhas = textos({ apresentacao: VIVA, largura: 59 })
+    expect(linhas.some((texto) => /[╭╮╰╯│]/.test(texto))).toBe(false)
+    for (const texto of linhas) expect([...texto].length, texto).toBeLessThanOrEqual(59)
+    const tudo = linhas.join('\n')
+    for (const fato of ['Projeto:', 'Raiz observada:', 'Lido em:', 'Leitura íntegra.']) {
+      expect(tudo).toContain(fato)
+    }
+  })
+
+  it('a 59 colunas os glifos e o conteúdo continuam lá', () => {
+    const linhas = textos({ apresentacao: VIVA, largura: 59 })
+    expect(linhas.some((texto) => texto.includes('▾'))).toBe(true)
+    expect(linhas.some((texto) => texto.includes('✓'))).toBe(true)
+  })
+
+  it('a 60 colunas a moldura volta, e a 80 o alinhamento é íntegro', () => {
+    expect(textos({ apresentacao: VIVA, largura: 60 })[0].startsWith('╭─')).toBe(true)
+    const linhas = textos({ apresentacao: VIVA, largura: 80 })
+    const fim = linhas.findIndex((texto) => texto.startsWith('╰'))
+    for (const texto of linhas.slice(0, fim + 1)) expect([...texto].length).toBe(80)
+  })
+
+  it('a cor desligada não muda o quadro: o compositor nem sabe que ela existe', () => {
+    // O degrau de cor não é entrada do compositor. Molduras e glifos estão no
+    // texto, e é por isso que sobrevivem a `NO_COLOR` e a `--sem-cor`.
+    const linhas = textos({ apresentacao: VIVA, largura: 100 })
+    expect(linhas.some((texto) => texto.startsWith('╭─'))).toBe(true)
+    expect(linhas.some((texto) => texto.includes('▾'))).toBe(true)
+  })
+
+  it('no jogo de sete bits, nenhum glifo e nenhuma moldura saem dos sete bits', () => {
+    const linhas = linhasDoQuadro(naDecomposicao(1, { apresentacao: { molduras: true, glifos: 'sete-bits' } }))
+    const tudo = linhas.map((linha) => linha.texto).join('\n')
+    expect(tudo).not.toMatch(/[╭╮╰╯│─▾▸❯✓→⎿…●○↑↓]/)
+    expect(tudo).toContain('[-] ')
+    expect(linhas.find((linha) => linha.selecionada)?.texto.trimStart().startsWith('> ')).toBe(true)
+    // A prosa acentuada sai como está: é o limite conhecido deste degrau.
+    expect(tudo).toContain('Decomposição')
+  })
+})
+
+describe('texto hostil vindo do disco, de ponta a ponta (feature 016, T051, NFR de segurança, D-20)', () => {
+  const ESC = String.fromCharCode(0x1b)
+  const HOSTIL = `limpa a tela ${ESC}[2J${ESC}[H e segue`
+  const DE_CONTROLE = /[\u0000-\u001f\u007f-\u009f]/
+
+  /** A carga de sempre, com a descrição de toda ação fechada trocada pela hostil. */
+  function cargaHostil() {
+    const texto = JSON.stringify(payloadFixture()).replaceAll('"feito"', JSON.stringify(HOSTIL))
+    return JSON.parse(texto) as ReturnType<typeof payloadFixture>
+  }
+
+  it('a fixture é de fato hostil: a descrição chega ao compositor com o caractere de controle', () => {
+    expect(JSON.stringify(cargaHostil())).toContain('\\u001b[2J')
+  })
+
+  for (const apresentacao of [undefined, VIVA, { molduras: true, glifos: 'sete-bits' } as const]) {
+    it(`nenhuma linha traz ponto de código de controle, nem em \`texto\` nem em \`trechos\` (${apresentacao?.glifos ?? 'sem apresentação'})`, () => {
+      const linhas = linhasDoQuadro(pedido({ entrada: entrada({ loaded: cargaHostil() }), apresentacao }))
+      for (const linha of linhas) {
+        expect(linha.texto).not.toMatch(DE_CONTROLE)
+        for (const trecho of linha.trechos ?? []) expect(trecho.texto).not.toMatch(DE_CONTROLE)
+      }
+    })
+  }
+
+  it('a sequência aparece neutralizada, como texto visível', () => {
+    const tudo = textos({ entrada: entrada({ loaded: cargaHostil() }) }).join('\n')
+    expect(tudo).toContain('␛[2J␛[H')
+    expect(tudo).toContain('limpa a tela')
+  })
+})
+
+describe('o desempenho da composição (feature 016, T052, NFR de desempenho, D-21)', () => {
+  it('compor um quadro de mais de 500 linhas, já com a ênfase por trecho, leva menos de 50 ms', () => {
+    const grande = entrada({
+      loaded: payloadFixture({ decomposition: decompositionFixture(150, 150) }),
+    })
+    const alvo = pedido({ entrada: grande, apresentacao: VIVA, largura: 100, altura: 40 })
+    expect(linhasDoQuadro(alvo).length).toBeGreaterThan(500)
+
+    // A melhor de cinco, depois de aquecer: o que se mede é a composição, e
+    // não a primeira compilação do caminho nem o vizinho que tomou o processador.
+    comporQuadro(alvo)
+    const tempos = Array.from({ length: 5 }, () => {
+      const inicio = performance.now()
+      comporQuadro(alvo)
+      return performance.now() - inicio
+    })
+    expect(Math.min(...tempos)).toBeLessThan(50)
   })
 })

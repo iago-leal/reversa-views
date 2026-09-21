@@ -54,6 +54,8 @@ import type { SectionName } from '../../webview/domain/types.ts'
 import type { ItemDaSecao, SecaoDesenhada } from '../tipos.ts'
 import { faixaDeBloqueio, TITULO_DO_BLOQUEIO } from './bloqueio.ts'
 import { secaoDeAnomalias, secaoDaSonda, secaoDePolitica } from './diagnostico.ts'
+import { GLIFOS, juntar } from './glifos.ts'
+import type { Glifos } from './glifos.ts'
 
 /** O título de cada seção, na letra em que o painel o desenha. */
 export const TITULOS: Record<SectionName, string> = {
@@ -82,20 +84,24 @@ function par(rotulo: string, valor: string | number | null): ItemDaSecao {
 /**
  * Todas as seções, na ordem que o painel fixa.
  * @param carga - a leitura que o host entregou.
+ * @param glifos - o jogo em uso, que decide o separador de campos (feature 016, D-12).
  * @returns as onze, em ordem.
  */
-export function secoesDoQuadro(carga: SetProcessData): SecaoDesenhada[] {
+export function secoesDoQuadro(
+  carga: SetProcessData,
+  glifos: Glifos = GLIFOS.unicode,
+): SecaoDesenhada[] {
   const porNome: Record<SectionName, () => SecaoDesenhada> = {
-    blocking: () => faixaDeBloqueio(carga),
+    blocking: () => faixaDeBloqueio(carga, glifos),
     forward: () => secaoDoForward(carga),
-    decomposition: () => secaoDaDecomposicao(carga),
-    panorama: () => secaoDoPanorama(carga),
-    history: () => secaoDoHistorico(carga),
-    bugs: () => secaoDosBugs(carga),
-    discovery: () => secaoDaDescoberta(carga),
-    origem: () => secaoDaOrigem(carga),
+    decomposition: () => secaoDaDecomposicao(carga, glifos),
+    panorama: () => secaoDoPanorama(carga, glifos),
+    history: () => secaoDoHistorico(carga, glifos),
+    bugs: () => secaoDosBugs(carga, glifos),
+    discovery: () => secaoDaDescoberta(carga, glifos),
+    origem: () => secaoDaOrigem(carga, glifos),
     policy: () => secaoDePolitica(carga),
-    anomalies: () => secaoDeAnomalias(carga),
+    anomalies: () => secaoDeAnomalias(carga, glifos),
     probe: () => secaoDaSonda(carga),
   }
   return sectionOrder().map((nome) => porNome[nome]())
@@ -132,7 +138,7 @@ function secaoDoForward(carga: SetProcessData): SecaoDesenhada {
 }
 
 /** A decomposição da feature ativa, na ordem e no corte que o cartão decide. */
-function secaoDaDecomposicao(carga: SetProcessData): SecaoDesenhada {
+function secaoDaDecomposicao(carga: SetProcessData, glifos: Glifos): SecaoDesenhada {
   const { decomposition } = carga
   if (!decomposition.lida) {
     return {
@@ -158,25 +164,32 @@ function secaoDaDecomposicao(carga: SetProcessData): SecaoDesenhada {
       vista.total === 0
         ? ['A feature ativa não tem ação alguma declarada.']
         : [`Próxima ação: ${vista.proxima ?? 'nenhuma aberta'}`],
+    // Feature 016, D-13: o glifo de estado sai do texto e vira MARCA, que é o
+    // que deixa colorir o glifo sem colorir a linha; o caminho e o instante
+    // saem do texto e viram dado secundário, em linha própria sob a descrição.
+    // A marca descreve o que o glifo já dizia, e não julga: próxima e fechada
+    // continuam vindo de `decompositionView`.
     itens: vista.linhas.map((linha) => ({
-      texto: [
-        linha.proxima ? '→' : linha.acao.fechada ? '✓' : '·',
-        linha.acao.id,
-        linha.acao.descricao,
-        linha.acao.arquivoAlvo,
-        linha.ultimoEvento === null ? null : brasiliaInstant(linha.ultimoEvento).text,
-      ]
+      texto: [linha.acao.id, linha.acao.descricao]
         .filter((parte) => parte !== null && parte !== '')
         .join(' '),
       artefato: linha.acao.arquivoAlvo,
       alerta: linha.proxima,
+      marca: linha.proxima ? 'proxima' : linha.acao.fechada ? 'fechada' : 'aberta',
+      secundarios: secundarios(
+        [
+          linha.acao.arquivoAlvo,
+          linha.ultimoEvento === null ? null : brasiliaInstant(linha.ultimoEvento).text,
+        ],
+        glifos,
+      ),
     })),
     recolhivel: true,
   }
 }
 
 /** O panorama do produto, nos grupos e na ordem que a mesma função pura decide. */
-function secaoDoPanorama(carga: SetProcessData): SecaoDesenhada {
+function secaoDoPanorama(carga: SetProcessData, glifos: Glifos): SecaoDesenhada {
   const eixo = carga.greenfield
   if (eixo === undefined) {
     return semLeitura('panorama', 'O eixo greenfield não foi lido por esta leitura.')
@@ -190,16 +203,28 @@ function secaoDoPanorama(carga: SetProcessData): SecaoDesenhada {
   for (const grupo of vista.grupos) {
     for (const componente of grupo.componentes) {
       itens.push({
-        texto: `${componente.nome} · ${componentSituationLabel(componente.situacao).text}${
-          componente.marca === 'ativa' ? ' · ativa' : ''
-        }`,
+        texto: juntar(
+          [
+            componente.nome,
+            componentSituationLabel(componente.situacao).text,
+            componente.marca === 'ativa' ? 'ativa' : null,
+          ],
+          glifos,
+        ),
         artefato: componente.spec ?? null,
       })
     }
   }
   for (const fora of eixo.panorama.foraDoPlano) {
     itens.push({
-      texto: `${fora.id ?? ''}-${fora.nomeCurto ?? fora.pasta} · ${situationLabel(fora.situacao).text} · fora do plano`,
+      texto: juntar(
+        [
+          `${fora.id ?? ''}-${fora.nomeCurto ?? fora.pasta}`,
+          situationLabel(fora.situacao).text,
+          'fora do plano',
+        ],
+        glifos,
+      ),
       artefato: fora.pasta,
       alerta: true,
     })
@@ -224,7 +249,7 @@ function secaoDoPanorama(carga: SetProcessData): SecaoDesenhada {
 }
 
 /** O histórico das entregas, mais recente primeiro, como a leitura o ordenou. */
-function secaoDoHistorico(carga: SetProcessData): SecaoDesenhada {
+function secaoDoHistorico(carga: SetProcessData, glifos: Glifos): SecaoDesenhada {
   const { history } = carga
 
   return {
@@ -237,15 +262,16 @@ function secaoDoHistorico(carga: SetProcessData): SecaoDesenhada {
       ...(history.entradas.length === 0 ? ['Nenhuma entrega anterior foi encontrada.'] : []),
     ],
     itens: history.entradas.map((entrada) => ({
-      texto: [
-        `${entrada.id ?? ''}${entrada.id === null ? '' : '-'}${entrada.nomeCurto ?? entrada.pasta}`,
-        situationLabel(entrada.situacao).text,
-        markLabel(entrada.marca).text,
-        `${entrada.acoes.fechadas}/${entrada.acoes.total} ações`,
-        entrada.resumo,
-      ]
-        .filter((parte) => parte !== null && parte !== '')
-        .join(' · '),
+      texto: juntar(
+        [
+          `${entrada.id ?? ''}${entrada.id === null ? '' : '-'}${entrada.nomeCurto ?? entrada.pasta}`,
+          situationLabel(entrada.situacao).text,
+          markLabel(entrada.marca).text,
+          `${entrada.acoes.fechadas}/${entrada.acoes.total} ações`,
+          entrada.resumo,
+        ],
+        glifos,
+      ),
       artefato: entrada.pasta,
     })),
     recolhivel: true,
@@ -253,7 +279,7 @@ function secaoDoHistorico(carga: SetProcessData): SecaoDesenhada {
 }
 
 /** O registro de bugs, agrupado por contexto e na ordem que o cartão usa. */
-function secaoDosBugs(carga: SetProcessData): SecaoDesenhada {
+function secaoDosBugs(carga: SetProcessData, glifos: Glifos): SecaoDesenhada {
   const registro = carga.bugs
   if (registro === undefined) {
     return semLeitura('bugs', 'O registro de bugs não foi lido por esta leitura.')
@@ -269,18 +295,21 @@ function secaoDosBugs(carga: SetProcessData): SecaoDesenhada {
     itens.push({ texto: `${grupo.contexto} (${grupo.total})`, artefato: grupo.pasta })
     for (const linha of grupo.linhas) {
       itens.push({
-        texto: [
-          linha.proximo ? '→' : '·',
-          linha.bug.id ?? linha.bug.pasta,
-          linha.bug.titulo,
-          linha.bug.estado === null ? linha.bug.estadoBruto : bugStateLabel(linha.bug.estado).text,
-          linha.bug.fase === null ? null : bugPhaseLabel(linha.bug.fase).text,
-          linha.bug.severidade === null ? null : bugSeverityLabel(linha.bug.severidade).text,
-        ]
-          .filter((parte) => parte !== null && parte !== '')
-          .join(' · '),
+        texto: juntar(
+          [
+            linha.bug.id ?? linha.bug.pasta,
+            linha.bug.titulo,
+            linha.bug.estado === null ? linha.bug.estadoBruto : bugStateLabel(linha.bug.estado).text,
+            linha.bug.fase === null ? null : bugPhaseLabel(linha.bug.fase).text,
+            linha.bug.severidade === null ? null : bugSeverityLabel(linha.bug.severidade).text,
+          ],
+          glifos,
+        ),
         artefato: linha.bug.arquivo,
         alerta: linha.proximo,
+        // O registro só conhecia dois glifos, o do próximo e o dos demais, e a
+        // marca diz o mesmo: `bugsView` decide qual é o próximo.
+        marca: linha.proximo ? 'proxima' : 'aberta',
       })
     }
   }
@@ -299,7 +328,7 @@ function secaoDosBugs(carga: SetProcessData): SecaoDesenhada {
 }
 
 /** A descoberta: as cinco fases canônicas e os checkpoints de cada agente. */
-function secaoDaDescoberta(carga: SetProcessData): SecaoDesenhada {
+function secaoDaDescoberta(carga: SetProcessData, glifos: Glifos): SecaoDesenhada {
   const { discovery } = carga.process
   const eixo = carga.discoveryState
 
@@ -327,10 +356,10 @@ function secaoDaDescoberta(carga: SetProcessData): SecaoDesenhada {
     fasesDoCiclo === null
       ? discovery.phases.map((fase) => {
           const marca = phaseMark(fase)
-          return { texto: `${marca.label.text} · ${marca.status}`, artefato: null }
+          return { texto: juntar([marca.label.text, marca.status], glifos), artefato: null }
         })
       : fasesDoCiclo.map((marca) => ({
-          texto: [marca.label.text, marca.status, marca.raw].filter((parte) => parte !== null).join(' · '),
+          texto: juntar([marca.label.text, marca.status, marca.raw], glifos),
           artefato: null,
         }))
 
@@ -344,9 +373,10 @@ function secaoDaDescoberta(carga: SetProcessData): SecaoDesenhada {
     for (const checkpoint of discovery.checkpoints) {
       const marca = checkpointMark(checkpoint)
       itens.push({
-        texto: [marca.label.text, marca.status, marca.instant === null ? null : brasiliaInstant(marca.instant).text]
-          .filter((parte) => parte !== null)
-          .join(' · '),
+        texto: juntar(
+          [marca.label.text, marca.status, marca.instant === null ? null : brasiliaInstant(marca.instant).text],
+          glifos,
+        ),
         artefato: null,
       })
     }
@@ -354,23 +384,26 @@ function secaoDaDescoberta(carga: SetProcessData): SecaoDesenhada {
     for (const checkpoint of eixo.checkpoints) {
       const marca = checkpointStateMark(checkpoint)
       itens.push({
-        texto: [
-          marca.label.text,
-          marca.status,
-          marca.instant === null ? null : brasiliaInstant(marca.instant).text,
-          provenanceText(checkpoint.reconhecidoPor),
-          checkpoint.camposComLista.length === 0
-            ? null
-            : `campos com lista de textos: ${checkpoint.camposComLista.join(', ')}`,
-        ]
-          .filter((parte) => parte !== null && parte !== '')
-          .join(' · '),
+        // O instante fica na linha, e não desce: aqui não há artefato, e uma
+        // linha a mais por checkpoint dobraria a seção sem separar nada (D-13).
+        texto: juntar(
+          [
+            marca.label.text,
+            marca.status,
+            marca.instant === null ? null : brasiliaInstant(marca.instant).text,
+            provenanceText(checkpoint.reconhecidoPor),
+            checkpoint.camposComLista.length === 0
+              ? null
+              : `campos com lista de textos: ${checkpoint.camposComLista.join(', ')}`,
+          ],
+          glifos,
+        ),
         artefato: null,
       })
     }
     for (const registro of nonAgentEntries(eixo)) {
       itens.push({
-        texto: `${registro.chave} · registro aprovado como não sendo agente`,
+        texto: juntar([registro.chave, 'registro aprovado como não sendo agente'], glifos),
         artefato: null,
       })
     }
@@ -387,7 +420,7 @@ function secaoDaDescoberta(carga: SetProcessData): SecaoDesenhada {
 }
 
 /** A origem do projeto: as quatro etapas de `/reversa-new` e o que cada uma deixou. */
-function secaoDaOrigem(carga: SetProcessData): SecaoDesenhada {
+function secaoDaOrigem(carga: SetProcessData, glifos: Glifos): SecaoDesenhada {
   const eixo = carga.greenfield
   if (eixo === undefined) {
     return semLeitura('origem', 'O registro da origem não foi lido por esta leitura.')
@@ -395,7 +428,7 @@ function secaoDaOrigem(carga: SetProcessData): SecaoDesenhada {
 
   const comecou = pipelineStarted(eixo)
   const titulo = comecou
-    ? `${TITULOS.origem} · ${greenfieldStageLabel(eixo.estagio).text}`
+    ? juntar([TITULOS.origem, greenfieldStageLabel(eixo.estagio).text], glifos)
     : TITULOS.origem
 
   return {
@@ -405,14 +438,19 @@ function secaoDaOrigem(carga: SetProcessData): SecaoDesenhada {
     corpo: [scenarioLabel(eixo.cenario).text, ...(eixo.resumo === null ? [] : [eixo.resumo])],
     itens: comecou
       ? originSteps(eixo).map((etapa) => ({
-          texto: `${originStepLabel(etapa.etapa).text} · ${stepStatusLabel(etapa.status).text}${
-            etapa.artefato === null ? '' : ` · ${etapa.artefato}`
-          }`,
+          // O caminho sai do texto e desce, como em toda seção (D-13).
+          texto: juntar([originStepLabel(etapa.etapa).text, stepStatusLabel(etapa.status).text], glifos),
           artefato: etapa.artefato,
         }))
       : [],
     recolhivel: true,
   }
+}
+
+/** O dado secundário de um item, numa linha só; lista vazia quando não há nenhum. */
+function secundarios(partes: readonly (string | null)[], glifos: Glifos): string[] {
+  const texto = juntar(partes, glifos)
+  return texto === '' ? [] : [texto]
 }
 
 /** Uma seção que só tem uma frase a dizer, e diz. */

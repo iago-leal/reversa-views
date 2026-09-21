@@ -380,6 +380,47 @@ unidade de compilação é própria, `tsconfig.cli.json`, e a saída vai para
 painel` a constrói antes de rodar, e a suíte do conteúdo do pacote recusa por
 nome qualquer caminho de `out-cli/` ou de `src/cli/` lá dentro.
 
+### A aparência, e o que ela não muda
+
+A interface viva desenha o cabeçalho, a situação de entrada, o bloqueio e a
+ajuda em **molduras**, marca cada item com um **glifo de estado**, guarda na
+última linha da janela uma **linha de estado** fixa, com a observação, a
+procedência da leitura, as teclas e a posição da rolagem, e fecha o quadro com
+uma seção que só o terminal tem, **Versões e construção**. As onze seções
+compartilhadas seguem na mesma ordem, com as mesmas frases: a aparência veste o
+texto, e não o reescreve. Abaixo de 60 colunas as molduras somem e o resto fica.
+
+A cor tem quatro **degraus**, e o ambiente escolhe qual: 24 bits quando
+`COLORTERM` o declara, 256 quando o `TERM` o diz, 16 nos demais terminais, e
+nenhuma quando a saída não é terminal, o `TERM` é `dumb`, ou `--sem-cor` ou
+`NO_COLOR` pedem. **`--sem-cor` tira a cor, e só ela**: molduras, glifos e linha
+de estado continuam, e todo estado que a cor distingue tem glifo próprio, de modo
+que nada depende dela para ser lido. O fundo vem de `--tema=escuro|claro`, depois
+de `REVERSA_VIEWS_TEMA`, depois de `COLORFGBG`, e na falta de todos é escuro; a
+ferramenta **não pergunta nada ao terminal** para descobri-lo, e valor inválido
+vira aviso na saída de erro, e não recusa. Localidade sem UTF-8 troca glifos e
+molduras pelo jogo de sete bits; a prosa, em português, continua acentuada.
+
+A **passada** garante o texto, e não os bytes: as mesmas frases, na mesma ordem,
+sem moldura, sem cursor, sem linha de estado e sem sequência de escape quando
+redirecionada. Todo texto vindo do disco passa por uma higiene que troca
+caractere de controle por representação visível, para que um `actions.md` hostil
+não comande o terminal de quem o lê.
+
+Os valores de cor moram num módulo só, `src/cli/paleta.ts`, e a sequência de
+escape em outro, `src/cli/terminal.ts`; a suíte de fronteiras confere os dois por
+busca. Para ver a aparência sem abrir um terminal por degrau:
+
+```bash
+npm run amostras:painel        # regrava amostras/painel/*.txt a partir de estado.json
+cat amostras/painel/grau-256-escuro.txt
+```
+
+As amostras são versionadas, e `tests/cli-amostras.spec.ts` reprova enquanto o
+gravado não acompanhar o gerado: mudança de paleta aparece como diferença no
+repositório, e não como surpresa. Elas ficam fora do pacote, e a suíte do
+conteúdo do pacote recusa `amostras/` por nome.
+
 ## O portão visual
 
 **Situação em 2026-09-09, feature 007: cumprido no navegador.** Os sete

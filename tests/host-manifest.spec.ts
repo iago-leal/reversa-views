@@ -104,7 +104,7 @@ describe('comandos da paleta (RF-07, D-11)', () => {
 })
 
 describe('as três unidades de compilação (RF-23, D-04, e D-03 da feature 014)', () => {
-  it('declara os trinta scripts, e apenas eles', () => {
+  it('declara os trinta e dois scripts, e apenas eles', () => {
     expect(Object.keys(manifesto.scripts ?? {})).toEqual([
       'pretest',
       'test',
@@ -141,6 +141,11 @@ describe('as três unidades de compilação (RF-23, D-04, e D-03 da feature 014)
       'contar:anomalias',
       'preaprender:equivalencias',
       'prepromover:equivalencias',
+      // Feature 016: as amostras do painel de terminal, geradas pela unidade de
+      // terminal e gravadas por uma casca em `scripts/`, porque a ferramenta
+      // não escreve (D-23).
+      'preamostras:painel',
+      'amostras:painel',
     ])
   })
 

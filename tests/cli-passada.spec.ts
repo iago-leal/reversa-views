@@ -5,6 +5,14 @@
  * tela. O que ela prende são as três promessas que um script depende: saída
  * sem sequência de escape, JSON válido, e os três códigos de saída conforme o
  * contrato.
+ *
+ * DISPOSIÇÃO (feature 016, T040). O texto da passada deixou de guardar bytes e
+ * passou a guardar GARANTIAS: a identidade de bytes fica só para a saída de
+ * dados, cujos casos aqui não foram tocados. A disposição do texto mudou, com
+ * o dado secundário em linha própria e a seção "Versões e construção" ao fim, e
+ * nenhum caso de antes precisou de reescrita para isso, porque nenhum deles
+ * prendia disposição: todos prendiam fato, ordem e ausência de sequência. O
+ * que se acrescenta ao fim são as garantias da RN-06, uma por caso.
  */
 
 import { describe, expect, it } from 'vitest'
@@ -156,5 +164,97 @@ describe('a saída legível por máquina (RF-21)', () => {
     expect(lido.processo).toBeNull()
     expect(lido.sonda).toBeNull()
     expect(lido.entrada).toBe('error')
+  })
+})
+
+describe('as garantias do texto da passada (feature 016, T040, RN-06, RF-15, RF-19)', () => {
+  const COM_COR = { grau: '24bits', tema: 'escuro', glifos: 'unicode' } as const
+  const SEQUENCIA_DE_COR = /\u001b\[[\d;]*m/g
+
+  /** O texto de uma passada diante de um terminal com cor. */
+  function diante(alvo: EffectiveEntry = entrada(), largura?: number): string {
+    return textoDaPassada({ entrada: alvo, largura, conferenciaLigada: true, apresentacao: COM_COR })
+  }
+
+  it('o texto redirecionado não contém sequência de escape nem caractere de moldura', () => {
+    expect(passada()).not.toContain('\u001b')
+    expect(passada()).not.toMatch(/[╭╮╰╯│]/)
+  })
+
+  it('nenhuma linha passa de oitenta colunas quando o destino não declara largura', () => {
+    for (const linha of passada().split('\n')) expect([...linha].length, linha).toBeLessThanOrEqual(80)
+  })
+
+  it('os fatos do cabeçalho de antes continuam afirmados, todos', () => {
+    const texto = passada()
+    for (const rotulo of ['Projeto:', 'Reversa:', 'Modelo herdado:', 'Extensão:', 'Construída de:', 'Raiz observada:', 'Lido em:', 'Leitura íntegra.']) {
+      expect(texto, rotulo).toContain(rotulo)
+    }
+  })
+
+  it('as onze seções saem na ordem de sempre, com a seção "Versões e construção" ao fim', () => {
+    const linhas = passada().split('\n')
+    const posicoes = sectionOrder().map((nome) => linhas.findIndex((linha) => linha.startsWith(TITULOS[nome])))
+    expect(posicoes.every((posicao) => posicao >= 0)).toBe(true)
+    expect([...posicoes].sort((x, y) => x - y)).toEqual(posicoes)
+    const versoes = linhas.findIndex((linha) => linha.startsWith('Versões e construção'))
+    expect(versoes).toBeGreaterThan(Math.max(...posicoes))
+  })
+
+  it('a frase de procedência está no texto, porque na passada não há linha de estado', () => {
+    const linhas = passada().split('\n')
+    const versoes = linhas.findIndex((linha) => linha.startsWith('Versões e construção'))
+    // A frase é mais larga que oitenta colunas e quebra sem cortar palavra: o
+    // que se compara é o texto, e não a linha.
+    expect(linhas.slice(versoes).join(' ').replace(/\s+/g, ' ')).toContain('esta é a primeira leitura desta sessão')
+    expect(passada()).not.toMatch(/linhas \d+.\d+ de \d+/)
+  })
+
+  it('o caminho e o instante de cada ação vêm em linha própria, como na interface viva', () => {
+    const linhas = passada().split('\n')
+    const acao = linhas.findIndex((linha) => /T00\d (feito|aberto)/.test(linha))
+    expect(linhas[acao]).not.toContain('src/x')
+    expect(linhas[acao + 1]).toMatch(/^\s+⎿ .*src\/x\d\.ts/)
+  })
+
+  it('diante de terminal com cor, o texto sai vestido', () => {
+    expect(diante()).toContain('\u001b[')
+    expect(diante()).toContain('38;2;')
+  })
+
+  it('retiradas as sequências de cor, a saída diante do terminal é idêntica à redirecionada', () => {
+    expect(diante().replace(SEQUENCIA_DE_COR, '')).toBe(passada())
+    expect(diante(entrada(), 60).replace(SEQUENCIA_DE_COR, '')).toBe(passada(entrada(), 60))
+  })
+
+  it('com a cor desligada, é idêntica sem retirar nada', () => {
+    const semCor = textoDaPassada({
+      entrada: entrada(),
+      conferenciaLigada: true,
+      apresentacao: { ...COM_COR, grau: 'nenhuma' },
+    })
+    expect(semCor).toBe(passada())
+  })
+
+  it('diante de terminal não há moldura nem linha de estado', () => {
+    expect(diante()).not.toMatch(/[╭╮╰╯│]/)
+    expect(diante()).not.toMatch(/linhas \d+.\d+ de \d+/)
+  })
+
+  it('nenhuma cor vaza de uma linha para a seguinte', () => {
+    for (const linha of diante().split('\n')) {
+      const ultima = [...linha.matchAll(SEQUENCIA_DE_COR)].at(-1)?.[0]
+      if (ultima !== undefined) expect(ultima, linha).toBe('\u001b[0m')
+    }
+  })
+
+  it('com a localidade sem Unicode, os glifos caem para sete bits e a prosa fica como está', () => {
+    const texto = textoDaPassada({
+      entrada: entrada(),
+      conferenciaLigada: true,
+      apresentacao: { grau: 'nenhuma', tema: 'escuro', glifos: 'sete-bits' },
+    })
+    expect(texto).not.toMatch(/[✓→·⎿…]/)
+    expect(texto).toContain('Decomposição')
   })
 })

@@ -86,6 +86,19 @@ describe('o conteúdo do pacote gerado (RF-21)', () => {
     expect(intrusos, `a ferramenta de terminal entrou no pacote: ${intrusos.join(', ')}`).toEqual([])
   })
 
+  /**
+   * As amostras do painel de terminal ficam FORA do pacote (feature 016, D-23).
+   *
+   * A pasta nasce fora por construção, porque o `.vscodeignore` exclui tudo e
+   * só readmite por ato. A asserção nomeia a recusa, como a vizinha faz: quem
+   * readmitir `amostras/` sem querer vê o intruso com nome.
+   */
+  it.skipIf(PACOTE === undefined)('não leva as amostras do painel dentro (feature 016)', () => {
+    const caminhos = lerEntradas(readFileSync(PACOTE as string)).map((entrada) => entrada.caminho)
+    const intrusos = caminhos.filter((caminho) => caminho.includes('amostras/'))
+    expect(intrusos, `as amostras entraram no pacote: ${intrusos.join(', ')}`).toEqual([])
+  })
+
   it('avisa quando não há pacote para conferir', () => {
     if (PACOTE === undefined) {
       console.warn('nenhum .vsix na raiz: rode `npm run empacotar` para que esta suíte confira')

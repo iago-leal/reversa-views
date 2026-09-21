@@ -22,34 +22,56 @@ import type { SectionName } from '../webview/domain/types.ts'
  * objeto que não existe mais.
  */
 export interface EstadoDeNavegacao {
-  /** Uma das onze, na ordem fixa do painel. */
-  secaoSelecionada: SectionName
+  /** Uma das onze, na ordem fixa do painel, ou a que é só do terminal. */
+  secaoSelecionada: SecaoDoTerminal
   /** Índice dentro da seção; nulo quando a seção não tem item navegável. */
   itemSelecionado: number | null
   /** Começa no padrão que `effectiveCollapsed` já decide para a tela. */
-  secoesFechadas: ReadonlySet<SectionName>
+  secoesFechadas: ReadonlySet<SecaoDoTerminal>
   ajudaVisivel: boolean
   /** O deslocamento vertical, para janela menor que o quadro. */
   primeiraLinhaVisivel: number
 }
 
 /**
- * A ênfase de uma linha, ABSTRATA: nenhuma sequência de escape nasce no
+ * Os papéis de um trecho, ABSTRATOS: nenhuma sequência de escape nasce no
  * desenho, e é isso que permite conferir o quadro inteiro por comparação de
- * texto (D-05).
+ * texto (D-05 da 014; D-02 da 016, que trocou a ênfase por linha por papéis
+ * por trecho).
  *
- * A tradução em cor, negrito ou inversão pertence ao módulo de terminal, e
- * some quando a saída não é terminal ou quando a cor está desligada.
+ * Papel é nome, e não cor: o desenho diz o que cada trecho é, e a tradução em
+ * tom mora em `paleta.ts` e em `terminal.ts`. O vocabulário é fechado porque é
+ * isso que a suíte consegue prender, e `titulo` é peso, e não cor.
  */
-export const ENFASES = ['normal', 'titulo', 'selecionada', 'atenuada', 'alerta'] as const
+export const PAPEIS = [
+  'normal',
+  'titulo',
+  'acento',
+  'destaque',
+  'atenuado',
+  'borda',
+  'concluido',
+  'atencao',
+  'falha',
+] as const
 
-/** Uma das cinco ênfases. */
-export type Enfase = (typeof ENFASES)[number]
+/** Um dos nove papéis. */
+export type Papel = (typeof PAPEIS)[number]
+
+/** Um pedaço de linha com um papel só; a linha é a concatenação deles. */
+export interface Trecho {
+  texto: string
+  papel: Papel
+}
 
 /** Uma linha desenhada, já recortada à largura da janela. */
 export interface LinhaDoQuadro {
+  /** A concatenação dos trechos, que é o que as suítes e a passada leem. */
   texto: string
-  enfase: Enfase
+  /** Os trechos da linha; `trechos.map(t => t.texto).join('') === texto`. */
+  trechos: Trecho[]
+  /** Verdadeiro em no máximo uma linha do quadro: a que está sob o cursor. */
+  selecionada: boolean
   /** O caminho relativo que a confirmação abriria sobre esta linha, ou nulo. */
   artefato: string | null
 }
@@ -59,7 +81,15 @@ export interface Quadro {
   linhas: LinhaDoQuadro[]
   /** Para o deslocamento vertical saber o limite. */
   alturaTotal: number
+  /**
+   * A linha de estado, fora de `linhas` para não rolar e não contar em
+   * `alturaTotal`; nula fora da interface viva (D-17).
+   */
+  linhaDeEstado: LinhaDoQuadro | null
 }
+
+/** O que o glifo de estado de um item já dizia, agora separado do texto (D-13). */
+export type MarcaDeEstado = 'fechada' | 'proxima' | 'aberta'
 
 /**
  * Um item navegável de uma seção: o texto que se lê e o que a confirmação
@@ -75,6 +105,38 @@ export interface ItemDaSecao {
   artefato: string | null
   /** Marca a linha como digna de atenção, sem que isso vire cor aqui. */
   alerta?: boolean
+  /** O estado que o glifo diz; nulo ou ausente quando o item não tem estado. */
+  marca?: MarcaDeEstado | null
+  /** O dado secundário, uma linha cada, atrás do glifo de continuação (RF-06). */
+  secundarios?: string[]
+}
+
+/** O nome da seção que é só do terminal, "Versões e construção" (D-15). */
+export const SECAO_DE_VERSOES = 'versoes'
+
+/**
+ * As seções por que o terminal navega: as onze do painel, mais a dele.
+ *
+ * `SectionName` e `sectionOrder()` são da apresentação compartilhada e não
+ * mudam: a seção nova entra por este tipo, depois das onze, como a faixa de
+ * bloqueio entra antes.
+ */
+export type SecaoDoTerminal = SectionName | typeof SECAO_DE_VERSOES
+
+/** Os quatro degraus de cor, do mais fiel ao nenhum (RN-05). */
+export type GrauDeCor = 'nenhuma' | '16' | '256' | '24bits'
+
+/** O fundo para o qual a paleta é escolhida (RN-04). */
+export type Fundo = 'escuro' | 'claro'
+
+/** Os dois jogos de glifos, de mesma forma (RF-14). */
+export type JogoDeGlifos = 'unicode' | 'sete-bits'
+
+/** O que o ambiente declarou, e que decide como a tela é vestida. */
+export interface Apresentacao {
+  grau: GrauDeCor
+  tema: Fundo
+  glifos: JogoDeGlifos
 }
 
 /**
@@ -84,7 +146,7 @@ export interface ItemDaSecao {
  * cada seção diz não muda com ela.
  */
 export interface SecaoDesenhada {
-  nome: SectionName
+  nome: SecaoDoTerminal
   titulo: string
   /** O número que o painel desenha ao lado do título, quando há um. */
   contagem: number | null

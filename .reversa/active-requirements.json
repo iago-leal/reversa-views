@@ -1,17 +1,10 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/015-fases-fora-do-canone",
-  "feature-id": "015",
-  "short-name": "fases-fora-do-canone",
-  "started-at": "2026-09-21T18:56:59Z",
-  "current-stage": "coding",
-  "stages-completed": [
-    "requirements",
-    "clarify",
-    "plan",
-    "to-do",
-    "audit",
-    "coding"
-  ],
+  "feature-dir": "_reversa_forward/016-visual-do-painel-cli",
+  "feature-id": "016",
+  "short-name": "visual-do-painel-cli",
+  "started-at": "2026-09-21T22:27:16Z",
+  "current-stage": "requirements",
+  "stages-completed": [],
   "paused-features": []
 }

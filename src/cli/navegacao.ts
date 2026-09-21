@@ -15,16 +15,24 @@
  * @module cli/navegacao
  */
 
-import type { EstadoDeNavegacao, TeclaNomeada, Transicao } from './tipos.ts'
-import type { SectionName } from '../webview/domain/types.ts'
+import { SECAO_DE_VERSOES } from './tipos.ts'
+import type { EstadoDeNavegacao, SecaoDoTerminal, TeclaNomeada, Transicao } from './tipos.ts'
 import { COLLAPSIBLE_SECTIONS } from '../webview/domain/types.ts'
+
+/**
+ * O que a ação global de fechar alcança: os cartões do painel, pela lista que
+ * o painel usa, mais a seção que é só do terminal (feature 016, RF-18).
+ *
+ * A faixa de bloqueio continua de fora, porque continua fora da lista.
+ */
+const RECOLHIVEIS: readonly SecaoDoTerminal[] = [...COLLAPSIBLE_SECTIONS, SECAO_DE_VERSOES]
 
 /** O que a máquina precisa saber do quadro para se mover dentro dele. */
 export interface ContextoDeNavegacao {
-  /** As seções, na ordem que o painel fixa. */
-  secoes: readonly SectionName[]
+  /** As seções, na ordem que o painel fixa, com a do terminal ao fim. */
+  secoes: readonly SecaoDoTerminal[]
   /** Quantos itens navegáveis cada seção tem, fechada ou aberta. */
-  itens: ReadonlyMap<SectionName, number>
+  itens: ReadonlyMap<SecaoDoTerminal, number>
   /** A altura do quadro inteiro. */
   alturaTotal: number
   /** A altura da janela que o mostra. */
@@ -33,7 +41,7 @@ export interface ContextoDeNavegacao {
 
 /** Uma posição navegável: o título de uma seção, ou um item dentro dela. */
 interface Posicao {
-  secao: SectionName
+  secao: SecaoDoTerminal
   item: number | null
 }
 
@@ -44,7 +52,7 @@ interface Posicao {
  * @returns o estado inicial, na primeira seção e no topo.
  */
 export function estadoInicial(
-  fechadas: readonly SectionName[],
+  fechadas: readonly SecaoDoTerminal[],
   contexto: ContextoDeNavegacao,
 ): EstadoDeNavegacao {
   return {
@@ -187,8 +195,8 @@ export function navegar(
       return apenas(
         {
           ...estado,
-          secoesFechadas: new Set(COLLAPSIBLE_SECTIONS),
-          itemSelecionado: COLLAPSIBLE_SECTIONS.includes(estado.secaoSelecionada)
+          secoesFechadas: new Set(RECOLHIVEIS),
+          itemSelecionado: RECOLHIVEIS.includes(estado.secaoSelecionada)
             ? null
             : estado.itemSelecionado,
         },

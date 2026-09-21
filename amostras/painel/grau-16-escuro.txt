@@ -1,0 +1,93 @@
+[33m╭─ [0m[1;33mReversa[0m[33m ────────────────────────────────────────────────────────────────────────────────────────╮[0m
+[33m│ [0mProjeto: reversa-views[33m                                                                           │[0m
+[33m│ [0mRaiz observada: /w/reversa-views[33m                                                                 │[0m
+[33m│ [0mLido em: 09/09/2026 12:00 (Brasília)[33m                                                             │[0m
+[33m│ [0mLeitura íntegra.[33m                                                                                 │[0m
+[33m╰──────────────────────────────────────────────────────────────────────────────────────────────────╯[0m
+
+[2m╭─ [0m[1mProcesso lido[0m[2m ──────────────────────────────────────────────────────────────────────────────────╮[0m
+[2m│ [0mReversa instalado na raiz observada; o que segue é o que a leitura encontrou.[2m                    │[0m
+[2m╰──────────────────────────────────────────────────────────────────────────────────────────────────╯[0m
+
+[93m╭─ ! Aguardando decisão humana[0m[2m (1)[0m[93m ────────────────────────────────────────────────────────────────╮[0m
+[93m│ [0m    [93mA feature ativa tem 2 dúvidas sem resposta no requirements. · /reversa-clarify               │[0m
+[93m│ [0m    [2m⎿ _reversa_forward/003-painel-do-processo/requirements.md[0m[93m                                    │[0m
+[93m╰──────────────────────────────────────────────────────────────────────────────────────────────────╯[0m
+
+  [33m▾ [0m[1mCiclo forward[0m
+    [2m3 de 5 ações fechadas[0m
+[33m❯ [0m  [1mEstágio: Execução em progresso[0m
+    Feature ativa: painel-do-processo
+    [2m⎿ _reversa_forward/003-painel-do-processo[0m
+    Ações fechadas: 3
+    Ações abertas: 2
+    Emendas: 0
+    Dúvidas: 2
+    Features pausadas: nenhum
+    Adendo: nenhum
+
+  [33m▾ [0m[1mDecomposição da feature ativa[0m[2m (5)[0m
+    [2mPróxima ação: T004[0m
+    [93m→ [0mT004 aberto
+      [2m⎿ src/x4.ts[0m
+    [2m· [0mT005 aberto
+      [2m⎿ src/x5.ts[0m
+    [32m✓ [0mT001 feito
+      [2m⎿ src/x1.ts[0m
+    [32m✓ [0mT002 feito
+      [2m⎿ src/x2.ts[0m
+    [32m✓ [0mT003 feito
+      [2m⎿ src/x3.ts[0m
+
+  [33m▾ [0m[1mPanorama do produto[0m[2m (5)[0m
+    [2m5 de 5 componentes planejados convergidos.[0m
+    [2mVínculo declarado não lido por esta leitura.[0m
+    empacotamento-e-verificacao · convergida
+    [2m⎿ _reversa_sdd/sdd/empacotamento-e-verificacao.md[0m
+    heranca-e-sincronia · convergida
+    [2m⎿ _reversa_sdd/sdd/heranca-e-sincronia.md[0m
+    leitura-do-processo · convergida
+    [2m⎿ _reversa_sdd/sdd/leitura-do-processo.md[0m
+    painel-do-processo · convergida
+    [2m⎿ _reversa_sdd/sdd/painel-do-processo.md[0m
+    ponte-e-host · convergida
+    [2m⎿ _reversa_sdd/sdd/ponte-e-host.md[0m
+    [93m009-greenfield-e-features-do-prd · em aberto · fora do plano[0m
+    [2m⎿ _reversa_forward/009-greenfield-e-features-do-prd[0m
+    [93m008-cronologia-do-ciclo-bugs · convergida · fora do plano[0m
+    [2m⎿ _reversa_forward/008-cronologia-do-ciclo-bugs[0m
+    [93m007-atualizacao-e-progresso · convergida · fora do plano[0m
+    [2m⎿ _reversa_forward/007-atualizacao-e-progresso[0m
+    [93m006-cartoes-e-cronologia · convergida · fora do plano[0m
+    [2m⎿ _reversa_forward/006-cartoes-e-cronologia[0m
+
+  [33m▸ [0m[1mHistórico das entregas[0m[2m (2)[0m
+
+  [33m▸ [0m[1mRegistro de bugs[0m[2m (3)[0m
+
+  [33m▾ [0m[1mDescoberta[0m
+    Reconhecimento · concluída
+    Escavação · corrente
+    Interpretação · pendente
+    Geração · pendente
+    Revisão · pendente
+    reversa-explorer · concluído em · 09/09/2026 07:00 (Brasília)
+    reversa-archaeologist · em andamento
+
+  [33m▸ [0m[1mOrigem do projeto · specs escritas[0m
+
+  [33m▸ [0m[1mPolítica de escrita[0m[2m (6)[0m
+
+  [33m▸ [0m[1mAnomalias[0m[2m (0)[0m
+
+  [33m▸ [0m[1mRelatório da sonda[0m[2m (0)[0m
+
+  [33m▾ [0m[1mVersões e construção[0m
+    Reversa: 1.3.3
+    Modelo herdado: 420305d
+    Extensão: 0.6.1
+    Construída de: a23711d
+    A conferência de atualização está desligada nesta execução: nenhuma conexão foi aberta.
+    Leitura de 09/09/2026 12:00 (Brasília): esta é a primeira leitura desta sessão.
+
+[33m●[0m[2m Leitura de 09/09/2026 12:00 (Bra…  j k mover · Enter abrir · ? ajuda · q sair[0m  linhas 1–39 de 92 ↓
