@@ -60,8 +60,19 @@ function entrada(payload = payloadFixture()): EffectiveEntry {
   }
 }
 
-/** O cabeçalho desenhado, sobre um desfecho e uma leitura. */
-function cabeçalho(update: UpdateStatus, payload = payloadFixture()): string {
+/**
+ * O cabeçalho desenhado, sobre um desfecho e uma leitura.
+ *
+ * As duas portas do prompt (feature 013) entram com valor neutro: razão nula, que
+ * é ação disponível, e portas que não fazem nada. Os casos que tratam do prompt
+ * passam o que lhes interessa, e os que vieram antes dele seguem dizendo o que
+ * sempre disseram.
+ */
+function cabeçalho(
+  update: UpdateStatus,
+  payload = payloadFixture(),
+  prompt: { razao?: string | null } = {},
+): string {
   return renderToStaticMarkup(
     <Header
       entry={entrada(payload)}
@@ -74,8 +85,21 @@ function cabeçalho(update: UpdateStatus, payload = payloadFixture()): string {
       onCollapseAll={() => {}}
       onSummary={() => {}}
       onCopy={() => {}}
+      promptReason={prompt.razao ?? null}
+      onPromptDraft={() => {}}
+      onCopyPrompt={() => {}}
     />,
   )
+}
+
+/** Um botão do cabeçalho, pelo nome da ação, com os seus atributos. */
+function acao(markup: string, nome: string): { desabilitado: boolean; rotulo: string } | null {
+  const casou = new RegExp(`<button([^>]*data-action="${nome}"[^>]*)>(.*?)</button>`, 's').exec(markup)
+  if (casou === null) return null
+  return {
+    desabilitado: /data-disabled="true"/.test(casou[1] ?? ''),
+    rotulo: (casou[2] ?? '').replace(/<[^>]*>/g, '').trim(),
+  }
 }
 
 /** O trecho da linha do desfecho, com o texto que ela desenha. */
@@ -381,5 +405,76 @@ describe('de onde o comando anunciado se chama (BUG-20260911-FI3O)', () => {
     for (const estado of ['desligada', 'consultando', 'em-dia', 'commit-desconhecido', 'impossivel']) {
       expect(updateLabel(DESFECHOS[estado], RAIZ).command, estado).toBeNull()
     }
+  })
+})
+/**
+ * As duas ações do prompt de correção (T015, feature 013).
+ *
+ * Três coisas se verificam, e as três vieram de defeito previsto no plano. A
+ * ação precisa existir com nome consultável, como as demais. A razão de estar
+ * apagada precisa estar LEGÍVEL, porque botão cinzento não informa quem não vê
+ * cor e não diz por que está cinzento a quem vê. E a confirmação de cópia
+ * precisa nomear o que foi copiado: com dois botões de cópia no mesmo cabeçalho,
+ * um booleano único diria "resumo copiado" depois do clique no prompt, que é
+ * afirmação falsa sobre a área de transferência de quem leu.
+ */
+describe('as ações do prompt de correção (feature 013)', () => {
+  it('desenha as duas ações do prompt, ao lado das duas do resumo', () => {
+    const markup = cabeçalho({ estado: 'em-dia' })
+
+    expect(acao(markup, 'copy-prompt')).not.toBeNull()
+    expect(acao(markup, 'prompt')).not.toBeNull()
+    expect(acao(markup, 'summary')).not.toBeNull()
+    expect(acao(markup, 'copy-summary')).not.toBeNull()
+  })
+
+  it('mantém as duas habilitadas quando a razão é nula', () => {
+    const markup = cabeçalho({ estado: 'em-dia' }, payloadFixture(), { razao: null })
+
+    expect(acao(markup, 'copy-prompt')?.desabilitado).toBe(false)
+    expect(acao(markup, 'prompt')?.desabilitado).toBe(false)
+  })
+
+  it('desabilita as duas quando há razão, e a escreve por extenso', () => {
+    const razao = 'a leitura do estado da descoberta não aconteceu'
+    const markup = cabeçalho({ estado: 'em-dia' }, payloadFixture(), { razao })
+
+    expect(acao(markup, 'copy-prompt')?.desabilitado).toBe(true)
+    expect(acao(markup, 'prompt')?.desabilitado).toBe(true)
+    expect(markup).toContain(razao)
+  })
+
+  it('a razão viaja em elemento próprio, e não apenas no aspecto do botão', () => {
+    const markup = cabeçalho({ estado: 'em-dia' }, payloadFixture(), {
+      razao: 'nenhum checkpoint sem conclusão declarada',
+    })
+
+    expect(markup).toMatch(/data-part="prompt-reason"/)
+  })
+
+  it('não escreve razão alguma quando a ação está disponível', () => {
+    const markup = cabeçalho({ estado: 'em-dia' }, payloadFixture(), { razao: null })
+
+    expect(markup).not.toMatch(/data-part="prompt-reason"/)
+  })
+
+  it('as duas ações do prompt dizem no rótulo que se tratam do prompt', () => {
+    const markup = cabeçalho({ estado: 'em-dia' })
+
+    expect(acao(markup, 'copy-prompt')?.rotulo.toLowerCase()).toContain('prompt')
+    expect(acao(markup, 'prompt')?.rotulo.toLowerCase()).toContain('prompt')
+  })
+
+  it('nasce sem confirmação de cópia alguma', () => {
+    const markup = cabeçalho({ estado: 'em-dia' })
+
+    expect(markup).not.toMatch(/data-part="copy-confirmation"/)
+  })
+
+  it('o rótulo do resumo continua o que era: a feature não renomeia o que existia', () => {
+    const markup = cabeçalho({ estado: 'em-dia' })
+
+    expect(acao(markup, 'copy-summary')?.rotulo).toBe('Copiar o resumo')
+    expect(acao(markup, 'summary')?.rotulo).toBe('Resumir em documento')
   })
 })

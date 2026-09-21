@@ -104,7 +104,7 @@ describe('comandos da paleta (RF-07, D-11)', () => {
 })
 
 describe('as duas unidades de compilação (RF-23, D-04)', () => {
-  it('declara os vinte e dois scripts, e apenas eles', () => {
+  it('declara os vinte e três scripts, e apenas eles', () => {
     expect(Object.keys(manifesto.scripts ?? {})).toEqual([
       'pretest',
       'test',
@@ -128,6 +128,7 @@ describe('as duas unidades de compilação (RF-23, D-04)', () => {
       'estragar:descoberta',
       'aprender:equivalencias',
       'promover:equivalencias',
+      'prompt:harness',
     ])
   })
 

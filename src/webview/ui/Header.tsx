@@ -45,6 +45,22 @@ export interface HeaderProps {
   onSummary: () => void
   /** Put the same summary on the clipboard (RF-17). */
   onCopy: () => void
+  /**
+   * Why the correction prompt is unavailable, in words; null means it is
+   * available (feature 013, RF-19).
+   *
+   * The reason is TEXT and not only a grey button, and this is the whole of the
+   * requirement: a disabled button says nothing at all to a reader who does not
+   * see colour, and says nothing about WHY to one who does. The three reasons
+   * the availability distinguishes -- nothing read, no axis in the payload, no
+   * case in the reading -- are three different facts, and one of them must not
+   * be allowed to read as "this project is fine".
+   */
+  promptReason?: string | null
+  /** Open the correction prompt as an unsaved document (feature 013, RF-22). */
+  onPromptDraft?: () => void
+  /** Put the same prompt on the clipboard (feature 013, RF-22). */
+  onCopyPrompt?: () => void
 }
 
 /** One action of the header, disabled when it would have no effect (RF-04). */
@@ -120,7 +136,11 @@ export function Header(props: HeaderProps): ReactNode {
   // gesture, not a preference, and it says nothing to the host: RF-17 asks the
   // panel to confirm the copy without opening a document, and a dialog would
   // be the interruption the panel does not do.
-  const [copied, setCopied] = useState(false)
+  // WHAT was copied, and not merely that something was. With two copy actions
+  // in the same header, a single boolean would say "resumo copiado" after a
+  // click on the prompt, which is a false statement about the clipboard of the
+  // person reading.
+  const [copied, setCopied] = useState<'resumo' | 'prompt' | null>(null)
 
   // RF-15: o momento da leitura sai daqui já no fuso de Brasília, e o valor
   // absoluto fica no atributo consultável, como RF-16 exige.
@@ -140,6 +160,12 @@ export function Header(props: HeaderProps): ReactNode {
       : updateLabel(update, payload?.builtFromRoot ?? null)
 
   const nothingRead = payload === null
+
+  // Feature 013: the reason decides the two actions of the prompt, and the port
+  // being absent disables them too. A button that looks available and does
+  // nothing is worse than one that says why it cannot.
+  const promptReason = props.promptReason ?? null
+  const noPrompt = promptReason !== null
   const allExpanded = props.collapsedCount === 0
   const allCollapsed = props.collapsedCount >= props.collapsibleCount
 
@@ -220,16 +246,38 @@ export function Header(props: HeaderProps): ReactNode {
           label="Copiar o resumo"
           disabled={nothingRead}
           onClick={() => {
-            setCopied(true)
+            setCopied('resumo')
             props.onCopy()
           }}
         />
+        <Action
+          name="prompt"
+          label="Prompt de correção em documento"
+          disabled={noPrompt || props.onPromptDraft === undefined}
+          onClick={() => props.onPromptDraft?.()}
+        />
+        <Action
+          name="copy-prompt"
+          label="Copiar o prompt de correção"
+          disabled={noPrompt || props.onCopyPrompt === undefined}
+          onClick={() => {
+            setCopied('prompt')
+            props.onCopyPrompt?.()
+          }}
+        />
       </p>
-      {copied ? (
-        <p data-part="copy-confirmation" className="header__confirmation">
-          Resumo copiado para a área de transferência.
+      {promptReason === null ? null : (
+        <p data-part="prompt-reason" className="header__reason muted">
+          {promptReason}
         </p>
-      ) : null}
+      )}
+      {copied === null ? null : (
+        <p data-part="copy-confirmation" className="header__confirmation">
+          {copied === 'resumo'
+            ? 'Resumo copiado para a área de transferência.'
+            : 'Prompt de correção copiado para a área de transferência.'}
+        </p>
+      ) }
       <div data-slot="dispatch" className="header__dispatch"></div>
     </header>
   )

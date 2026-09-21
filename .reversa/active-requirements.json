@@ -1,14 +1,16 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/012-equivalencias-de-checkpoint",
-  "feature-id": "012",
-  "short-name": "equivalencias-de-checkpoint",
-  "started-at": "2026-09-20T20:42:06Z",
-  "current-stage": "to-do",
+  "feature-dir": "_reversa_forward/013-botao-do-prompt",
+  "feature-id": "013",
+  "short-name": "botao-do-prompt",
+  "started-at": "2026-09-20T23:26:42Z",
+  "current-stage": "coding",
   "stages-completed": [
     "requirements",
     "clarify",
-    "plan"
+    "plan",
+    "to-do",
+    "coding"
   ],
   "paused-features": []
 }

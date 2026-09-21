@@ -748,8 +748,54 @@ export function checkpointStateFixture(
     instante: '2026-09-09T10:00:00Z',
     camposComLista: [],
     reconhecidoPor: null,
+    formaElidida: null,
     ...partes,
   }
+}
+
+/**
+ * One checkpoint that declared no conclusion, WITH the elided form (feature
+ * 013).
+ *
+ * It builds the coherent shape rather than just the fields, for the same reason
+ * `recognisedCheckpointFixture` does: the form only ever accompanies this one
+ * situation, and both the instant and the provenance are null beside it. A
+ * fixture free to contradict that would let a bug through the suite that the
+ * invariants exist to catch.
+ * @param agent - the agent name.
+ * @param formaElidida - the elided checkpoint; the `scout` case by default.
+ * @returns the judged checkpoint, with its form.
+ */
+export function undeclaredCheckpointFixture(
+  agent: string,
+  formaElidida: Record<string, string | number | boolean | null> = {
+    timestamp: '2026-05-03T12:10:19Z',
+    files: '<lista de 3>',
+  },
+): CheckpointState {
+  return checkpointStateFixture({
+    agent,
+    situacao: 'conclusao-nao-declarada',
+    instante: null,
+    reconhecidoPor: null,
+    formaElidida,
+  })
+}
+
+/**
+ * The same checkpoint as a host older than feature 013 sends it: the situation
+ * is there, and the field is ABSENT rather than null.
+ *
+ * Absent and null are different statements -- "I did not read the form" and
+ * "this situation asks for none" -- and only the panel can tell them apart, so
+ * the suite needs a fixture that produces each.
+ * @param agent - the agent name.
+ * @returns the checkpoint without the field at all.
+ */
+export function formlessCheckpointFixture(agent: string): CheckpointState {
+  const checkpoint = undeclaredCheckpointFixture(agent)
+  delete checkpoint.formaElidida
+  return checkpoint
 }
 
 /**

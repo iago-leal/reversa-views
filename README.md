@@ -497,3 +497,50 @@ tem o repositório.
 
 Nenhum `state.json` é reescrito em passo algum, nem pelo aprendizado, nem pela
 promoção, nem pela leitura. A tradução acontece em memória e sobre o mapa.
+
+### O prompt de correção: o painel pede, e não conserta
+
+A primeira promoção do mapa derrubou vinte e cinco anomalias a três, e as três
+que sobraram **não devem ser traduzidas**. Nelas o defeito não está na leitura
+nem na falta de um par aprovado: está em quem gravou o checkpoint. Traduzir uma
+delas no mapa esconderia a causa e a deixaria repetir no próximo projeto.
+
+Por isso o cabeçalho ganhou duas ações, ao lado das duas do resumo:
+
+- **Prompt de correção em documento**, que abre o texto num documento não salvo;
+- **Copiar o prompt de correção**, que põe o mesmo texto na área de transferência.
+
+O texto é um pedido pronto para colar no chat do agente que mantém o projeto
+observado. Ele diz onde colar, nomeando a raiz; declara a norma, que é
+`completed_at` com `files`; mostra um bloco por caso, com a **forma elidida** do
+checkpoint, nunca o conteúdo; faz quatro pedidos numerados, sendo o último
+propor a correção na fonte sem aplicá-la; e fecha com quatro proibições. As duas
+ações nascem apagadas quando não há caso, e a **razão** de estarem apagadas sai
+escrita, porque botão cinzento não informa quem não vê cor nem diz por quê a
+quem vê. As três razões são três fatos distintos: nada foi lido, o host não
+mandou o eixo, ou a leitura não tem caso.
+
+O painel não conserta nada, e isso é desenho e não limitação: ele não escreve em
+`state.json` de projeto algum, e o `SKILL.md` que causou o defeito mora fora da
+raiz observada. O que ele faz é dar à pessoa o pedido inteiro, com a causa junto
+do dado.
+
+O painel lê uma raiz por vez, e os três casos moram em três projetos. Para vê-los
+de uma vez há um comando de manutenção:
+
+```bash
+npm run prompt:harness -- --raiz=~/dev
+```
+
+Ele varre os `state.json` da raiz, aplica as duas regras do esquema e o mapa
+aprovado, elide cada checkpoint e escreve **o mesmo texto** do painel em
+`propostas/prompt-harness.md` (`--saida=` troca o destino). Mesmo texto, e não
+texto parecido: `tests/prompt-paridade.spec.ts` compara os dois lados inteiros, e
+divergência ali é defeito de código. Ele não fala com motor algum, não classifica
+coisa alguma e não toca `state.json` de ninguém; a conferência disso é um
+`git status` na raiz varrida logo depois de rodar. Sem caso algum, ele não deixa
+arquivo pela metade: nomeia a causa e sai.
+
+Um cuidado ao usar a varredura: o texto nomeia projeto e caminho absoluto de cada
+caso, e por isso o destino padrão fica de fora do que se versiona por reflexo. A
+elisão protege o conteúdo dos campos, não o nome do projeto onde eles moram.

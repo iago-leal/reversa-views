@@ -857,6 +857,37 @@ export interface CheckpointState {
    * is null, since recognising and not declaring are mutually exclusive.
    */
   reconhecidoPor: { campo: string; valor: string } | null
+  /**
+   * The checkpoint as it is on disk, in FORM and never in content (feature
+   * 013).
+   *
+   * It exists because the panel had nothing to say about the field that caused
+   * the deviation. The measurement of 2026-09-20 made the gap concrete: of the
+   * three checkpoints left in `conclusao-nao-declarada` after the first
+   * promotion, `ps-iagerasmlk/scout` and `transc_audio_mlx/archaeologist`
+   * reached the screen with NO field named at all, because `camposComLista`
+   * only reports list-valued fields and only when `files` is absent. A prompt
+   * built from that would say no more than the screen already says.
+   *
+   * The value is the checkpoint passed through `elidirCheckpoint`: every key
+   * preserved, scalars up to forty characters preserved, and list, long text,
+   * filesystem path and object replaced by a marker of their SHAPE. So
+   * `timestamp` and the counters of `items_done` travel, and findings,
+   * scratchpad paths and file listings do not.
+   *
+   * THREE states, and telling them apart is the point. `undefined` is a host
+   * older than this field, which read nothing. `null` is a situation that asks
+   * for no form. An object is a form that was read. Drawing the first two alike
+   * would hide which of them is a defect.
+   *
+   * It is filled ONLY when `situacao` is `conclusao-nao-declarada`. Whoever
+   * finished, whoever is working and whoever was recognised by an approved pair
+   * have no prompt to compose, and carrying their form would be publishing
+   * without purpose. Two consequences follow, and the suite pins both: a
+   * non-null value implies `reconhecidoPor` is null, and it implies `instante`
+   * is null, since neither coexists with the situation that fills this.
+   */
+  formaElidida?: Record<string, string | number | boolean | null> | null
 }
 
 /**

@@ -55,12 +55,15 @@ const probe: ProbeReport = {
 const ramos = { decomposition: EMPTY_DECOMPOSITION, history: EMPTY_HISTORY, greenfield: EMPTY_GREENFIELD }
 
 import {
+  checkpointStateFixture,
   closedDiscoveryFixture,
   discoveryStateFixture,
+  formlessCheckpointFixture,
   preTwelveDiscoveryFixture,
   recognisedCheckpointFixture,
   payloadFixture,
   processFixture,
+  undeclaredCheckpointFixture,
 } from './helpers/reversa-fixtures.ts'
 
 describe('estados de entrada', () => {
@@ -471,5 +474,84 @@ describe('os campos do reconhecimento por equivalência (feature 012)', () => {
     })
 
     expect(carga.discoveryState?.checkpoints[0]?.situacao).toBe('falhou')
+  })
+})
+/**
+ * O campo da forma elidida (feature 013).
+ *
+ * Ele cresce por dentro de `CheckpointState`, e o topo da carga não ganha nada:
+ * é a mesma regra que a 012 seguiu e que a 010 escreveu, e o caso abaixo a fixa
+ * olhando o FONTE, porque ordem de declaração de interface não existe em tempo
+ * de execução.
+ *
+ * Os três estados do campo são a parte que merece suíte própria. Ausente é host
+ * que não leu, nula é situação que não pede forma, e objeto é forma lida. Quem
+ * desenhar os dois primeiros do mesmo modo esconde qual deles é defeito.
+ */
+describe('o campo da forma elidida (feature 013)', () => {
+  const tipos = readFileSync('src/domain/types.ts', 'utf8')
+
+  /** Os campos de uma interface, na ordem do fonte, com a marca de opcional. */
+  function campos(nome: string): Array<{ nome: string; opcional: boolean }> {
+    const corpo = new RegExp(`export interface ${nome} \\{([\\s\\S]*?)\\n\\}`).exec(tipos)?.[1] ?? ''
+    return [...corpo.matchAll(/^ {2}(\w+)(\??):/gm)].map((m) => ({ nome: m[1] ?? '', opcional: m[2] === '?' }))
+  }
+
+  it('CheckpointState termina com formaElidida, e ela é o único campo opcional', () => {
+    const lista = campos('CheckpointState')
+
+    expect(lista[lista.length - 1]?.nome).toBe('formaElidida')
+    expect(lista[lista.length - 1]?.opcional).toBe(true)
+    expect(lista.slice(0, -1).every((c) => !c.opcional)).toBe(true)
+  })
+
+  it('o topo da carga não ganha campo algum', () => {
+    const corpo = /export interface SetProcessData \{([\s\S]*?)\n\}/.exec(readFileSync('src/host/protocol.ts', 'utf8'))?.[1] ?? ''
+    const declarados = [...corpo.matchAll(/^ {2}(\w+)\??:/gm)].map((m) => m[1])
+
+    expect(declarados).toHaveLength(15)
+    expect(declarados[declarados.length - 1]).toBe('discoveryState')
+  })
+
+  it('DiscoveryStateAxis continua com os cinco campos da 012', () => {
+    expect(campos('DiscoveryStateAxis')).toHaveLength(5)
+  })
+
+  it('atravessa a forma elidida sem transformação', () => {
+    const forma = { timestamp: '2026-05-03T12:10:19Z', files: '<lista de 3>' }
+    const carga = payloadFixture({
+      discoveryState: discoveryStateFixture({
+        checkpoints: [undeclaredCheckpointFixture('scout', forma)],
+      }),
+    })
+
+    expect(carga.discoveryState?.checkpoints[0]?.formaElidida).toEqual(forma)
+  })
+
+  it('trata o campo ausente como leitura que não aconteceu, e não como forma vazia', () => {
+    const carga = payloadFixture({
+      discoveryState: discoveryStateFixture({
+        checkpoints: [formlessCheckpointFixture('scout')],
+      }),
+    })
+    const checkpoint = carga.discoveryState?.checkpoints[0]
+
+    expect(checkpoint).not.toHaveProperty('formaElidida')
+    expect(checkpoint?.formaElidida).toBeUndefined()
+  })
+
+  it('distingue os três estados do campo', () => {
+    const ausente = formlessCheckpointFixture('a').formaElidida
+    const nula = checkpointStateFixture({ agent: 'b' }).formaElidida
+    const lida = undeclaredCheckpointFixture('c').formaElidida
+
+    expect(ausente).toBeUndefined()
+    expect(nula).toBeNull()
+    expect(lida).not.toBeNull()
+  })
+
+  it('não acrescenta comando algum ao canal', () => {
+    expect(WEBVIEW_COMMANDS).toHaveLength(7)
+    expect(RESERVED_COMMAND).toBe('dispatch')
   })
 })

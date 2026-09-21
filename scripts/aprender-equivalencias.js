@@ -16,12 +16,12 @@
  * @module scripts/aprender-equivalencias
  */
 
-const { existsSync, readFileSync, readdirSync, statSync, writeFileSync } = require('node:fs')
-const { homedir } = require('node:os')
+const { existsSync, readFileSync, writeFileSync } = require('node:fs')
 const path = require('node:path')
 
 const { coletar } = require('./equivalencias/coletar')
 const { elidirCheckpoint } = require('./equivalencias/elidir')
+const { lerEstados, resolverRaiz } = require('./equivalencias/estados')
 const { lerMapaDeModulo, DESTINO } = require('./equivalencias/gerar-mapa')
 const { MODELO_PADRAO, criarClassificador } = require('./equivalencias/motor')
 const { escreverProposta } = require('./equivalencias/proposta')
@@ -35,45 +35,6 @@ const PROPOSTA = 'propostas/equivalencias.md'
 function argumento(argumentos, nome, padrao) {
   const achado = argumentos.find((a) => a.startsWith(`--${nome}=`))
   return achado === undefined ? padrao : achado.slice(nome.length + 3)
-}
-
-/** O til do começo, resolvido, porque quem digita a raiz digita `~/dev`. */
-function resolverRaiz(bruta) {
-  const expandida = bruta.startsWith('~') ? path.join(homedir(), bruta.slice(1)) : bruta
-  return path.resolve(expandida)
-}
-
-/**
- * Os `state.json` de uma raiz: o dela própria, se houver, e o de cada filha.
- * @param {string} raiz - a pasta a varrer.
- * @returns {{projeto: string, stateJson: string}[]} o que foi lido.
- */
-function lerEstados(raiz) {
-  const candidatos = [raiz]
-  try {
-    for (const nome of readdirSync(raiz)) {
-      const filha = path.join(raiz, nome)
-      try {
-        if (statSync(filha).isDirectory()) candidatos.push(filha)
-      } catch {
-        // Pasta que não se deixa olhar não para a varredura.
-      }
-    }
-  } catch {
-    // Raiz ilegível: sobra ela própria, e o relato dirá que nada foi achado.
-  }
-
-  const estados = []
-  for (const pasta of candidatos) {
-    const arquivo = path.join(pasta, '.reversa', 'state.json')
-    if (!existsSync(arquivo)) continue
-    try {
-      estados.push({ projeto: path.basename(pasta), stateJson: readFileSync(arquivo, 'utf8') })
-    } catch {
-      // Arquivo ilegível é um projeto a menos, nunca uma rodada a menos.
-    }
-  }
-  return estados
 }
 
 /** Uma linha no terminal, que é o registro desta ferramenta. */

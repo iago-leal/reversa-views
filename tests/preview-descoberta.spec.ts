@@ -239,6 +239,10 @@ describe('cada caso produz o estado que promete', () => {
       instante: null,
       camposComLista: ['achados', 'arquivos_canonicos'],
       reconhecidoPor: { campo: 'status', valor: 'concluido' },
+      // A forma elidida da feature 013 acompanha UMA situação só, e esta não é
+      // ela: quem foi reconhecido por par aprovado não vai a prompt algum, e a
+      // nulidade escrita aqui é a invariante lida de fora.
+      formaElidida: null,
     })
     // E o caso continua mostrando a situação que ele existe para mostrar: o
     // `scout` traz `estado: "pronto"`, que ninguém aprovou.

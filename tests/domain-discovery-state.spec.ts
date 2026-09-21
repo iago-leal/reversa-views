@@ -467,4 +467,181 @@ describe('o mapa de equivalências aprovadas', () => {
       }
     })
   })
+
+/**
+ * A forma elidida do checkpoint desviante (feature 013, T007, T008, T009).
+ *
+ * Ela existe porque o painel não tinha o que dizer sobre o campo que causou o
+ * desvio: dos três casos que sobraram depois da primeira promoção do mapa, dois
+ * chegavam à tela sem campo algum nomeado, e o terceiro sem os contadores que
+ * sustentam o argumento. Estes casos guardam as três coisas que a decisão
+ * implica: que a forma nasce onde se prometeu, que ela não nasce onde não se
+ * prometeu, e que o seu conteúdo é forma e nunca conteúdo.
+ */
+describe('a forma elidida do checkpoint (feature 013)', () => {
+  /** O eixo lido sobre a fixtura dos três casos, sem mapa aprovado algum. */
+  function casos(mapa?: MapaDeEquivalencias) {
+    return readDiscoveryState({
+      stateJson: fixture('casos-do-prompt'),
+      anomalias: [],
+      ...(mapa === undefined ? {} : { equivalencias: mapa }),
+    })
+  }
+
+  /** Um checkpoint pelo nome do agente, que os casos nomeiam. */
+  function checkpoint(nome: string) {
+    const achado = casos().checkpoints.find((c) => c.agent === nome)
+    if (achado === undefined) throw new Error(`a fixtura não traz ${nome}`)
+    return achado
+  }
+
+  describe('as chaves e os valores (T007)', () => {
+    it('preserva as chaves do disco, inclusive as que o esquema conhece', () => {
+      const disco = JSON.parse(fixture('casos-do-prompt')) as {
+        checkpoints: Record<string, Record<string, unknown>>
+      }
+
+      for (const [agente, entry] of Object.entries(disco.checkpoints)) {
+        expect(Object.keys(checkpoint(agente).formaElidida ?? {}), agente).toEqual(
+          Object.keys(entry),
+        )
+      }
+    })
+
+    it('nenhum valor é lista ou objeto: a forma que viaja é rasa', () => {
+      for (const c of casos().checkpoints) {
+        for (const [chave, valor] of Object.entries(c.formaElidida ?? {})) {
+          expect(Array.isArray(valor), `${c.agent}.${chave}`).toBe(false)
+          expect(typeof valor === 'object' && valor !== null, `${c.agent}.${chave}`).toBe(false)
+        }
+      }
+    })
+
+    it('traz o campo que resolve o caso do scout, que nenhum outro campo transporta', () => {
+      const scout = checkpoint('scout')
+
+      expect(scout.formaElidida?.timestamp).toBe('2026-05-03T12:10:19Z')
+      // A prova de que o campo era necessário: sem ele, este checkpoint chega
+      // à tela sem nada, porque `files` presente cala `camposComLista`.
+      expect(scout.camposComLista).toEqual([])
+    })
+
+    it('traz os contadores do redator_progress, que sustentam a pergunta que antecede a correção', () => {
+      const forma = checkpoint('redator_progress').formaElidida
+
+      expect(forma?.items_done).toBe(3)
+      expect(forma?.items_total).toBe(6)
+      expect(forma?.last_completed_at).toBe('2026-04-28T20:10:00Z')
+    })
+
+    it('reduz as listas à contagem, sem os itens', () => {
+      const forma = checkpoint('redator_progress').formaElidida
+
+      expect(forma?.items_pending).toBe('<lista de 3>')
+      expect(forma?.items_completed).toBe('<lista de 16>')
+      expect(JSON.stringify(forma)).not.toContain('SPEC-GOV-02')
+    })
+
+    it('distingue modules_pending vazio de ausente, que é o caso do archaeologist', () => {
+      const forma = checkpoint('archaeologist').formaElidida
+
+      expect(forma).toHaveProperty('modules_pending')
+      expect(forma?.modules_pending).toBe('<lista de 0>')
+    })
+  })
+
+  describe('a invariante central: a forma nasce só onde há prompt a compor (T008)', () => {
+    it('preenche a forma em todo checkpoint em conclusão não declarada', () => {
+      const eixo = casos()
+
+      expect(eixo.checkpoints).toHaveLength(3)
+      for (const c of eixo.checkpoints) {
+        expect(c.situacao, c.agent).toBe('conclusao-nao-declarada')
+        expect(c.formaElidida, c.agent).not.toBeNull()
+      }
+    })
+
+    it('deixa a forma nula no checkpoint concluído pelo campo canônico', () => {
+      const eixo = readDiscoveryState({ stateJson: fixture('checkpoint-parcial'), anomalias: [] })
+      const concluido = eixo.checkpoints.find((c) => c.situacao === 'concluido')
+
+      expect(concluido).toBeDefined()
+      expect(concluido?.formaElidida).toBeNull()
+    })
+
+    it('deixa a forma nula no checkpoint em andamento', () => {
+      const eixo = readDiscoveryState({ stateJson: fixture('checkpoint-parcial'), anomalias: [] })
+      const andando = eixo.checkpoints.find((c) => c.situacao === 'em-andamento')
+
+      expect(andando).toBeDefined()
+      expect(andando?.formaElidida).toBeNull()
+    })
+
+    it('deixa a forma nula no checkpoint reconhecido por par aprovado', () => {
+      const eixo = casos({
+        pares: [
+          { campo: 'timestamp', valor: '2026-05-03t12:10:19z', leitura: 'concluido', aprovadoEm: '2026-09-20', evidencia: [] },
+        ],
+        naoAgentes: [],
+      })
+      const reconhecido = eixo.checkpoints.find((c) => c.agent === 'scout')
+
+      expect(reconhecido?.situacao).toBe('concluido')
+      expect(reconhecido?.formaElidida).toBeNull()
+    })
+
+    it('deixa a forma nula no checkpoint que o par aprovado lê como falha', () => {
+      const eixo = readDiscoveryState({
+        stateJson: fixture('checkpoint-que-falhou'),
+        anomalias: [],
+        equivalencias: {
+          pares: [
+            { campo: 'status', valor: 'failed', leitura: 'falhou', aprovadoEm: '2026-09-20', evidencia: [] },
+          ],
+          naoAgentes: [],
+        },
+      })
+      const falhou = eixo.checkpoints.find((c) => c.situacao === 'falhou')
+
+      expect(falhou).toBeDefined()
+      expect(falhou?.formaElidida).toBeNull()
+    })
+
+    it('não dá forma a quem não é agente: a chave aprovada sai sem ela', () => {
+      const eixo = casos({
+        pares: [],
+        naoAgentes: [{ chave: 'redator_progress', aprovadoEm: '2026-09-20', evidencia: [] }],
+      })
+
+      expect(eixo.registrosNaoAgentes.map((r) => r.chave)).toEqual(['redator_progress'])
+      expect(eixo.registrosNaoAgentes[0]).not.toHaveProperty('formaElidida')
+    })
+  })
+
+  describe('as duas invariantes derivadas (T009)', () => {
+    it('forma preenchida implica procedência nula', () => {
+      for (const c of casos().checkpoints) {
+        if (c.formaElidida === null || c.formaElidida === undefined) continue
+        expect(c.reconhecidoPor, c.agent).toBeNull()
+      }
+    })
+
+    it('forma preenchida implica instante nulo', () => {
+      for (const c of casos().checkpoints) {
+        if (c.formaElidida === null || c.formaElidida === undefined) continue
+        expect(c.instante, c.agent).toBeNull()
+      }
+    })
+
+    it('vale sobre os sete vocabulários, e não só sobre os três casos', () => {
+      const eixo = readDiscoveryState({ stateJson: fixture('vocabularios-de-conclusao'), anomalias: [] })
+
+      expect(eixo.checkpoints.length).toBeGreaterThan(3)
+      for (const c of eixo.checkpoints) {
+        const temForma = c.formaElidida !== null && c.formaElidida !== undefined
+        expect(temForma, c.agent).toBe(c.situacao === 'conclusao-nao-declarada')
+      }
+    })
+  })
+})
 })

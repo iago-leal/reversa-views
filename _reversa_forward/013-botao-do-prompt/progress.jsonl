@@ -1,0 +1,42 @@
+{"ts": "2026-09-20T23:59:53Z", "action": "T001", "status": "done", "files": ["src/domain/types.ts"]}
+{"ts": "2026-09-20T23:59:53Z", "action": "T002", "status": "done", "files": ["src/domain/elisao.ts"]}
+{"ts": "2026-09-20T23:59:53Z", "action": "T003", "status": "done", "files": ["tests/fixtures/descoberta/casos-do-prompt.json"]}
+{"ts": "2026-09-20T23:59:53Z", "action": "T004", "status": "done", "files": ["tests/helpers/reversa-fixtures.ts"]}
+{"ts": "2026-09-20T23:59:53Z", "action": "T005", "status": "done", "files": ["scripts/equivalencias/estados.js", "scripts/aprender-equivalencias.js"]}
+{"ts": "2026-09-20T23:59:53Z", "action": "T005", "status": "note", "files": ["scripts/equivalencias/estados.js"], "nota": "a varredura ganhou o campo pasta, por acrescimo: o prompt precisa nomear a raiz e reconstrui-la no consumidor repetiria conta ja feita"}
+{"ts": "2026-09-21T00:06:20Z", "action": "T006", "status": "done", "files": ["tests/elisao-paridade.spec.ts"]}
+{"ts": "2026-09-21T00:06:20Z", "action": "T007", "status": "done", "files": ["tests/domain-discovery-state.spec.ts"]}
+{"ts": "2026-09-21T00:06:20Z", "action": "T008", "status": "done", "files": ["tests/domain-discovery-state.spec.ts"]}
+{"ts": "2026-09-21T00:06:20Z", "action": "T009", "status": "done", "files": ["tests/domain-discovery-state.spec.ts"]}
+{"ts": "2026-09-21T00:06:20Z", "action": "T010", "status": "done", "files": ["tests/webview-prompt.spec.ts"]}
+{"ts": "2026-09-21T00:06:20Z", "action": "T011", "status": "done", "files": ["tests/webview-prompt.spec.ts"]}
+{"ts": "2026-09-21T00:06:20Z", "action": "T012", "status": "done", "files": ["tests/webview-prompt.spec.ts"]}
+{"ts": "2026-09-21T00:06:20Z", "action": "T013", "status": "done", "files": ["tests/webview-prompt.spec.ts"]}
+{"ts": "2026-09-21T00:06:20Z", "action": "T014", "status": "done", "files": ["tests/webview-prompt.spec.ts"]}
+{"ts": "2026-09-21T00:06:20Z", "action": "T015", "status": "done", "files": ["tests/webview-header.spec.tsx"]}
+{"ts": "2026-09-21T00:06:20Z", "action": "T016", "status": "done", "files": ["tests/prompt-harness.spec.ts"]}
+{"ts": "2026-09-21T00:06:20Z", "action": "T017", "status": "done", "files": ["tests/prompt-paridade.spec.ts"]}
+{"ts": "2026-09-21T00:06:20Z", "action": "T018", "status": "done", "files": ["tests/host-protocol.spec.ts"]}
+{"ts": "2026-09-21T00:06:20Z", "action": "T018", "status": "note", "files": ["tests/host-protocol.spec.ts"], "nota": "T006 e T018 verdes na escrita; as demais ficam vermelhas por desenho ate o nucleo, que e o TDD desta casa"}
+{"ts":"2026-09-20T21:07:00Z","action":"T019","status":"done","files":["src/domain/discovery-state.ts"]}
+{"ts":"2026-09-20T21:07:10Z","action":"T020","status":"done","files":["src/domain/discovery-state.ts"]}
+{"ts":"2026-09-20T21:12:40Z","action":"T021","status":"done","files":["src/webview/domain/prompt.ts"]}
+{"ts":"2026-09-20T21:12:41Z","action":"T022","status":"done","files":["src/webview/domain/prompt.ts"]}
+{"ts":"2026-09-20T21:12:42Z","action":"T023","status":"done","files":["src/webview/domain/prompt.ts"]}
+{"ts":"2026-09-20T21:12:43Z","action":"T024","status":"done","files":[],"note":"nenhum rotulo novo: checkpointStateMark ja devolve a situacao em palavras, e a tela fica intocada"}
+{"ts":"2026-09-20T21:12:50Z","action":"T019","status":"note","note":"as dez asserções vermelhas de domain-discovery-state passaram a verdes: 58 de 58"}
+{"ts":"2026-09-20T21:12:55Z","action":"T021","status":"note","note":"webview-prompt verde por inteiro na primeira execucao: 34 de 34"}
+{"ts":"2026-09-20T21:14:10Z","action":"T025","status":"done","files":["src/webview/ui/Header.tsx"]}
+{"ts":"2026-09-20T21:14:40Z","action":"T026","status":"done","files":["src/webview/ui/App.tsx"]}
+{"ts":"2026-09-20T21:14:41Z","action":"T027","status":"done","files":["src/webview/main.tsx"]}
+{"ts":"2026-09-20T21:17:10Z","action":"T028","status":"done","files":["scripts/prompt-harness.js"]}
+{"ts":"2026-09-20T21:17:30Z","action":"T029","status":"done","files":["package.json","tests/host-manifest.spec.ts"]}
+{"ts":"2026-09-20T21:14:42Z","action":"T030","status":"done","files":["src/webview/main.tsx"],"note":"o log saiu junto com T027, no mesmo useCallback: contagem e via, nunca o texto"}
+{"ts":"2026-09-20T21:19:00Z","action":"T031","status":"done","files":["README.md"]}
+{"ts":"2026-09-20T21:20:00Z","action":"T032","status":"done","files":[],"note":"rodado contra ~/dev: 3 casos, os mesmos tres medidos; saida escrita no scratchpad e NAO em propostas/, porque o texto nomeia projeto e caminho absoluto e propostas/ e versionado em repo com remoto publico"}
+{"ts":"2026-09-20T21:20:10Z","action":"T032","status":"note","note":"state.json intocado: TECH+ e transc_audio_mlx limpos no git, ps-iagerasmlk sem git com mtime de 2026-05-03"}
+{"ts":"2026-09-20T21:20:20Z","action":"T021","status":"corrected","note":"PromptCase perdeu o campo situacao, que nao esta no contrato interfaces/texto-do-prompt.md: a frase virou constante presa pela paridade, e labels.ts ficou intocado"}
+{"ts":"2026-09-20T21:20:30Z","action":"T029","status":"note","note":"duas suites vizinhas atualizadas por consequencia: host-manifest passou a 23 scripts e preview-descoberta ganhou formaElidida nula no checkpoint reconhecido"}
+{"ts":"2026-09-20T21:20:40Z","action":"T032","status":"note","note":"suite inteira verde: 1963 testes em 115 arquivos; typecheck, check:webview e build limpos"}
+{"ts":"2026-09-20T21:22:00Z","action":"legacy-impact","status":"done","files":["_reversa_forward/013-botao-do-prompt/legacy-impact.md"],"note":"cenario greenfield: componente-novo para tudo, Preservadas e Modificadas vazias com nota"}
+{"ts":"2026-09-20T21:22:10Z","action":"regression-watch","status":"done","files":["_reversa_forward/013-botao-do-prompt/regression-watch.md"],"note":"watch principal vazio; 23 observacoes W001-W023 sem peso de regressao"}

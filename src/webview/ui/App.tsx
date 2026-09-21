@@ -80,6 +80,18 @@ export interface AppProps {
   /** The two ways out of RF-12 and RF-17; the text is composed upstream. */
   onSummary?: () => void
   onCopySummary?: () => void
+  /**
+   * The two ways out of the correction prompt, and the reason it is unavailable
+   * (feature 013).
+   *
+   * All three are decided upstream, exactly like the summary: the availability
+   * is apportioned by a single function of the payload, and a component that
+   * derived it again would be a second authority over the same fact. This one
+   * carries them to the header and nothing else.
+   */
+  promptReason?: string | null
+  onPrompt?: () => void
+  onCopyPrompt?: () => void
 }
 
 /**
@@ -143,6 +155,9 @@ export function App(props: AppProps): ReactNode {
           onCollapseAll={() => props.onCollapseAll?.()}
           onSummary={() => props.onSummary?.()}
           onCopy={() => props.onCopySummary?.()}
+          promptReason={props.promptReason ?? null}
+          onPromptDraft={props.onPrompt === undefined ? undefined : () => props.onPrompt?.()}
+          onCopyPrompt={props.onCopyPrompt === undefined ? undefined : () => props.onCopyPrompt?.()}
         />
       )}
 

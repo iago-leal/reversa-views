@@ -31,6 +31,7 @@
  */
 
 import { asRecord, asString, asStringList, parseJsonSafe } from '../heranca/reversa-domain/src/index.ts'
+import { elidirCheckpoint } from './elisao.ts'
 import type {
   AbsorbedAnomaly,
   CheckpointState,
@@ -172,11 +173,28 @@ function lerCheckpoint(
   // `status: "concluido"` next to a populated `modules_pending` is work under
   // way, and reading it the other way round would declare finished an agent
   // that is halfway through.
+  // The elided form travels ONLY with the fourth situation, and the nullity is
+  // WRITTEN in each of the three branches that decide before it rather than
+  // inherited from a shared object. Reading the code is part of the privacy
+  // promise, and a reader who has to infer the nullity has not verified it
+  // (feature 013, RN-14).
   if (instante !== null) {
-    return { ...comum, situacao: 'concluido', instante, reconhecidoPor: null }
+    return {
+      ...comum,
+      situacao: 'concluido',
+      instante,
+      reconhecidoPor: null,
+      formaElidida: null,
+    }
   }
   if (pendentes.length > 0) {
-    return { ...comum, situacao: 'em-andamento', instante: null, reconhecidoPor: null }
+    return {
+      ...comum,
+      situacao: 'em-andamento',
+      instante: null,
+      reconhecidoPor: null,
+      formaElidida: null,
+    }
   }
 
   // Only now: what a person approved. The instant stays null whatever the map
@@ -190,10 +208,24 @@ function lerCheckpoint(
       situacao: par.leitura,
       instante: null,
       reconhecidoPor: { campo: par.campo, valor: par.valor },
+      formaElidida: null,
     }
   }
 
-  return { ...comum, situacao: 'conclusao-nao-declarada', instante: null, reconhecidoPor: null }
+  // Only here, and this is the whole of feature 013. The panel had nothing to
+  // say about the field that caused the deviation: of the three checkpoints
+  // left after the first promotion, two reached the screen with no field named
+  // at all, because `camposComLista` reports list-valued fields and only when
+  // `files` is absent. The form is elided HERE, in the reading, so the webview
+  // never sees the raw checkpoint and the promise is verifiable at the frontier
+  // rather than in the components.
+  return {
+    ...comum,
+    situacao: 'conclusao-nao-declarada',
+    instante: null,
+    reconhecidoPor: null,
+    formaElidida: elidirCheckpoint(entry),
+  }
 }
 
 /**

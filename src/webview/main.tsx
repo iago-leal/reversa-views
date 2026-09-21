@@ -19,6 +19,7 @@ import './theme/theme.css'
 import type { DisplayPreferences, EditorTheme, Notice, SectionName } from './domain/types.ts'
 import { INITIAL_ENTRY, nextEntry } from './domain/entry.ts'
 import { readPreferences, withAll, withCollapsed } from './domain/preferences.ts'
+import { promptAvailability, promptText } from './domain/prompt.ts'
 import { summaryText } from './domain/summary.ts'
 import { App } from './ui/App.tsx'
 import { createBridge, hostApi, listenToHost } from './bridge/messaging.ts'
@@ -30,6 +31,9 @@ const MOUNT_ID = 'root'
 
 /** How the panel asks the editor to call the unsaved document (RF-12). */
 const SUMMARY_TITLE = 'Resumo do processo'
+
+/** The title of the document the correction prompt opens in (feature 013). */
+const PROMPT_TITLE = 'Prompt de correção do checkpoint'
 
 /** The class list of the body, and how to hear about it changing (EC-06). */
 const bodyClasses = {
@@ -158,6 +162,36 @@ function Panel(): ReactNode {
     [bridge, entry],
   )
 
+  /**
+   * The correction prompt, by the exact mould of `summarise` (feature 013).
+   *
+   * The availability is apportioned ONCE, here, and the same apportionment
+   * feeds the button and the text: a screen that decided it twice would
+   * eventually offer a live button beside a refusal, and the refusal would be
+   * the honest one.
+   */
+  const disponibilidade = promptAvailability(entry.loaded)
+
+  const solicitar = useCallback(
+    (how: 'draft' | 'copy') => {
+      const { elegiveis, razao } = promptAvailability(entry.loaded)
+      if (elegiveis.length === 0) {
+        bridge.log(panelLine('main', 'prompt recusado', razao ?? 'não há caso a pedir'))
+        return
+      }
+      const text = promptText(elegiveis)
+      // The count, and never the text: the trail says what was asked for
+      // without repeating what was said, which is the same cut the elision
+      // makes one layer below (RNF-05).
+      bridge.log(
+        panelLine('main', 'prompt composto', `${elegiveis.length} caso(s), por ${how === 'draft' ? 'documento' : 'cópia'}`),
+      )
+      if (how === 'draft') bridge.openDraft(text, PROMPT_TITLE)
+      else bridge.copyText(text)
+    },
+    [bridge, entry],
+  )
+
   return (
     <App
       entry={entry}
@@ -173,6 +207,9 @@ function Panel(): ReactNode {
       onCollapseAll={() => toggleAll(true)}
       onSummary={() => summarise('draft')}
       onCopySummary={() => summarise('copy')}
+      promptReason={disponibilidade.razao}
+      onPrompt={() => solicitar('draft')}
+      onCopyPrompt={() => solicitar('copy')}
     />
   )
 }

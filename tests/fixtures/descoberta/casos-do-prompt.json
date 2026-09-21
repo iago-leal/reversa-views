@@ -1,0 +1,53 @@
+{
+  "_nota": "Os três checkpoints que restaram em conclusão não declarada depois da primeira promoção do mapa, medidos em ~/dev em 2026-09-20 e escritos aqui, não copiados. São o insumo da feature 013: cada um deles é uma variedade distinta do mesmo defeito, e o prompt precisa dar conta das três. Reunidos num state.json só porque o que se prova é a composição do texto, e não a leitura de três discos.",
+  "_variedades": {
+    "redator_progress": "campo fora do esquema com contadores: o argumento é que o trabalho NÃO terminou, e ele mora em items_done de items_total. Nenhum campo atual do eixo o transporta.",
+    "scout": "instante sob o nome errado, com files no lugar certo. camposComLista se cala porque files está presente, de modo que sem a forma elidida o painel não tem o que dizer.",
+    "archaeologist": "modules_pending presente e VAZIO, e nada mais. Ausência de pendência não é afirmação de fim, e não há campo fora do esquema a apontar."
+  },
+  "version": "1.3.3",
+  "project": "casos-do-prompt",
+  "user_name": "iago",
+  "output_folder": "_reversa_sdd",
+  "phase": "geracao",
+  "completed": ["reconhecimento", "escavacao", "interpretacao"],
+  "pending": ["geracao", "revisao"],
+  "checkpoints": {
+    "redator_progress": {
+      "items_total": 6,
+      "items_done": 3,
+      "items_pending": [
+        "sdd/SPEC-GOV-02-nda-tracking.md",
+        "sdd/SPEC-INTEGRA-01-notion-sync.md",
+        "traceability/code-spec-matrix.md"
+      ],
+      "items_completed": [
+        "sdd/SPEC-CORE-01.md",
+        "sdd/SPEC-CORE-02.md",
+        "sdd/SPEC-CORE-03.md",
+        "sdd/SPEC-CORE-04.md",
+        "sdd/SPEC-CORE-05.md",
+        "sdd/SPEC-CORE-06.md",
+        "sdd/SPEC-CORE-07.md",
+        "sdd/SPEC-CORE-08.md",
+        "sdd/SPEC-CORE-09.md",
+        "sdd/SPEC-CORE-10.md",
+        "sdd/SPEC-CORE-11.md",
+        "sdd/SPEC-CORE-12.md",
+        "sdd/SPEC-CORE-13.md",
+        "sdd/SPEC-CORE-14.md",
+        "sdd/SPEC-CORE-15.md",
+        "sdd/SPEC-CORE-16.md"
+      ],
+      "last_completed_at": "2026-04-28T20:10:00Z"
+    },
+    "scout": {
+      "timestamp": "2026-05-03T12:10:19Z",
+      "files": ["PS/inventory.md", "PS/dependencies.md", ".reversa/context/surface.json"]
+    },
+    "archaeologist": {
+      "modules_analyzed": ["transcricao-audio-mlx"],
+      "modules_pending": []
+    }
+  }
+}
