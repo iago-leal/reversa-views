@@ -4,7 +4,7 @@ id: BUG-20260921-J2ZK
 display_number: 13
 title: Bug encerrado com bloqueio declarado ainda sobe à faixa de espera
 status: resolved
-phase: closed
+phase: delivering
 severity: low
 priority: P3
 created: 2026-09-21

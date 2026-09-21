@@ -4,7 +4,7 @@ id: BUG-20260921-WNU6
 display_number: 12
 title: Comentário de fim de linha no front matter é lido como valor, e lista vazia vira bloqueio
 status: resolved
-phase: closed
+phase: delivering
 severity: medium
 priority: P2
 created: 2026-09-21
