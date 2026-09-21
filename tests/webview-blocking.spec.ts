@@ -247,6 +247,26 @@ describe('as três condições de bug na faixa (RF-10)', () => {
     expect(razoes).toEqual([])
   })
 
+  it('bloqueio declarado em bug encerrado não produz linha (BUG-20260921-J2ZK)', () => {
+    const razoes = razoesDeBug([
+      bugDeRegistro({
+        id: 'BUG-FECHADO',
+        bloqueado: true,
+        estado: 'resolved',
+        travado: true,
+        encerrado: '2026-09-10',
+      }),
+    ])
+    expect(razoes).toEqual([])
+  })
+
+  it('espera por decisão humana em bug encerrado continua produzindo linha', () => {
+    const razoes = razoesDeBug([
+      bugDeRegistro({ id: 'BUG-ESPERA-FECHADO', fase: 'awaiting-human', travado: true }),
+    ])
+    expect(razoes).toHaveLength(1)
+  })
+
   it('sem nenhuma das três, a faixa não ganha linha de bug', () => {
     const razoes = razoesDeBug([
       bugDeRegistro({ id: 'BUG-COMUM' }),

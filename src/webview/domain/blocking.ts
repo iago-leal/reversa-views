@@ -142,10 +142,12 @@ const BUG_COMMAND = '/reversa-debugger-fix'
  * fields of the bug: the band reads top to bottom, and what comes first is a
  * decision.
  *
- * Only the third is gated on the bug not being closed, and the asymmetry is the
- * requirement's rather than an oversight: a lock over a bug that still declares
- * a wait or a blocking condition is a registry that contradicts itself, and
- * saying so is worth a line.
+ * The second and the third are gated on the bug not being closed. Until
+ * 2026-09-21 only the third was, on the reasoning that a lock over a bug that
+ * still declares a blocking condition is a registry that contradicts itself.
+ * The maintainer decided otherwise on that date (BUG-20260921-J2ZK): the band
+ * names what waits on a person, and a closed bug waits on nobody. The first
+ * condition was not part of that decision, and stays ungated.
  * @param bug - the bug being read.
  * @returns the reasons it carries, as sentences; empty when it carries none.
  */
@@ -157,7 +159,7 @@ function bugConditions(bug: BugEntry): string[] {
   // and stays off the band: raising a value whose meaning this version cannot
   // establish would be the panel guessing what the registrar meant.
   if (bug.fase === AWAITING_HUMAN) razoes.push('aguarda decisão humana')
-  if (bug.bloqueado) razoes.push('está bloqueado por condição declarada')
+  if (!bug.travado && bug.bloqueado) razoes.push('está bloqueado por condição declarada')
   if (!bug.travado && HIGH_SEVERITIES.has(bug.severidade ?? '')) {
     razoes.push('tem severidade alta e não foi encerrado')
   }

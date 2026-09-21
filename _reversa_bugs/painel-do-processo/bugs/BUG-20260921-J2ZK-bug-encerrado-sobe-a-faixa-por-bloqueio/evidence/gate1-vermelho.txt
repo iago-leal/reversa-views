@@ -1,0 +1,5 @@
+   × as três condições de bug na faixa (RF-10) > bloqueio declarado em bug encerrado não produz linha (BUG-20260921-J2ZK) 4ms
+     → expected [ { …(3) } ] to deeply equal []
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  6 failed | 56 passed (62)
