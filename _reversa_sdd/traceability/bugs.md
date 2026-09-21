@@ -1,4 +1,4 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-21T19:31:52.623Z a partir de 13 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-21T19:36:56.133Z a partir de 13 bugs -->
 # Bugs por artefato de spec
 
 Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec muda só por adendo.
@@ -21,7 +21,7 @@ Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec mud
 
 ## `_reversa_forward/008-cronologia-do-ciclo-bugs/requirements.md`
 
-- BUG-20260921-J2ZK (active, P3): Bug encerrado com bloqueio declarado ainda sobe à faixa de espera
+- BUG-20260921-J2ZK (resolved/fixed, P3): Bug encerrado com bloqueio declarado ainda sobe à faixa de espera
   - seção `#5-requisitos-funcionais` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260921-J2ZK-bug-encerrado-sobe-a-faixa-por-bloqueio`
 
 ## `_reversa_sdd/addenda/006-cartoes-e-cronologia.md`
@@ -46,9 +46,9 @@ Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec mud
 
 ## `_reversa_sdd/addenda/008-cronologia-do-ciclo-bugs.md`
 
-- BUG-20260921-J2ZK (active, P3): Bug encerrado com bloqueio declarado ainda sobe à faixa de espera
+- BUG-20260921-J2ZK (resolved/fixed, P3): Bug encerrado com bloqueio declarado ainda sobe à faixa de espera
   - seção `#impacto-por-artefato-da-extração` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260921-J2ZK-bug-encerrado-sobe-a-faixa-por-bloqueio`
-- BUG-20260921-WNU6 (active, P2): Comentário de fim de linha no front matter é lido como valor, e lista vazia vira bloqueio
+- BUG-20260921-WNU6 (resolved/fixed, P2): Comentário de fim de linha no front matter é lido como valor, e lista vazia vira bloqueio
   - seção `#impacto-por-artefato-da-extração` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260921-WNU6-comentario-de-fim-de-linha-vira-valor`
 
 ## `_reversa_sdd/addenda/010-vinculo-spec-e-conferencias.md`
@@ -95,7 +95,7 @@ Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec mud
   - seção `#15-decisões-tomadas-decision-log` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260914-DTLI-notacao-markdown-vira-valor-desconhecido`
 - BUG-20260919-3P7S (resolved/fixed, P2): Pasta com actions.md acima do teto de bytes aparece como sem ações, e a perda não é declarada
   - seção `#11-edge-cases-e-tratamento-de-erros` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260919-3P7S-acoes-acima-do-teto-viram-sem-acoes`
-- BUG-20260921-WNU6 (active, P2): Comentário de fim de linha no front matter é lido como valor, e lista vazia vira bloqueio
+- BUG-20260921-WNU6 (resolved/fixed, P2): Comentário de fim de linha no front matter é lido como valor, e lista vazia vira bloqueio
   - seção `#11-edge-cases-e-tratamento-de-erros` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260921-WNU6-comentario-de-fim-de-linha-vira-valor`
 
 ## `_reversa_sdd/sdd/painel-do-processo.md`

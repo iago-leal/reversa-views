@@ -3,8 +3,8 @@ schema_version: 1
 id: BUG-20260921-WNU6
 display_number: 12
 title: Comentário de fim de linha no front matter é lido como valor, e lista vazia vira bloqueio
-status: active
-phase: delivering
+status: resolved
+phase: closed
 severity: medium
 priority: P2
 created: 2026-09-21
@@ -84,12 +84,13 @@ delivery:
   pull_request: null
   ci: null
   merged: 2026-09-21
-  published: null
+  published: 2026-09-21, pacote reversa-views-0.14.5.vsix gerado e instalado por code --install-extension
 
 versions:
   fixed_in: "0.14.4"
   built_from: b574ce4
-  packaged: "2026-09-21, reversa-views-0.14.4.vsix gerado; instalação no editor pendente"
+  packaged: "2026-09-21, reversa-views-0.14.4.vsix, construído de b574ce4"
+  installed: "0.14.5, construída de ebfb5bc, confirmada em iagoleal-local.reversa-views@0.14.5"
 
 backports: []
 
@@ -101,8 +102,9 @@ change_set:
 
 closure:
   policy: package
-  satisfied: false
-resolution_kind: null
+  satisfied: true
+  satisfied_at: 2026-09-21
+resolution_kind: fixed
 ---
 
 # Comentário de fim de linha no front matter é lido como valor, e lista vazia vira bloqueio
@@ -227,8 +229,9 @@ outros 3 passam, como guarda do que não podia quebrar (`evidence/gate1-vermelho
 
 ### Fechamento
 
-Política `package`: commit `00001d0` e pacote `reversa-views-0.14.4.vsix`, construído de `b574ce4`. Falta a
-instalação no editor, com `code --install-extension reversa-views-0.14.4.vsix`. Sem trava até lá.
+Política `package`, satisfeita em 2026-09-21: commit `00001d0`, pacote `reversa-views-0.14.4.vsix` e
+instalação confirmada em `iagoleal-local.reversa-views@0.14.5`, construída de `ebfb5bc`, que contém a
+correção. Trava gravada em `DONE.md`.
 
 ## Agent Notes
 

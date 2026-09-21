@@ -1,4 +1,4 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-21T19:31:52.623Z a partir de 13 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-21T19:36:56.133Z a partir de 13 bugs -->
 # Grafo de bugs · painel-do-processo
 
 ```mermaid
@@ -14,8 +14,8 @@ graph LR
   BUG_20260914_DTLI["nº 8 · BUG-20260914-DTLI<br/>A notação que o próprio Reversa escreve na tabela vira tipo desconhecido e tabela não reconhecida<br/>resolved · high"]
   BUG_20260919_3P7S["nº 11 · BUG-20260919-3P7S<br/>Pasta com actions.md acima do teto de bytes aparece como sem ações, e a perda não é declarada<br/>resolved · medium"]
   BUG_20260919_BQBJ["nº 10 · BUG-20260919-BQBJ<br/>Adaptações declaradas com trecho indentado não são literais no YAML, e a ressincronização para em A4<br/>open · medium"]
-  BUG_20260921_J2ZK["nº 13 · BUG-20260921-J2ZK<br/>Bug encerrado com bloqueio declarado ainda sobe à faixa de espera<br/>active · low"]
-  BUG_20260921_WNU6["nº 12 · BUG-20260921-WNU6<br/>Comentário de fim de linha no front matter é lido como valor, e lista vazia vira bloqueio<br/>active · medium"]
+  BUG_20260921_J2ZK["nº 13 · BUG-20260921-J2ZK<br/>Bug encerrado com bloqueio declarado ainda sobe à faixa de espera<br/>resolved · low"]
+  BUG_20260921_WNU6["nº 12 · BUG-20260921-WNU6<br/>Comentário de fim de linha no front matter é lido como valor, e lista vazia vira bloqueio<br/>resolved · medium"]
   BUG_20260909_VHII -. related-to (proposed) .-> BUG_20260909_FJBD
   BUG_20260910_74UL -. related-to (proposed) .-> BUG_20260909_FJBD
   BUG_20260910_SVZU -. related-to (proposed) .-> BUG_20260909_VHII
@@ -44,7 +44,5 @@ Nenhum cluster por causa estrutural: não há aresta `supported` ou `confirmed` 
 | Bug | Score |
 |---|---|
 | BUG-20260919-BQBJ | 2 |
-| BUG-20260921-J2ZK | 1 |
-| BUG-20260921-WNU6 | 1 |
 
 Fórmula: causados×3 + bloqueados×2 + regressões×4 + relacionados×1 (máx. 3), só sobre arestas `supported`/`confirmed`.
