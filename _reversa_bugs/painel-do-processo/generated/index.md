@@ -1,4 +1,4 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-19T21:05:58.287Z a partir de 11 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-21T19:31:31.817Z a partir de 13 bugs -->
 # Índice de bugs · painel-do-processo
 
 ## Resumo
@@ -7,10 +7,11 @@
 |---|---|
 | resolved | 10 |
 | open | 1 |
+| active | 2 |
 
 | Phase | Bugs |
 |---|---|
-| delivering | 10 |
+| delivering | 12 |
 | triaging | 1 |
 
 ## Abertos e ativos
@@ -18,6 +19,8 @@
 | # | ID | Prioridade | Severidade | area/module/feature | Título | Caminho | Bloqueado |
 |---|---|---|---|---|---|---|---|
 | 10 | BUG-20260919-BQBJ | P2 | medium | heranca/heranca-e-sincronia/004-heranca-e-sincronia | Adaptações declaradas com trecho indentado não são literais no YAML, e a ressincronização para em A4 | `_reversa_bugs/painel-do-processo/bugs/BUG-20260919-BQBJ-adaptacao-indentada-nao-e-literal` | não |
+| 13 | BUG-20260921-J2ZK | P3 | low | webview/painel-do-processo/unclassified | Bug encerrado com bloqueio declarado ainda sobe à faixa de espera | `_reversa_bugs/painel-do-processo/bugs/BUG-20260921-J2ZK-bug-encerrado-sobe-a-faixa-por-bloqueio` | não |
+| 12 | BUG-20260921-WNU6 | P2 | medium | leitura/leitura-do-processo/unclassified | Comentário de fim de linha no front matter é lido como valor, e lista vazia vira bloqueio | `_reversa_bugs/painel-do-processo/bugs/BUG-20260921-WNU6-comentario-de-fim-de-linha-vira-valor` | não |
 
 ## Resolvidos
 

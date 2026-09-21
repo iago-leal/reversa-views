@@ -1,4 +1,4 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-19T21:05:58.287Z a partir de 11 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-21T19:31:31.817Z a partir de 13 bugs -->
 # Grafo de bugs · painel-do-processo
 
 ```mermaid
@@ -14,6 +14,8 @@ graph LR
   BUG_20260914_DTLI["nº 8 · BUG-20260914-DTLI<br/>A notação que o próprio Reversa escreve na tabela vira tipo desconhecido e tabela não reconhecida<br/>resolved · high"]
   BUG_20260919_3P7S["nº 11 · BUG-20260919-3P7S<br/>Pasta com actions.md acima do teto de bytes aparece como sem ações, e a perda não é declarada<br/>resolved · medium"]
   BUG_20260919_BQBJ["nº 10 · BUG-20260919-BQBJ<br/>Adaptações declaradas com trecho indentado não são literais no YAML, e a ressincronização para em A4<br/>open · medium"]
+  BUG_20260921_J2ZK["nº 13 · BUG-20260921-J2ZK<br/>Bug encerrado com bloqueio declarado ainda sobe à faixa de espera<br/>active · low"]
+  BUG_20260921_WNU6["nº 12 · BUG-20260921-WNU6<br/>Comentário de fim de linha no front matter é lido como valor, e lista vazia vira bloqueio<br/>active · medium"]
   BUG_20260909_VHII -. related-to (proposed) .-> BUG_20260909_FJBD
   BUG_20260910_74UL -. related-to (proposed) .-> BUG_20260909_FJBD
   BUG_20260910_SVZU -. related-to (proposed) .-> BUG_20260909_VHII
@@ -25,13 +27,14 @@ graph LR
   BUG_20260919_3P7S -. related-to (proposed) .-> BUG_20260914_5UH7
   BUG_20260919_BQBJ -- related-to --> BUG_20260909_FJBD
   BUG_20260919_BQBJ -- related-to --> BUG_20260914_DTLI
+  BUG_20260921_J2ZK -- related-to --> BUG_20260921_WNU6
 ```
 
 ## Clusters
 
-- `leitura-do-processo`: 6 bug(s): BUG-20260909-FJBD, BUG-20260910-74UL, BUG-20260912-PIPE, BUG-20260914-5UH7, BUG-20260914-DTLI, BUG-20260919-3P7S
+- `leitura-do-processo`: 7 bug(s): BUG-20260909-FJBD, BUG-20260910-74UL, BUG-20260912-PIPE, BUG-20260914-5UH7, BUG-20260914-DTLI, BUG-20260919-3P7S, BUG-20260921-WNU6
 - `empacotamento-e-verificacao`: 2 bug(s): BUG-20260909-VHII, BUG-20260910-SVZU
-- `painel-do-processo`: 2 bug(s): BUG-20260910-WIBK, BUG-20260911-FI3O
+- `painel-do-processo`: 3 bug(s): BUG-20260910-WIBK, BUG-20260911-FI3O, BUG-20260921-J2ZK
 - `heranca-e-sincronia`: 1 bug(s): BUG-20260919-BQBJ
 
 Nenhum cluster por causa estrutural: não há aresta `supported` ou `confirmed` entre os bugs deste contexto.
@@ -41,5 +44,7 @@ Nenhum cluster por causa estrutural: não há aresta `supported` ou `confirmed` 
 | Bug | Score |
 |---|---|
 | BUG-20260919-BQBJ | 2 |
+| BUG-20260921-J2ZK | 1 |
+| BUG-20260921-WNU6 | 1 |
 
 Fórmula: causados×3 + bloqueados×2 + regressões×4 + relacionados×1 (máx. 3), só sobre arestas `supported`/`confirmed`.

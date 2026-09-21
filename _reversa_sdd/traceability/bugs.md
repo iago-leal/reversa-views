@@ -1,4 +1,4 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-19T21:05:58.287Z a partir de 11 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-21T19:31:31.817Z a partir de 13 bugs -->
 # Bugs por artefato de spec
 
 Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec muda só por adendo.
@@ -19,6 +19,11 @@ Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec mud
 - BUG-20260911-FI3O (resolved/fixed, P1): O comando que a faixa anuncia não existe fora do clone, e falha como erro do npm
   - seção `#7-criterios-de-aceitacao` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260911-FI3O-comando-de-atualizacao-nao-existe-fora-do-clone`
 
+## `_reversa_forward/008-cronologia-do-ciclo-bugs/requirements.md`
+
+- BUG-20260921-J2ZK (active, P3): Bug encerrado com bloqueio declarado ainda sobe à faixa de espera
+  - seção `#5-requisitos-funcionais` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260921-J2ZK-bug-encerrado-sobe-a-faixa-por-bloqueio`
+
 ## `_reversa_sdd/addenda/006-cartoes-e-cronologia.md`
 
 - BUG-20260909-FJBD (resolved/fixed, P2): Cabeçalho declara leitura degradada por anomalia cenario-ambiguo na nota de impacto greenfield
@@ -38,6 +43,13 @@ Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec mud
   - seção `#impacto-por-artefato-da-extracao` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260910-WIBK-faixa-anuncia-comando-que-so-confere`
 - BUG-20260911-FI3O (resolved/fixed, P1): O comando que a faixa anuncia não existe fora do clone, e falha como erro do npm
   - seção `#` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260911-FI3O-comando-de-atualizacao-nao-existe-fora-do-clone`
+
+## `_reversa_sdd/addenda/008-cronologia-do-ciclo-bugs.md`
+
+- BUG-20260921-J2ZK (active, P3): Bug encerrado com bloqueio declarado ainda sobe à faixa de espera
+  - seção `#impacto-por-artefato-da-extração` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260921-J2ZK-bug-encerrado-sobe-a-faixa-por-bloqueio`
+- BUG-20260921-WNU6 (active, P2): Comentário de fim de linha no front matter é lido como valor, e lista vazia vira bloqueio
+  - seção `#impacto-por-artefato-da-extração` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260921-WNU6-comentario-de-fim-de-linha-vira-valor`
 
 ## `_reversa_sdd/addenda/010-vinculo-spec-e-conferencias.md`
 
@@ -83,6 +95,8 @@ Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec mud
   - seção `#15-decisões-tomadas-decision-log` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260914-DTLI-notacao-markdown-vira-valor-desconhecido`
 - BUG-20260919-3P7S (resolved/fixed, P2): Pasta com actions.md acima do teto de bytes aparece como sem ações, e a perda não é declarada
   - seção `#11-edge-cases-e-tratamento-de-erros` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260919-3P7S-acoes-acima-do-teto-viram-sem-acoes`
+- BUG-20260921-WNU6 (active, P2): Comentário de fim de linha no front matter é lido como valor, e lista vazia vira bloqueio
+  - seção `#11-edge-cases-e-tratamento-de-erros` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260921-WNU6-comentario-de-fim-de-linha-vira-valor`
 
 ## `_reversa_sdd/sdd/painel-do-processo.md`
 
