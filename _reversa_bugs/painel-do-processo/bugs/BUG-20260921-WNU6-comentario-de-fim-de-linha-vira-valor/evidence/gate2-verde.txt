@@ -1,0 +1,9 @@
+As duas suites tocadas, depois da correcao:
+ Test Files  2 passed (2)
+      Tests  62 passed (62)
+
+Suite inteira (npm test), 2026-09-21:
+ Test Files  125 passed (125)
+      Tests  2189 passed (2189)
+
+typecheck e check:webview: sem saida, sem erro.

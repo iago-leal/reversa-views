@@ -1,0 +1,10 @@
+Linhas de primeiro nivel do front matter com comentario de fim de linha, nos 61 bug.md de ~/dev em 2026-09-21:
+
+afla/_reversa_bugs/painel-indicadores/bugs/BUG-20260914-SRSK-par-orcamento-u9-cfop-5999-fora-da-expedicao/bug.md: blocking: []   # bloqueio externo de 2026-08-24 (G-32) levantado pelo mantenedor em 2026-09-14
+harness/_reversa_bugs/atualizacao-do-core/bugs/BUG-20260813-ZNYF-oferta-de-upgrade-propoe-downgrade/bug.md: module: sync                  # termo acolhido na taxonomy.yaml pelo CHG-004
+harness/_reversa_bugs/atualizacao-do-core/bugs/BUG-20260813-ZNYF-oferta-de-upgrade-propoe-downgrade/bug.md: feature: atualizacao-do-core  # termo acolhido na taxonomy.yaml pelo CHG-004
+harness/_reversa_bugs/encerramento-de-sessao/bugs/BUG-20260811-OYKV-memoria-stale-ritual-vault/bug.md: spec_verdict: spec-gap  # sem adendo: nenhuma spec do harness governa memórias por-projeto de IDE (artefato externo)
+harness/_reversa_bugs/encerramento-de-sessao/bugs/BUG-20260811-TVCP-wrapper-upstream-sem-ancora-de-cwd/bug.md: spec_verdict: spec-gap  # adendo aditivo: _reversa_sdd/addenda/bug-BUG-20260811-TVCP-v001.md
+harness/_reversa_bugs/encerramento-de-sessao/bugs/BUG-20260811-XZ3B-indice-nao-derivado-no-encerramento/bug.md: spec_verdict: spec-desatualizada  # adendo: _reversa_sdd/addenda/bug-BUG-20260811-XZ3B-v001.md
+
+Seis linhas em cinco arquivos; as seis sao comentario legitimo. Uma cai no ramo da lista em linha (blocking) e cinco no ramo do escalar (module, feature, spec_verdict).

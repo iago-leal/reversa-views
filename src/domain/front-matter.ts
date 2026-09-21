@@ -110,7 +110,7 @@ function readBlock(block: readonly string[]): FrontMatter {
     if (found === null) continue
 
     const key = found[1] as string
-    const value = (found[2] ?? '').trim()
+    const value = dropComment((found[2] ?? '').trim())
 
     if (value === '') {
       // A top-level key with no value opens something. Which something is
@@ -137,6 +137,41 @@ function readBlock(block: readonly string[]): FrontMatter {
   }
 
   return { presente: true, falha: null, escalares, listas, naoLidos }
+}
+
+/**
+ * The value with its trailing YAML comment dropped, and nothing else touched.
+ *
+ * In YAML a `#` preceded by whitespace opens a comment that runs to the end of
+ * the line, unless it sits inside quotes. Quotes only count where YAML counts
+ * them: in a value that STARTS quoted, or in an inline list. An apostrophe in
+ * the middle of a plain scalar is a letter, and treating it as an opening quote
+ * would keep the comment of `title: it's here # note`.
+ *
+ * This is the whole of what the reader learns about comments. It stays a
+ * restricted reader: no anchors, no tags, no multi-line flow.
+ * @param value - the text after the first separator, already trimmed.
+ * @returns the value without the comment; empty when the value was only one.
+ */
+function dropComment(value: string): string {
+  if (value.startsWith('#')) return ''
+
+  const quoted = value[0] === '"' || value[0] === "'" || value[0] === '['
+  let open: string | null = null
+
+  for (let index = 0; index < value.length; index += 1) {
+    const char = value[index] as string
+    if (open !== null) {
+      if (open === '"' && char === '\\') index += 1
+      else if (char === open) open = null
+      continue
+    }
+    if (quoted && (char === '"' || char === "'")) open = char
+    else if (char === '#' && /\s/.test(value[index - 1] ?? '')) {
+      return value.slice(0, index).trimEnd()
+    }
+  }
+  return value
 }
 
 /**

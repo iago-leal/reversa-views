@@ -1,0 +1,6 @@
+"blocking: []   # bloqueio externo de 2026-08-24 (G-32) levantado pelo mantenedor em 2026-09-14" => {"escalares":{},"listas":{"blocking":false},"naoLidos":[]}
+"blocking: []" => {"escalares":{},"listas":{"blocking":false},"naoLidos":[]}
+"severity: high  # nota" => {"escalares":{"severity":"high"},"listas":{},"naoLidos":[]}
+"blocking:   # nota" => {"escalares":{},"listas":{"blocking":true},"naoLidos":[]}
+"title: \"Painel # 3: a contagem diverge\"" => {"escalares":{"title":"Painel # 3: a contagem diverge"},"listas":{},"naoLidos":[]}
+"title: cor#fff sem espaco" => {"escalares":{"title":"cor#fff sem espaco"},"listas":{},"naoLidos":[]}

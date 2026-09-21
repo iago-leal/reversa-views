@@ -1,0 +1,13 @@
+   × comentário de fim de linha não é valor (BUG-20260921-WNU6) > a linha real do SRSK do afla lê como lista vazia 4ms
+   × comentário de fim de linha não é valor (BUG-20260921-WNU6) > escalar com comentário devolve só o escalar 1ms
+   × comentário de fim de linha não é valor (BUG-20260921-WNU6) > chave cujo valor é só comentário abre a lista que vem abaixo 0ms
+   × comentário de fim de linha não é valor (BUG-20260921-WNU6) > cerquilha dentro de aspas continua no valor 0ms
+   × comentário de fim de linha não é valor (BUG-20260921-WNU6) > apóstrofo no meio de escalar simples não abre aspas 0ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 6 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  2 failed (2)
+      Tests  6 failed | 56 passed (62)
+     → expected true to be false // Object.is equality
+     → expected 'high  # nota' to be 'high' // Object.is equality
+     → expected undefined to be true // Object.is equality
+     → expected '\'a # b\'  # nota' to be 'a # b' // Object.is equality
+     → expected 'it\'s here # nota' to be 'it\'s here' // Object.is equality
