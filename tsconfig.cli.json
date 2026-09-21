@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "ES2022",
+    "lib": [
+      "ES2022"
+    ],
+    "strict": true,
+    "rewriteRelativeImportExtensions": true,
+    "verbatimModuleSyntax": false,
+    "rootDir": "src",
+    "outDir": "out-cli",
+    "types": [
+      "node"
+    ],
+    "sourceMap": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/cli/**/*.ts"
+  ]
+}

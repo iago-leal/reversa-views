@@ -69,6 +69,23 @@ describe('o conteúdo do pacote gerado (RF-21)', () => {
     ).toBeLessThanOrEqual(TETO_DO_PACOTE_DA_EXTENSAO)
   })
 
+  /**
+   * A ferramenta de terminal da feature 014 fica FORA do pacote (D-03).
+   *
+   * A lista prevista já recusaria os dois caminhos por omissão, e a asserção
+   * existe mesmo assim: ela nomeia o defeito. Bastaria alguém compilar a
+   * ferramenta dentro de `out/` para que ela entrasse pela reinclusão de
+   * `!out/**`, e o intruso apareceria como mais um caminho entre centenas.
+   * Aqui ele aparece com nome.
+   */
+  it.skipIf(PACOTE === undefined)('não leva a ferramenta de terminal dentro (feature 014)', () => {
+    const caminhos = lerEntradas(readFileSync(PACOTE as string)).map((entrada) => entrada.caminho)
+    const intrusos = caminhos.filter(
+      (caminho) => caminho.includes('out-cli/') || caminho.includes('src/cli/'),
+    )
+    expect(intrusos, `a ferramenta de terminal entrou no pacote: ${intrusos.join(', ')}`).toEqual([])
+  })
+
   it('avisa quando não há pacote para conferir', () => {
     if (PACOTE === undefined) {
       console.warn('nenhum .vsix na raiz: rode `npm run empacotar` para que esta suíte confira')

@@ -103,8 +103,8 @@ describe('comandos da paleta (RF-07, D-11)', () => {
   })
 })
 
-describe('as duas unidades de compilação (RF-23, D-04)', () => {
-  it('declara os vinte e três scripts, e apenas eles', () => {
+describe('as três unidades de compilação (RF-23, D-04, e D-03 da feature 014)', () => {
+  it('declara os vinte e seis scripts, e apenas eles', () => {
     expect(Object.keys(manifesto.scripts ?? {})).toEqual([
       'pretest',
       'test',
@@ -129,7 +129,52 @@ describe('as duas unidades de compilação (RF-23, D-04)', () => {
       'aprender:equivalencias',
       'promover:equivalencias',
       'prompt:harness',
+      // Feature 014: a ferramenta de terminal, cuja unidade de compilação é a
+      // terceira e cuja saída fica FORA do pacote instalável (D-03).
+      'compile:cli',
+      'prepainel',
+      'painel',
     ])
+  })
+
+  it('a ferramenta de terminal compila em unidade própria, com saída fora de `out/`', () => {
+    const unidade = JSON.parse(readFileSync('tsconfig.cli.json', 'utf8'))
+    expect(unidade.compilerOptions.outDir).toBe('out-cli')
+    expect(unidade.compilerOptions.rootDir).toBe('src')
+    expect(unidade.include).toEqual(['src/cli/**/*.ts'])
+    // O editor não é alcançável a partir dela: a ferramenta roda fora dele.
+    expect(unidade.compilerOptions.types).toEqual(['node'])
+  })
+
+  it('a unidade do host exclui a ferramenta, como já excluía a tela', () => {
+    const host = JSON.parse(readFileSync('tsconfig.json', 'utf8'))
+    expect(host.exclude).toContain('src/webview/**')
+    expect(host.exclude).toContain('src/cli/**')
+  })
+
+  it('o comando do painel constrói a unidade antes de rodar (D-04)', () => {
+    expect(manifesto.scripts?.prepainel).toBe('npm run compile:cli')
+    expect(manifesto.scripts?.['compile:cli'] ?? '').toContain('tsconfig.cli.json')
+    // O carimbo da construção é gerado antes, pela mesma razão do `pretest`:
+    // ele não está no clone recém-feito, e o ponto de entrada o importa.
+    expect(manifesto.scripts?.['compile:cli'] ?? '').toContain('gerar:carimbo')
+  })
+
+  it('a saída da ferramenta não é versionada, ao lado da do host', () => {
+    const padrões = readFileSync('.gitignore', 'utf8')
+      .split('\n')
+      .map((linha) => linha.trim())
+      .filter((linha) => linha !== '' && !linha.startsWith('#'))
+    expect(padrões).toContain('out-cli/')
+  })
+
+  it('o pacote readmite `out/`, e não readmite a saída da ferramenta', () => {
+    const lista = readFileSync('.vscodeignore', 'utf8')
+      .split('\n')
+      .map((linha) => linha.trim())
+      .filter((linha) => linha.length > 0 && !linha.startsWith('#'))
+    expect(lista).toContain('!out/**')
+    expect(lista.some((linha) => linha.includes('out-cli'))).toBe(false)
   })
 
   it('o build confere a herança localmente e gera a constante antes de compilar (RF-19)', () => {

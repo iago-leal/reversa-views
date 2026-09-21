@@ -1,16 +1,15 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/013-botao-do-prompt",
-  "feature-id": "013",
-  "short-name": "botao-do-prompt",
-  "started-at": "2026-09-20T23:26:42Z",
-  "current-stage": "coding",
+  "feature-dir": "_reversa_forward/014-cli-do-processo",
+  "feature-id": "014",
+  "short-name": "cli-do-processo",
+  "started-at": "2026-09-21T00:53:36Z",
+  "current-stage": "to-do",
   "stages-completed": [
     "requirements",
     "clarify",
     "plan",
-    "to-do",
-    "coding"
+    "to-do"
   ],
   "paused-features": []
 }

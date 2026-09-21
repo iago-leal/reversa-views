@@ -9,6 +9,16 @@
  *
  * No reason executes anything. The command is text to copy, and the reserved
  * dispatch of RF-15 is the place where that would one day change.
+ *
+ * SHARED PRESENTATION, since feature 014. This module used to serve the panel
+ * alone; it now serves TWO surfaces -- the webview and the terminal tool of
+ * `src/cli/` -- and it did not move for that. Moving the folder would have
+ * touched every component, every suite and every delivered addendum without
+ * changing one line of behaviour (D-14), so the change of status is declared
+ * here and pinned by a suite: `tests/cli-boundaries.spec.ts` forbids a new
+ * presentation rule from being born in `src/cli/quadro/`, and
+ * `tests/cli-paridade.spec.tsx` compares what the two surfaces affirm over the
+ * same payload. Drawing is what differs between them; deciding is not.
  * @module webview/domain/blocking
  */
 

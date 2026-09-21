@@ -22,6 +22,7 @@
   ],
   "exclude": [
     "src/heranca/**/tests/**",
-    "src/webview/**"
+    "src/webview/**",
+    "src/cli/**"
   ]
 }

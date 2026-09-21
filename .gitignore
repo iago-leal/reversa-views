@@ -13,6 +13,9 @@
 
 # Build e dependencias
 out/
+# Saida de construcao da ferramenta de terminal: unidade propria, fora de out/
+# para nao entrar no pacote instalavel (feature 014, D-03).
+out-cli/
 node_modules/
 coverage/
 *.vsix

@@ -76,7 +76,10 @@
     "estragar:descoberta": "node scripts/estragar-descoberta.js",
     "aprender:equivalencias": "node scripts/aprender-equivalencias.js",
     "promover:equivalencias": "node scripts/promover-equivalencias.js",
-    "prompt:harness": "node scripts/prompt-harness.js"
+    "prompt:harness": "node scripts/prompt-harness.js",
+    "compile:cli": "npm run gerar:carimbo && tsc -p tsconfig.cli.json",
+    "prepainel": "npm run compile:cli",
+    "painel": "node scripts/painel.js"
   },
   "devDependencies": {
     "@primer/primitives": "11.10.0",

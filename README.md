@@ -332,6 +332,54 @@ Enquanto mexe na tela, `npm run observar:webview` reempacota a cada alteração,
 com mapa de fontes. Recarregar a página é ato seu: o preview não abre canal para
 o navegador.
 
+## O painel no terminal
+
+O mesmo processo, sem abrir o editor:
+
+```bash
+npm run painel
+npm run painel -- --workspace=/caminho/do/projeto
+npm run painel -- --passada | head -40
+npm run painel -- --dados > processo.json
+```
+
+Ele não é um leitor novo: é um terceiro consumidor da mesma leitura, ao lado do
+painel e do preview. Pede ao host a mesma sequência de mensagens que a tela
+recebe e a dobra sobre a mesma máquina de estados de entrada, de modo que as
+onze seções saem na mesma ordem, com os mesmos rótulos e os mesmos números.
+Divergência entre as duas superfícies é defeito, e `tests/cli-paridade.spec.tsx`
+a pega comparando as duas sobre a mesma carga.
+
+Há dois modos, e a saída escolhe qual. Com terminal, nasce a **interface viva**:
+as setas movem a seleção, `←` e `→` fecham e abrem a seção, `Enter` abre o
+artefato no editor que `VISUAL` ou `EDITOR` declara, `r` relê, `?` mostra a
+tabela inteira de teclas e `q` sai. Ela também relê **sozinha** quando o disco
+muda, agrupando uma rajada de escritas numa releitura só, e declara na tela que
+a mudança veio da observação, para que ninguém leia um número acreditando ser o
+que tinha visto antes. Redirecionada, nasce a **passada**: imprime uma vez, sem
+sequência de escape alguma, e termina — `npm run painel > saida.txt` funciona
+sem bandeira, que é a razão de a regra existir.
+
+Três códigos de saída, e a distinção do meio é a que importa num script:
+`0` quando a leitura ocorreu, **inclusive** sem Reversa instalado na raiz; `1`
+quando a leitura falhou; `2` para uso incorreto, que é argumento desconhecido ou
+raiz inexistente. `--sem-conferir` e `REVERSA_VIEWS_SEM_CONFERIR` desligam a
+consulta à origem, e `--sem-cor` e `NO_COLOR` desligam a cor; `--ajuda` descreve
+o resto.
+
+A ferramenta **não escreve arquivo algum**, em modo algum, por argumento algum,
+e `tests/cli-boundaries.spec.ts` o confere lendo os próprios fontes. O único
+processo que ela cria é o do editor, num módulo apartado e sem passar pelo
+shell. O terminal é devolvido como foi encontrado em toda saída, inclusive na
+interrupção por `Ctrl+C`, na suspensão por `Ctrl+Z` e na falha não prevista:
+interface viva que deixa terminal quebrado é pior que nenhuma.
+
+Como o preview e o auxiliar de prompt, ela vive fora do pacote instalável. A
+unidade de compilação é própria, `tsconfig.cli.json`, e a saída vai para
+`out-cli/`, fora de `out/`, que é o que o `.vscodeignore` readmite; `npm run
+painel` a constrói antes de rodar, e a suíte do conteúdo do pacote recusa por
+nome qualquer caminho de `out-cli/` ou de `src/cli/` lá dentro.
+
 ## O portão visual
 
 **Situação em 2026-09-09, feature 007: cumprido no navegador.** Os sete
