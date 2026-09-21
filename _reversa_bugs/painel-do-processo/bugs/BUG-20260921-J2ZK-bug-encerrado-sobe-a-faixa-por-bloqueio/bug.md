@@ -73,6 +73,21 @@ change_risk:
     - uma condição numa função pura, compartilhada pela tela e pelo terminal
     - reversível; nenhuma suíte existente foi reescrita
 
+delivery:
+  branch: master
+  commit: c876920
+  pull_request: null
+  ci: null
+  merged: 2026-09-21
+  published: null
+
+versions:
+  fixed_in: "0.14.4"
+  built_from: b574ce4
+  packaged: "2026-09-21, reversa-views-0.14.4.vsix gerado; instalação no editor pendente"
+
+backports: []
+
 change_set:
   - id: CHG-001
     kind: code
@@ -194,7 +209,8 @@ outro passa, como guarda da primeira condição (`evidence/gate1-vermelho.txt`).
 
 ### Fechamento
 
-Política `package`: falta o pacote instalado no editor. Sem trava até lá.
+Política `package`: commit `c876920` e pacote `reversa-views-0.14.4.vsix`, construído de `b574ce4`. Falta a
+instalação no editor, com `code --install-extension reversa-views-0.14.4.vsix`. Sem trava até lá.
 
 ## Agent Notes
 
