@@ -1,13 +1,12 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-22T20:30:11.456Z a partir de 14 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-22T20:32:20.475Z a partir de 14 bugs -->
 # Índice de bugs · painel-do-processo
 
 ## Resumo
 
 | Status | Bugs |
 |---|---|
-| resolved | 12 |
+| resolved | 13 |
 | open | 1 |
-| active | 1 |
 
 | Phase | Bugs |
 |---|---|
@@ -19,11 +18,10 @@
 | # | ID | Prioridade | Severidade | area/module/feature | Título | Caminho | Bloqueado |
 |---|---|---|---|---|---|---|---|
 | 10 | BUG-20260919-BQBJ | P2 | medium | heranca/heranca-e-sincronia/004-heranca-e-sincronia | Adaptações declaradas com trecho indentado não são literais no YAML, e a ressincronização para em A4 | `_reversa_bugs/painel-do-processo/bugs/BUG-20260919-BQBJ-adaptacao-indentada-nao-e-literal` | não |
-| 14 | BUG-20260922-HTND | P2 | medium | unclassified/painel-do-processo/unclassified | Rajada de setas num só bloco de bytes vale uma tecla só no painel de terminal | `_reversa_bugs/painel-do-processo/bugs/BUG-20260922-HTND-rajada-de-setas-vale-uma-tecla` | não |
 
 ## Resolvidos
 
-- fixed: 12
+- fixed: 13
 
 - BUG-20260909-FJBD (nº 1, fixed, travado): Cabeçalho declara leitura degradada por anomalia cenario-ambiguo na nota de impacto greenfield
 - BUG-20260909-VHII (nº 2, fixed, travado): Extensão instalada anterior à feature 007 não declara procedência nem anuncia atualização
@@ -37,4 +35,5 @@
 - BUG-20260919-3P7S (nº 11, fixed, travado): Pasta com actions.md acima do teto de bytes aparece como sem ações, e a perda não é declarada
 - BUG-20260921-J2ZK (nº 13, fixed, travado): Bug encerrado com bloqueio declarado ainda sobe à faixa de espera
 - BUG-20260921-WNU6 (nº 12, fixed, travado): Comentário de fim de linha no front matter é lido como valor, e lista vazia vira bloqueio
+- BUG-20260922-HTND (nº 14, fixed, travado): Rajada de setas num só bloco de bytes vale uma tecla só no painel de terminal
 

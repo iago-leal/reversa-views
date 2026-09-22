@@ -3,7 +3,7 @@ schema_version: 1
 id: BUG-20260922-HTND
 display_number: 14
 title: Rajada de setas num só bloco de bytes vale uma tecla só no painel de terminal
-status: active
+status: resolved
 phase: delivering
 severity: medium
 priority: P2
@@ -114,10 +114,27 @@ change_set:
     purpose: adendo aditivo com as regras da rajada
     diff: null
 
+delivery:
+  branch: master
+  commit: 014f534
+  pull_request: null
+  ci: null
+  merged: 2026-09-22
+  published: 2026-09-22, pacote reversa-views-0.17.3.vsix gerado e instalado por npm run atualizar -- --aplicar
+
+versions:
+  fixed_in: "0.17.3"
+  built_from: 014f534
+  packaged: "2026-09-22, reversa-views-0.17.3.vsix, construído de 014f534"
+  installed: "0.17.3, confirmada em iagoleal-local.reversa-views@0.17.3"
+
+backports: []
+
 closure:
   policy: package
-  satisfied: false
-resolution_kind: null
+  satisfied: true
+  satisfied_at: 2026-09-22
+resolution_kind: fixed
 ---
 
 # Rajada de setas num só bloco de bytes vale uma tecla só no painel de terminal
@@ -270,8 +287,11 @@ adendo de spec é o próprio arquivo do CHG-003.
 
 ### Fechamento
 
-Política `package`: falta a entrega. O bug segue `active`/`delivering` até commit, pacote e
-instalação por `npm run atualizar -- --aplicar`.
+Política `package`, satisfeita em 2026-09-22: commit `014f534` enviado ao remoto, pacote
+`reversa-views-0.17.3.vsix` construído dele e instalação confirmada em
+`iagoleal-local.reversa-views@0.17.3`. A interface de terminal não viaja no pacote: roda do clone por
+`npm run painel`, cujo `prepainel` recompila `out-cli/`, e por isso vale desde o commit. Trava
+gravada em `DONE.md`.
 
 ## Agent Notes
 
