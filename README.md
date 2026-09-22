@@ -353,7 +353,9 @@ a pega comparando as duas sobre a mesma carga.
 Há dois modos, e a saída escolhe qual. Com terminal, nasce a **interface viva**:
 as setas movem a seleção, `←` e `→` fecham e abrem a seção, `Enter` abre o
 artefato no editor que `VISUAL` ou `EDITOR` declara, `r` relê, `?` mostra a
-tabela inteira de teclas e `q` sai. Ela também relê **sozinha** quando o disco
+tabela inteira de teclas e `q` sai; `PgUp` e `PgDn` movem a seleção uma janela
+por vez, `Ctrl+U` e `Ctrl+D` meia janela, e o redesenho não deixa cópia alguma
+do quadro no histórico do emulador. Ela também relê **sozinha** quando o disco
 muda, agrupando uma rajada de escritas numa releitura só, e declara na tela que
 a mudança veio da observação, para que ninguém leia um número acreditando ser o
 que tinha visto antes. Redirecionada, nasce a **passada**: imprime uma vez, sem

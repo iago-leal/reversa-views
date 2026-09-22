@@ -35,7 +35,11 @@ export interface LinhaDeAjuda {
 /** O título do painel. */
 export const TITULO_DA_AJUDA = 'Teclas'
 
-/** A tabela confirmada pelo usuário em 2026-09-20, na ordem em que foi confirmada. */
+/**
+ * A tabela confirmada pelo usuário em 2026-09-20, na ordem em que foi
+ * confirmada, com as duas linhas de página acrescentadas em 2026-09-21
+ * (feature 017, `interfaces/teclado.md` da 017).
+ */
 export const TABELA_DE_AJUDA: readonly LinhaDeAjuda[] = [
   { tecla: '↑ ↓  k j', efeito: 'Move a seleção entre as linhas navegáveis', emSeteBits: 'setas  k j' },
   { tecla: '← →  h l', efeito: 'Fecha e abre a seção sob a seleção', emSeteBits: 'setas  h l' },
@@ -46,6 +50,9 @@ export const TABELA_DE_AJUDA: readonly LinhaDeAjuda[] = [
   { tecla: 'z', efeito: 'Fecha todas as seções' },
   { tecla: '?', efeito: 'Mostra e esconde esta ajuda' },
   { tecla: 'g / G', efeito: 'Vai ao topo e ao fim do quadro' },
+  // As duas de página, acréscimo da feature 017 (D-09), só de sete bits.
+  { tecla: 'PgUp / PgDn', efeito: 'Move a seleção uma janela acima e abaixo' },
+  { tecla: 'Ctrl+U / Ctrl+D', efeito: 'Move a seleção meia janela acima e abaixo' },
   { tecla: 'q / Esc', efeito: 'Sai, restaurando o terminal' },
   { tecla: 'Ctrl+C', efeito: 'Sai, restaurando o terminal' },
   { tecla: 'Ctrl+Z', efeito: 'Suspende para o shell e retoma inteiro ao fg' },

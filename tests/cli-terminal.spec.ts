@@ -11,6 +11,18 @@
  * A pausa da entrada tem teste próprio porque já falhou: pausar não basta para
  * o processo terminar, e a ferramenta ficava de pé depois de `q`, com a tela
  * devolvida e nada mais a fazer. Soltar a referência é o que a derruba.
+ *
+ * MUDANÇA DE DISPOSIÇÃO (feature 017, T008 a T010, D-01 a D-04, D-10). O
+ * redesenho deixou de apagar a tela inteira: abre a atualização sincronizada,
+ * vai ao canto, apaga cada linha ANTES de escrevê-la, apaga o que sobra abaixo
+ * do corpo a partir da linha seguinte à última, escreve a linha de estado na
+ * última linha da janela e fecha a sincronização, tudo numa única escrita; a
+ * restauração fecha a sincronização antes de devolver o cursor, para a saída
+ * no meio de um desenho; e a rajada de redimensionamento é agrupada por giro.
+ * Cada caso tocado está marcado como "disposição" no próprio caso. Nenhuma
+ * expectativa de FATO foi afrouxada: retiradas as sequências, o texto escrito
+ * é o de antes, a separação por retorno e avanço continua, e nada é escrito
+ * antes do primeiro desenho.
  */
 
 import { describe, expect, it } from 'vitest'
@@ -26,12 +38,30 @@ const SEM_COR: Apresentacao = { grau: 'nenhuma', tema: 'escuro', glifos: 'unicod
 const EM_16: Apresentacao = { grau: '16', tema: 'escuro', glifos: 'unicode' }
 const COM_TOM = PAPEIS.filter((papel) => papel !== 'normal' && papel !== 'titulo') as PapelComTom[]
 
+/** As sequências que o redesenho promete, escritas aqui de novo de propósito: a suíte as prende. */
+const CSI = '\u001b['
+const SINCRONIZAR = `${CSI}?2026h`
+const DESSINCRONIZAR = `${CSI}?2026l`
+const CANTO = `${CSI}H`
+const APAGAR_LINHA = `${CSI}2K`
+const APAGAR_ABAIXO = `${CSI}J`
+const MOSTRAR_CURSOR = `${CSI}?25h`
+const TELA_NORMAL = `${CSI}?1049l`
+
+/** O posicionamento na primeira coluna de uma linha. */
+const na = (linha: number): string => `${CSI}${linha};1H`
+
+/** O texto de uma escrita, retiradas todas as sequências de controle. */
+const semSequencias = (texto: string): string => texto.replace(/\u001b\[[\d;?]*[A-Za-z]/g, '')
+
 /** Tudo o que se pediu aos fluxos, na ordem em que se pediu. */
 interface Registro {
   escrito: string[]
   atos: string[]
   bruto: boolean[]
   ouvintes: { entrada: number; saida: number }
+  /** O ouvinte de redimensionamento registrado na saída, para disparar a rajada. */
+  redimensionar: (() => void) | null
 }
 
 /**
@@ -42,7 +72,13 @@ interface Registro {
 function fluxos(
   opcoes: { tty?: boolean; colunas?: number; linhas?: number } = {},
 ): { fluxos: FluxosDoTerminal; registro: Registro } {
-  const registro: Registro = { escrito: [], atos: [], bruto: [], ouvintes: { entrada: 0, saida: 0 } }
+  const registro: Registro = {
+    escrito: [],
+    atos: [],
+    bruto: [],
+    ouvintes: { entrada: 0, saida: 0 },
+    redimensionar: null,
+  }
 
   const entrada = {
     isTTY: opcoes.tty ?? true,
@@ -84,12 +120,14 @@ function fluxos(
       registro.escrito.push(texto)
       return true
     },
-    on(_evento: string, _ouvinte: unknown) {
+    on(evento: string, ouvinte: unknown) {
       registro.ouvintes.saida += 1
+      if (evento === 'resize') registro.redimensionar = ouvinte as () => void
       return saida
     },
-    off(_evento: string, _ouvinte: unknown) {
+    off(evento: string, _ouvinte: unknown) {
       registro.ouvintes.saida -= 1
+      if (evento === 'resize') registro.redimensionar = null
       return saida
     },
   }
@@ -132,6 +170,9 @@ describe('entrar e devolver o terminal', () => {
   })
 
   it('devolve tudo o que tomou, na ordem inversa', () => {
+    // Disposição (feature 017, RN-02, D-03): a restauração fecha antes a
+    // atualização sincronizada, que um desenho interrompido pode ter deixado
+    // aberta, e só então devolve o cursor e a tela.
     const { fluxos: f, registro } = fluxos()
     const terminal = criarTerminal({ fluxos: f, apresentacao: SEM_COR })
     terminal.entrar()
@@ -139,7 +180,21 @@ describe('entrar e devolver o terminal', () => {
     registro.escrito.length = 0
     terminal.restaurar()
     expect(registro.atos).toEqual(['bruto-desliga', 'pause', 'unref'])
-    expect(registro.escrito.join('')).toBe('\u001b[?25h\u001b[?1049l')
+    expect(registro.escrito.join('')).toBe(`${DESSINCRONIZAR}${MOSTRAR_CURSOR}${TELA_NORMAL}`)
+  })
+
+  it('fecha a sincronização antes de mostrar o cursor e de deixar a tela, e uma vez só', () => {
+    const { fluxos: f, registro } = fluxos()
+    const terminal = criarTerminal({ fluxos: f, apresentacao: SEM_COR })
+    terminal.entrar()
+    terminal.desenhar({ linhas: [linha([trecho('uma')])], alturaTotal: 1, linhaDeEstado: null })
+    registro.escrito.length = 0
+    terminal.restaurar()
+    terminal.restaurar()
+    const tudo = registro.escrito.join('')
+    expect(tudo.indexOf(DESSINCRONIZAR)).toBeLessThan(tudo.indexOf(MOSTRAR_CURSOR))
+    expect(tudo.indexOf(MOSTRAR_CURSOR)).toBeLessThan(tudo.indexOf(TELA_NORMAL))
+    expect(tudo.split(DESSINCRONIZAR)).toHaveLength(2)
   })
 
   it('solta a referência da entrada, e não só a pausa', () => {
@@ -196,27 +251,91 @@ describe('entrar e devolver o terminal', () => {
 describe('o desenho', () => {
   // Disposição (feature 016, T032): a linha deixou de ter uma ênfase e passou
   // a ter trechos com papel, e o terminal deixou de receber "há cor" e passou
-  // a receber o degrau e o fundo. O que os casos prendiam continua preso:
-  // apagar antes de escrever, separar com retorno e avanço, nenhuma sequência
-  // com a cor desligada, e a vestimenta fechada quando há cor.
-  it('apaga antes de escrever, porque o redesenho é integral', () => {
+  // a receber o degrau e o fundo. Disposição (feature 017, T008, D-01 a D-03):
+  // o apagamento de tela inteira deu lugar ao posicionamento no canto e ao
+  // apagamento por linha, dentro da atualização sincronizada. O que os casos
+  // prendiam continua preso: apagar antes de escrever, separar com retorno e
+  // avanço, nenhuma sequência de cor com a cor desligada, e a vestimenta
+  // fechada quando há cor.
+  it('não apaga a tela: abre a sincronização, vai ao canto e apaga a linha antes de escrevê-la (disposição)', () => {
     const { fluxos: f, registro } = fluxos()
     criarTerminal({ fluxos: f, apresentacao: SEM_COR }).desenhar({
       linhas: [linha([trecho('uma')])],
       alturaTotal: 1,
       linhaDeEstado: null,
     })
-    expect(registro.escrito.join('')).toBe('\u001b[2J\u001b[Huma')
+    expect(registro.escrito.join('')).toBe(
+      `${SINCRONIZAR}${CANTO}${APAGAR_LINHA}uma${na(2)}${APAGAR_ABAIXO}${DESSINCRONIZAR}`,
+    )
   })
 
-  it('separa as linhas com retorno e avanço, que é o que o modo bruto exige', () => {
+  it('a sequência de um redesenho não contém o apagamento de tela inteira (RF-07)', () => {
+    const { fluxos: f, registro } = fluxos({ linhas: 24, colunas: 80 })
+    criarTerminal({ fluxos: f, apresentacao: EM_16 }).desenhar({
+      linhas: [linha([trecho('uma', 'acento')]), linha([trecho('outra')])],
+      alturaTotal: 300,
+      linhaDeEstado: linha([trecho('estado')]),
+    })
+    expect(registro.escrito.join('')).not.toContain(`${CSI}2J`)
+  })
+
+  it('separa as linhas com retorno e avanço, cada uma apagada antes, e sem avanço após a última', () => {
     const { fluxos: f, registro } = fluxos()
     criarTerminal({ fluxos: f, apresentacao: SEM_COR }).desenhar({
       linhas: [linha([trecho('uma')]), linha([trecho('outra')])],
       alturaTotal: 2,
       linhaDeEstado: null,
     })
-    expect(registro.escrito.join('')).toContain('uma\r\noutra')
+    const tudo = registro.escrito.join('')
+    expect(tudo).toContain(`${APAGAR_LINHA}uma\r\n${APAGAR_LINHA}outra`)
+    expect(tudo).not.toContain('outra\r\n')
+  })
+
+  it('o apagamento abaixo do corpo começa na linha seguinte à última, e não sobre ela (D-02)', () => {
+    // Uma linha de exatamente `largura` colunas deixa o cursor em quebra
+    // pendente na última coluna, e apagar dali comeria o canto da moldura.
+    const { fluxos: f, registro } = fluxos({ linhas: 24 })
+    criarTerminal({ fluxos: f, apresentacao: SEM_COR }).desenhar({
+      linhas: [linha([trecho('uma')]), linha([trecho('outra')])],
+      alturaTotal: 2,
+      linhaDeEstado: null,
+    })
+    expect(registro.escrito.join('')).toContain(`outra${na(3)}${APAGAR_ABAIXO}`)
+  })
+
+  it('corpo que enche a janela não apaga abaixo, porque não há abaixo', () => {
+    const { fluxos: f, registro } = fluxos({ linhas: 2 })
+    criarTerminal({ fluxos: f, apresentacao: SEM_COR }).desenhar({
+      linhas: [linha([trecho('uma')]), linha([trecho('outra')])],
+      alturaTotal: 2,
+      linhaDeEstado: null,
+    })
+    const tudo = registro.escrito.join('')
+    expect(tudo).not.toContain(APAGAR_ABAIXO)
+    expect(tudo).not.toContain(na(3))
+    expect(tudo.endsWith(`outra${DESSINCRONIZAR}`)).toBe(true)
+  })
+
+  it('tudo sai numa única escrita, que é o que faz a sincronização valer também onde o modo não existe', () => {
+    const { fluxos: f, registro } = fluxos({ linhas: 24 })
+    criarTerminal({ fluxos: f, apresentacao: EM_16 }).desenhar({
+      linhas: [linha([trecho('uma', 'acento')]), linha([trecho('outra')])],
+      alturaTotal: 300,
+      linhaDeEstado: linha([trecho('estado')]),
+    })
+    expect(registro.escrito).toHaveLength(1)
+    expect(registro.escrito[0].startsWith(`${SINCRONIZAR}${CANTO}`)).toBe(true)
+    expect(registro.escrito[0].endsWith(DESSINCRONIZAR)).toBe(true)
+  })
+
+  it('retiradas as sequências, o texto escrito é o de hoje', () => {
+    const { fluxos: f, registro } = fluxos({ linhas: 24 })
+    criarTerminal({ fluxos: f, apresentacao: EM_16 }).desenhar({
+      linhas: [linha([trecho('uma', 'acento')]), linha([trecho('outra', 'titulo')])],
+      alturaTotal: 300,
+      linhaDeEstado: linha([trecho('estado', 'atenuado')]),
+    })
+    expect(semSequencias(registro.escrito.join(''))).toBe('uma\r\noutraestado')
   })
 
   it('não veste papel algum quando a cor está desligada, e o texto sai inteiro (RF-12)', () => {
@@ -226,7 +345,11 @@ describe('o desenho', () => {
       alturaTotal: PAPEIS.length,
       linhaDeEstado: null,
     })
-    const corpo = registro.escrito.join('').replace('\u001b[2J\u001b[H', '')
+    // Disposição (017): saem as sequências de posicionamento, apagamento e
+    // sincronização, que não são cor; o que resta não pode ter escape algum.
+    const corpo = registro.escrito
+      .join('')
+      .replace(/\u001b\[(\?2026[hl]|H|2K|J|\d+;1H)/g, '')
     expect(corpo).not.toContain('\u001b')
     expect(corpo).toContain('╭─ acento')
   })
@@ -241,14 +364,16 @@ describe('o desenho', () => {
     expect(registro.escrito.join('')).toContain('\u001b[1mtítulo\u001b[0m')
   })
 
-  it('escreve a linha de estado na última linha da janela, por posicionamento, depois do corpo', () => {
+  it('escreve a linha de estado na última linha da janela, apagada antes, depois do corpo e do apagamento abaixo (disposição)', () => {
     const { fluxos: f, registro } = fluxos({ linhas: 24, colunas: 80 })
     criarTerminal({ fluxos: f, apresentacao: SEM_COR }).desenhar({
       linhas: [linha([trecho('corpo')])],
       alturaTotal: 300,
       linhaDeEstado: linha([trecho('linhas 1–23 de 300 ↓')]),
     })
-    expect(registro.escrito.join('')).toBe('\u001b[2J\u001b[Hcorpo\u001b[24;1Hlinhas 1–23 de 300 ↓')
+    expect(registro.escrito.join('')).toBe(
+      `${SINCRONIZAR}${CANTO}${APAGAR_LINHA}corpo${na(2)}${APAGAR_ABAIXO}${na(24)}${APAGAR_LINHA}linhas 1–23 de 300 ↓${DESSINCRONIZAR}`,
+    )
   })
 
   it('a linha de estado fica embaixo também quando o quadro é mais curto que a janela', () => {
@@ -258,17 +383,75 @@ describe('o desenho', () => {
       alturaTotal: 1,
       linhaDeEstado: linha([trecho('estado')]),
     })
-    expect(registro.escrito.join('')).toContain('\u001b[50;1Hestado')
+    expect(registro.escrito.join('')).toContain(`${na(50)}${APAGAR_LINHA}estado`)
   })
 
-  it('sem linha de estado, nada é posicionado', () => {
+  it('sem linha de estado, a última linha da janela não é posicionada (disposição: só o apagamento abaixo posiciona)', () => {
     const { fluxos: f, registro } = fluxos({ linhas: 24 })
     criarTerminal({ fluxos: f, apresentacao: EM_16 }).desenhar({
       linhas: [linha([trecho('uma')])],
       alturaTotal: 1,
       linhaDeEstado: null,
     })
-    expect(registro.escrito.join('')).not.toMatch(/\u001b\[\d+;1H/)
+    const tudo = registro.escrito.join('')
+    expect(tudo).not.toContain(na(24))
+    expect(tudo.match(/\u001b\[\d+;1H/g)).toEqual([na(2)])
+  })
+})
+
+describe('a rajada de redimensionamento (feature 017, T010, RF-09, D-04)', () => {
+  /** Um giro do laço de eventos, que é onde a rajada se fecha. */
+  const giro = (): Promise<void> => new Promise((resolver) => setImmediate(resolver))
+
+  /** Um terminal com o ouvinte contando, e a rajada à mão. */
+  function armado(): { chamadas: () => number; parar: () => void; emitir: () => void; f: FluxosDoTerminal } {
+    const { fluxos: f, registro } = fluxos({ linhas: 24, colunas: 80 })
+    let contagem = 0
+    const parar = criarTerminal({ fluxos: f, apresentacao: SEM_COR }).aoRedimensionar(() => {
+      contagem += 1
+    })
+    return { chamadas: () => contagem, parar, emitir: () => registro.redimensionar?.(), f }
+  }
+
+  it('dez emissões no mesmo giro produzem uma chamada ao ouvinte, depois do giro', async () => {
+    const { chamadas, emitir } = armado()
+    for (let vez = 0; vez < 10; vez += 1) emitir()
+    expect(chamadas()).toBe(0)
+    await giro()
+    expect(chamadas()).toBe(1)
+    await giro()
+    expect(chamadas()).toBe(1)
+  })
+
+  it('cancelar a assinatura antes do giro produz nenhuma', async () => {
+    const { chamadas, emitir, parar } = armado()
+    emitir()
+    emitir()
+    parar()
+    await giro()
+    expect(chamadas()).toBe(0)
+  })
+
+  it('emissões em dois giros produzem duas', async () => {
+    const { chamadas, emitir } = armado()
+    emitir()
+    emitir()
+    await giro()
+    emitir()
+    await giro()
+    expect(chamadas()).toBe(2)
+  })
+
+  it('o ouvinte vê as dimensões da hora em que roda, e não as do primeiro evento', async () => {
+    const { fluxos: f, registro } = fluxos({ linhas: 24, colunas: 80 })
+    const terminal = criarTerminal({ fluxos: f, apresentacao: SEM_COR })
+    const vistas: number[] = []
+    terminal.aoRedimensionar(() => vistas.push(terminal.dimensoes().largura))
+    registro.redimensionar?.()
+    ;(f.saida as unknown as { columns: number }).columns = 132
+    registro.redimensionar?.()
+    await giro()
+    expect(vistas).toEqual([132])
   })
 })
 
@@ -373,14 +556,18 @@ describe('nada é escrito antes do primeiro desenho (feature 016, T054, RF-20, D
   })
 
   it('o primeiro byte depois de entrar é o do primeiro desenho', () => {
+    // Disposição (017, D-03): o primeiro desenho começa pela abertura da
+    // atualização sincronizada, e não mais pelo apagamento da tela.
     const { fluxos: f, registro } = fluxos()
     const terminal = criarTerminal({ fluxos: f, apresentacao: EM_16 })
     terminal.entrar()
     terminal.desenhar({ linhas: [linha([trecho('uma')])], alturaTotal: 1, linhaDeEstado: null })
-    expect(registro.escrito[1].startsWith('\u001b[2J')).toBe(true)
+    expect(registro.escrito[1].startsWith(SINCRONIZAR)).toBe(true)
   })
 
   it('nenhuma escrita é consulta: nem cor de fundo, nem atributos, nem posição do cursor', () => {
+    // Continua valendo com as sequências da 017: sincronização, canto,
+    // apagamento por linha e abaixo terminam em `h`, `l`, `H`, `K` e `J`.
     const { fluxos: f, registro } = fluxos({ linhas: 24 })
     const terminal = criarTerminal({ fluxos: f, apresentacao: EM_16 })
     terminal.entrar()

@@ -168,6 +168,145 @@ describe('o topo e o fim', () => {
   })
 })
 
+describe('a página e a meia página, por posições (feature 017, RF-01, D-07, D-08, RN-03)', () => {
+  // Sem o mapa `linhas` no contexto, a página anda `alturaVisivel` posições:
+  // é a queda definida para toda chamada que constrói o contexto como esta
+  // suíte sempre construiu.
+  it('`pagina-abaixo` avança uma altura visível de posições e move a janela junto', () => {
+    const estado = apos(inicial(), 'pagina-abaixo')
+    // Vinte posições adiante do título da primeira seção, a três posições
+    // por seção, é o segundo item da sétima.
+    expect(estado.secaoSelecionada).toBe(sectionOrder()[6])
+    expect(estado.itemSelecionado).toBe(1)
+    expect(estado.primeiraLinhaVisivel).toBe(20)
+  })
+
+  it('`pagina-acima` desfaz o que `pagina-abaixo` fez, e para na primeira posição e no topo', () => {
+    const voltado = apos(inicial(), 'pagina-abaixo', 'pagina-acima')
+    expect(voltado.secaoSelecionada).toBe(sectionOrder()[0])
+    expect(voltado.itemSelecionado).toBeNull()
+    expect(voltado.primeiraLinhaVisivel).toBe(0)
+    expect(apos(voltado, 'pagina-acima')).toEqual(voltado)
+  })
+
+  it('a seleção fica presa à última posição, e a janela segue andando até o fundo', () => {
+    // Trinta e três posições e vinte por página: a segunda página já leva a
+    // seleção ao fim; a janela anda uma altura por página, e só para no fundo.
+    const noFim = apos(inicial(), 'pagina-abaixo', 'pagina-abaixo', 'pagina-abaixo')
+    expect(noFim.secaoSelecionada).toBe(sectionOrder()[sectionOrder().length - 1])
+    expect(noFim.itemSelecionado).toBe(1)
+    expect(noFim.primeiraLinhaVisivel).toBe(60)
+    const presa = apos(noFim, ...Array<TeclaNomeada>(9).fill('pagina-abaixo'))
+    expect(presa.primeiraLinhaVisivel).toBe(200 - 20)
+    expect(presa.secaoSelecionada).toBe(noFim.secaoSelecionada)
+    expect(presa.itemSelecionado).toBe(noFim.itemSelecionado)
+  })
+
+  it('num quadro de três janelas, três `pagina-abaixo` chegam ao fim e o quarto não muda nada', () => {
+    const tresJanelas = contexto({ alturaTotal: 33, alturaVisivel: 11 })
+    let estado = inicial()
+    for (let vez = 0; vez < 3; vez += 1) estado = navegar(estado, 'pagina-abaixo', tresJanelas).estado
+    expect(estado.secaoSelecionada).toBe(sectionOrder()[sectionOrder().length - 1])
+    expect(estado.itemSelecionado).toBe(1)
+    expect(estado.primeiraLinhaVisivel).toBe(33 - 11)
+    expect(navegar(estado, 'pagina-abaixo', tresJanelas).estado).toEqual(estado)
+  })
+
+  it('a meia página anda metade da altura visível, e duas equivalem a uma página quando a altura é par', () => {
+    const meia = apos(inicial(), 'meia-pagina-abaixo')
+    expect(meia.primeiraLinhaVisivel).toBe(10)
+    expect(apos(meia, 'meia-pagina-abaixo')).toEqual(apos(inicial(), 'pagina-abaixo'))
+    expect(apos(meia, 'meia-pagina-acima')).toEqual(inicial())
+  })
+
+  it('sem posição navegável, nada muda', () => {
+    const vazio = contexto({ secoes: [], itens: new Map() })
+    for (const tecla of ['pagina-abaixo', 'pagina-acima', 'meia-pagina-abaixo', 'meia-pagina-acima'] as const) {
+      expect(navegar(inicial(), tecla, vazio).estado, tecla).toEqual(inicial())
+    }
+  })
+})
+
+describe('a página pelo mapa de linhas (feature 017, RF-02, D-07)', () => {
+  /**
+   * O mapa como o compositor o entrega: cada seção com o título numa linha,
+   * dois itens e uma linha vazia depois; o primeiro item da primeira seção
+   * ocupa duas linhas, como um item com dado secundário.
+   * @param fechadas - as seções cujos itens não estão na tela.
+   * @returns o mapa e a altura do quadro que ele descreve.
+   */
+  function mapa(fechadas: readonly SectionName[] = []): Pick<ContextoDeNavegacao, 'linhas' | 'alturaTotal'> {
+    const linhas = new Map<SectionName, { titulo: number; itens: number[] }>()
+    let linha = 0
+    sectionOrder().forEach((nome, indice) => {
+      const titulo = linha
+      linha += 1
+      const itens: number[] = []
+      if (!fechadas.includes(nome)) {
+        for (let item = 0; item < 2; item += 1) {
+          itens.push(linha)
+          linha += indice === 0 && item === 0 ? 2 : 1
+        }
+      }
+      linhas.set(nome, { titulo, itens })
+      linha += 1
+    })
+    return { linhas, alturaTotal: linha }
+  }
+
+  const porLinhas = contexto({ alturaVisivel: 8, ...mapa() })
+
+  it('o alvo é a primeira posição cuja linha alcança uma janela abaixo, e não a posição a uma janela de distância', () => {
+    // Do título da primeira seção, linha 0, a oitava linha é a vazia depois
+    // da segunda seção: a primeira posição a partir dela é o título da
+    // terceira, na linha 9. Por posições, seria o segundo item da terceira.
+    const estado = navegar(inicial(), 'pagina-abaixo', porLinhas).estado
+    expect(estado.secaoSelecionada).toBe(sectionOrder()[2])
+    expect(estado.itemSelecionado).toBeNull()
+    expect(estado.primeiraLinhaVisivel).toBe(8)
+  })
+
+  it('a página acima é simétrica: a última posição cuja linha está uma janela acima', () => {
+    const noFim = navegar(inicial(), 'fim', porLinhas).estado
+    const estado = navegar(noFim, 'pagina-acima', porLinhas).estado
+    // O último item mora na linha 43; oito acima é a 35, que é o segundo
+    // item da nona seção.
+    expect(estado.secaoSelecionada).toBe(sectionOrder()[8])
+    expect(estado.itemSelecionado).toBe(1)
+    expect(estado.primeiraLinhaVisivel).toBe(porLinhas.alturaTotal - 8 - 8)
+  })
+
+  it('a meia página usa metade da altura, e duas equivalem a uma página quando a altura é par', () => {
+    const meia = navegar(inicial(), 'meia-pagina-abaixo', porLinhas).estado
+    expect(meia.secaoSelecionada).toBe(sectionOrder()[1])
+    expect(meia.itemSelecionado).toBeNull()
+    expect(meia.primeiraLinhaVisivel).toBe(4)
+    expect(navegar(meia, 'meia-pagina-abaixo', porLinhas).estado).toEqual(
+      navegar(inicial(), 'pagina-abaixo', porLinhas).estado,
+    )
+  })
+
+  it('com as seções fechadas, a página anda pelos títulos', () => {
+    const fechadas = contexto({ alturaVisivel: 8, ...mapa(sectionOrder()) })
+    let estado = inicial(sectionOrder())
+    const visitadas: Array<number | null> = []
+    for (let vez = 0; vez < 3; vez += 1) {
+      estado = navegar(estado, 'pagina-abaixo', fechadas).estado
+      visitadas.push(estado.itemSelecionado)
+      expect(estado.itemSelecionado).toBeNull()
+    }
+    expect(estado.secaoSelecionada).toBe(sectionOrder()[sectionOrder().length - 1])
+    expect(visitadas).toEqual([null, null, null])
+  })
+
+  it('os títulos a uma janela de distância são o quarto e o oitavo, a duas linhas cada', () => {
+    const fechadas = contexto({ alturaVisivel: 8, ...mapa(sectionOrder()) })
+    const primeiro = navegar(inicial(sectionOrder()), 'pagina-abaixo', fechadas).estado
+    expect(primeiro.secaoSelecionada).toBe(sectionOrder()[4])
+    expect(navegar(primeiro, 'pagina-abaixo', fechadas).estado.secaoSelecionada).toBe(sectionOrder()[8])
+  })
+})
+
 describe('os efeitos nomeados, que a máquina não executa', () => {
   const PARES: Array<[TeclaNomeada, string]> = [
     ['reler', 'reler'],
@@ -195,6 +334,10 @@ describe('os efeitos nomeados, que a máquina não executa', () => {
       'ajuda',
       'topo',
       'fim',
+      'pagina-acima',
+      'pagina-abaixo',
+      'meia-pagina-acima',
+      'meia-pagina-abaixo',
     ] as TeclaNomeada[]) {
       expect(navegar(inicial(), tecla, contexto()).efeito, tecla).toBe('nenhum')
     }

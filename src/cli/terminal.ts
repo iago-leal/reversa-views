@@ -17,6 +17,16 @@
  * normal, da falha não prevista, do sinal de interrupção e dos dois lados da
  * suspensão, e algumas dessas chegam juntas. Terminal devolvido duas vezes é
  * inofensivo; devolvido nenhuma é dano ao ambiente do usuário.
+ *
+ * Desde a feature 017 o redesenho é integral POR POSICIONAMENTO, e não por
+ * apagamento da tela: vai ao canto, apaga cada linha antes de escrevê-la,
+ * apaga o que sobra abaixo do corpo e escreve a linha de estado, tudo entre a
+ * abertura e o fechamento da atualização sincronizada e numa única escrita.
+ * Apagar a tela inteira a cada quadro deixava um branco entre um e outro, e
+ * era esse branco, em rajada, que o emulador empurrava para o histórico. A
+ * rajada de redimensionamento é agrupada aqui, uma chamada por giro do laço
+ * de eventos, sem relógio; e o que a ferramenta liga no terminal, inclusive a
+ * sincronização, ela desliga na restauração, na ordem inversa.
  * @module cli/terminal
  */
 
@@ -29,7 +39,11 @@ const TELA_ALTERNATIVA = `${CSI}?1049h`
 const TELA_NORMAL = `${CSI}?1049l`
 const ESCONDER_CURSOR = `${CSI}?25l`
 const MOSTRAR_CURSOR = `${CSI}?25h`
-const LIMPAR = `${CSI}2J${CSI}H`
+const SINCRONIZAR = `${CSI}?2026h`
+const DESSINCRONIZAR = `${CSI}?2026l`
+const CANTO = `${CSI}H`
+const APAGAR_LINHA = `${CSI}2K`
+const APAGAR_ABAIXO = `${CSI}J`
 const NORMAL = `${CSI}0m`
 
 /** Os parâmetros de representação gráfica que o protocolo nomeia. */
@@ -55,13 +69,23 @@ export interface Terminal {
   entrar(): void
   /** Devolve o terminal como foi encontrado; chamável quantas vezes for. */
   restaurar(): void
-  /** Apaga e redesenha por inteiro, que é o único desenho que existe. */
+  /**
+   * Redesenha por inteiro, que é o único desenho que existe: por
+   * posicionamento e apagamento por linha, sem apagar a tela, dentro de uma
+   * atualização sincronizada e numa única escrita.
+   */
   desenhar(quadro: Quadro): void
   /** Uma linha de texto cru, sem ênfase alguma. */
   escrever(texto: string): void
   /** Registra o ouvinte de blocos de bytes; devolve como desfazê-lo. */
   aoTeclar(ouvinte: (bloco: Uint8Array) => void): () => void
-  /** Registra o ouvinte de redimensionamento; devolve como desfazê-lo. */
+  /**
+   * Registra o ouvinte de redimensionamento; devolve como desfazê-lo.
+   *
+   * A rajada é agrupada por giro do laço de eventos: dez eventos seguidos
+   * produzem uma chamada, depois do giro, e o ouvinte relê as dimensões na
+   * hora em que roda. Desfeita a assinatura, ele não é mais chamado.
+   */
   aoRedimensionar(ouvinte: () => void): () => void
 }
 
@@ -164,7 +188,11 @@ export function criarTerminal(opcoes: {
     restaurar() {
       if (!dentro) return
       dentro = false
-      saida.write(MOSTRAR_CURSOR + TELA_NORMAL)
+      // A sincronização é fechada primeiro, para o caso de a saída chegar no
+      // meio de um desenho: um emulador com o modo aberto segura a tela até
+      // o fechamento, e devolver o cursor antes disso o devolveria a uma tela
+      // que ainda não se mostrou (feature 017, RN-02, D-03).
+      saida.write(DESSINCRONIZAR + MOSTRAR_CURSOR + TELA_NORMAL)
       if (entrada.isTTY) entrada.setRawMode(false)
       entrada.pause()
       // Pausar não basta para o processo terminar: um `stdin` que já recebeu
@@ -178,19 +206,39 @@ export function criarTerminal(opcoes: {
     desenhar(quadro) {
       // Redesenho INTEGRAL, e não incremental: o editor do ambiente pode ter
       // escrito qualquer coisa na tela, e presumir o contrário produz resíduo.
+      // Integral não é apagar a tela: apagar a tela inteira a cada quadro
+      // deixa uma tela em branco entre um e outro, e é esse branco, em
+      // rajada, que o emulador empurra para o histórico. O redesenho vai ao
+      // canto e apaga cada linha ANTES de escrevê-la (feature 017, D-01).
+      //
+      // Antes, e não depois: uma linha de exatamente `largura` colunas deixa
+      // o cursor em quebra pendente na última coluna, e apagar dali comeria o
+      // último glifo escrito, que é o canto da moldura (D-02).
       const corpo = quadro.linhas
-        .map((linha) => vestirLinha(linha, apresentacao))
+        .map((linha) => APAGAR_LINHA + vestirLinha(linha, apresentacao))
         .join('\r\n')
+
+      // O que sobrou do quadro anterior abaixo de um corpo mais curto é
+      // apagado a partir da linha SEGUINTE à última, pela mesma razão da
+      // quebra pendente; corpo que enche a janela não tem abaixo.
+      const altura = saida.rows ?? PADRAO.altura
+      const abaixo =
+        quadro.linhas.length < altura ? `${CSI}${quadro.linhas.length + 1};1H${APAGAR_ABAIXO}` : ''
 
       // A linha de estado não rola: é escrita por posicionamento absoluto na
       // última linha da janela, e fica embaixo também quando o quadro é mais
       // curto que ela (feature 016, D-17).
       const estado = quadro.linhaDeEstado
-      const altura = saida.rows ?? PADRAO.altura
       const fixa =
-        estado === null ? '' : `${CSI}${altura};1H${vestirLinha(estado, apresentacao)}`
+        estado === null
+          ? ''
+          : `${CSI}${altura};1H${APAGAR_LINHA}${vestirLinha(estado, apresentacao)}`
 
-      saida.write(LIMPAR + corpo + fixa)
+      // Tudo entre a abertura e o fechamento da atualização sincronizada, e
+      // numa única escrita: o emulador que conhece o modo troca o quadro de
+      // uma vez, e o que não conhece ignora as duas sequências e recebe o
+      // quadro inteiro num bloco só (D-03).
+      saida.write(SINCRONIZAR + CANTO + corpo + abaixo + fixa + DESSINCRONIZAR)
     },
 
     escrever(texto) {
@@ -208,9 +256,26 @@ export function criarTerminal(opcoes: {
     },
 
     aoRedimensionar(ouvinte) {
-      saida.on('resize', ouvinte)
+      // A rajada de um arrasto de janela vira uma chamada por giro do laço de
+      // eventos: o primeiro evento agenda o ouvinte, os seguintes no mesmo
+      // giro só encontram a pendência marcada, e o ouvinte relê as dimensões
+      // na hora em que roda. Sem relógio, e sem estado no laço (feature 017,
+      // RF-09, D-04).
+      let pendente = false
+      const agrupar = (): void => {
+        if (pendente) return
+        pendente = true
+        setImmediate(() => {
+          if (!pendente) return
+          pendente = false
+          ouvinte()
+        })
+      }
+      saida.on('resize', agrupar)
       return () => {
-        saida.off('resize', ouvinte)
+        // Cancelar limpa a pendência: o ouvinte não roda depois de desfeito.
+        pendente = false
+        saida.off('resize', agrupar)
       }
     },
   }

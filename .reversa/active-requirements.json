@@ -1,9 +1,9 @@
 {
   "schema-version": 1,
-  "feature-dir": "_reversa_forward/016-visual-do-painel-cli",
-  "feature-id": "016",
-  "short-name": "visual-do-painel-cli",
-  "started-at": "2026-09-21T22:27:16Z",
+  "feature-dir": "_reversa_forward/017-tela-cheia-do-painel",
+  "feature-id": "017",
+  "short-name": "tela-cheia-do-painel",
+  "started-at": "2026-09-22T00:02:43Z",
   "current-stage": "requirements",
   "stages-completed": [],
   "paused-features": []

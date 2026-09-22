@@ -8,6 +8,8 @@
 [38;2;215;119;87m│ [0m[1;38;2;215;119;87mz              [0m   Fecha todas as seções[38;2;215;119;87m                                                          │[0m
 [38;2;215;119;87m│ [0m[1;38;2;215;119;87m?              [0m   Mostra e esconde esta ajuda[38;2;215;119;87m                                                    │[0m
 [38;2;215;119;87m│ [0m[1;38;2;215;119;87mg / G          [0m   Vai ao topo e ao fim do quadro[38;2;215;119;87m                                                 │[0m
+[38;2;215;119;87m│ [0m[1;38;2;215;119;87mPgUp / PgDn    [0m   Move a seleção uma janela acima e abaixo[38;2;215;119;87m                                       │[0m
+[38;2;215;119;87m│ [0m[1;38;2;215;119;87mCtrl+U / Ctrl+D[0m   Move a seleção meia janela acima e abaixo[38;2;215;119;87m                                      │[0m
 [38;2;215;119;87m│ [0m[1;38;2;215;119;87mq / Esc        [0m   Sai, restaurando o terminal[38;2;215;119;87m                                                    │[0m
 [38;2;215;119;87m│ [0m[1;38;2;215;119;87mCtrl+C         [0m   Sai, restaurando o terminal[38;2;215;119;87m                                                    │[0m
 [38;2;215;119;87m│ [0m[1;38;2;215;119;87mCtrl+Z         [0m   Suspende para o shell e retoma inteiro ao fg[38;2;215;119;87m                                   │[0m
@@ -15,4 +17,4 @@
 [38;2;215;119;87m│ [0m[38;2;153;153;153mNenhuma tecla escreve arquivo, edita o processo do Reversa ou dispara agente.[0m[38;2;215;119;87m                    │[0m
 [38;2;215;119;87m│ [0m[38;2;153;153;153m? esconde esta ajuda e devolve o quadro.[0m[38;2;215;119;87m                                                         │[0m
 [38;2;215;119;87m╰──────────────────────────────────────────────────────────────────────────────────────────────────╯[0m
-[38;2;215;119;87m●[0m[38;2;153;153;153m Leitura de 09/09/2026 12:00 (Brasí…  j k mover · Enter abrir · ? ajuda · q sair[0m  linhas 1–17 de 17
+[38;2;215;119;87m●[0m[38;2;153;153;153m Leitura de 09/09/2026 12:00 (Brasí…  j k mover · Enter abrir · ? ajuda · q sair[0m  linhas 1–19 de 19

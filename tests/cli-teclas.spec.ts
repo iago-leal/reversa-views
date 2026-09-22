@@ -40,7 +40,39 @@ describe('a aresta que a D-15 decide', () => {
   })
 
   it('uma sequência de escape que não conhece não vira tecla alguma', () => {
-    expect(reconhecerTecla(bloco(ESC, 0x5b, 0x35, 0x7e))).toBeNull()
+    // Disposição (feature 017, D-05): `Esc [ 5 ~` passou a ser a página
+    // acima, e a sequência desconhecida deste caso é agora a de `Insert`.
+    expect(reconhecerTecla(bloco(ESC, 0x5b, 0x32, 0x7e))).toBeNull()
+  })
+})
+
+describe('as teclas de página e de meia página (feature 017, D-05, D-06)', () => {
+  const TIL = 0x7e
+
+  it('`Esc [ 5 ~` é a página acima e `Esc [ 6 ~` a página abaixo', () => {
+    expect(reconhecerTecla(bloco(ESC, 0x5b, 0x35, TIL))).toBe('pagina-acima')
+    expect(reconhecerTecla(bloco(ESC, 0x5b, 0x36, TIL))).toBe('pagina-abaixo')
+  })
+
+  it('`Ctrl+U` é meia página acima e `Ctrl+D` meia página abaixo, que em modo bruto é um byte comum', () => {
+    expect(reconhecerTecla(bloco(0x15))).toBe('meia-pagina-acima')
+    expect(reconhecerTecla(bloco(0x04))).toBe('meia-pagina-abaixo')
+  })
+
+  it('as outras sequências com til, Home, Insert, Delete e End, não viram tecla alguma', () => {
+    for (const numero of [0x31, 0x32, 0x33, 0x34]) {
+      expect(reconhecerTecla(bloco(ESC, 0x5b, numero, TIL)), String.fromCharCode(numero)).toBeNull()
+    }
+  })
+
+  it('a sequência com til é lida pelo número, e não pelo til', () => {
+    expect(reconhecerTecla(bloco(ESC, 0x5b, TIL))).toBeNull()
+    expect(reconhecerTecla(bloco(ESC, 0x5b, 0x31, 0x35, TIL))).toBeNull()
+  })
+
+  it('as sequências terminadas em letra continuam reconhecidas pelo último byte', () => {
+    expect(reconhecerTecla(bloco(ESC, 0x5b, 0x41))).toBe('acima')
+    expect(reconhecerTecla(bloco(ESC, 0x5b, 0x5a))).toBe('secao-anterior')
   })
 })
 

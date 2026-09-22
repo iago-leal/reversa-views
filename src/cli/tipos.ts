@@ -188,11 +188,15 @@ export const TECLAS = [
   'ajuda',
   'topo',
   'fim',
+  'pagina-acima',
+  'pagina-abaixo',
+  'meia-pagina-acima',
+  'meia-pagina-abaixo',
   'sair',
   'suspender',
 ] as const
 
-/** Uma das quinze teclas nomeadas. */
+/** Uma das dezenove teclas nomeadas. */
 export type TeclaNomeada = (typeof TECLAS)[number]
 
 /**

@@ -125,10 +125,24 @@ interface Selecao {
   bloco: number
 }
 
-/** O que a montagem devolve: as linhas, e onde está a seleção. */
+/** Onde o título de uma seção mora, e a linha principal de cada item dela. */
+interface LinhasDaSecao {
+  titulo: number
+  /** Vazio quando a seção está fechada: os itens não estão na tela. */
+  itens: number[]
+}
+
+/**
+ * O que a montagem devolve: as linhas, onde está a seleção, e em que linha
+ * cada posição navegável mora (feature 017, D-07).
+ *
+ * De uma seção, as linhas são relativas ao começo dela; do quadro inteiro,
+ * absolutas. Nulo quando a ajuda cobre o quadro, porque então não há posição.
+ */
 interface Montagem {
   linhas: LinhaDoQuadro[]
   selecao: Selecao | null
+  posicoes: Map<SecaoDoTerminal, LinhasDaSecao> | null
 }
 
 /**
@@ -192,20 +206,27 @@ export function comporQuadro(pedido: EntradaDoQuadro): Quadro {
 
 /**
  * O contexto que a máquina de navegação precisa para se mover no quadro.
+ *
+ * O mapa de linhas sai da MESMA montagem que anota a seleção, e é isso que
+ * garante a invariante que a suíte confere: a linha da seleção corrente no
+ * mapa é `indiceDaSelecao()`. Com a ajuda visível não há posição, e o campo é
+ * omitido; a máquina então anda por posições, que é comportamento definido.
  * @param pedido - a entrada, o estado e as dimensões.
- * @returns as seções, as contagens de itens e as duas alturas.
+ * @returns as seções, as contagens de itens, as duas alturas e o mapa de linhas.
  */
 export function contextoDeNavegacao(pedido: EntradaDoQuadro): ContextoDeNavegacao {
   const itens = new Map<SecaoDoTerminal, number>(
     secoesDoTerminal().map((nome) => [nome, 0] as [SecaoDoTerminal, number]),
   )
   for (const secao of secoesDesenhadas(pedido)) itens.set(secao.nome, secao.itens.length)
+  const montagem = montar(pedido)
 
   return {
     secoes: secoesDoTerminal(),
     itens,
-    alturaTotal: linhasDoQuadro(pedido).length,
+    alturaTotal: montagem.linhas.length,
     alturaVisivel: alturaUtil(pedido),
+    ...(montagem.posicoes === null ? {} : { linhas: montagem.posicoes }),
   }
 }
 
@@ -286,6 +307,7 @@ function montar(pedido: EntradaDoQuadro): Montagem {
         glifos: apresentacao.glifos,
       }),
       selecao: null,
+      posicoes: null,
     }
   }
 
@@ -293,15 +315,25 @@ function montar(pedido: EntradaDoQuadro): Montagem {
   linhas.push(...linhasDaEntrada(pedido), linhaVazia())
 
   let selecao: Selecao | null = null
+  const posicoes = new Map<SecaoDoTerminal, LinhasDaSecao>()
   for (const secao of secoesDesenhadas(pedido)) {
     const montada = linhasDaSecao(secao, pedido)
+    const inicio = linhas.length
     if (montada.selecao !== null) {
-      selecao = { ...montada.selecao, indice: montada.selecao.indice + linhas.length }
+      selecao = { ...montada.selecao, indice: montada.selecao.indice + inicio }
+    }
+    // As linhas da seção vêm relativas ao começo dela; aqui viram absolutas,
+    // com o mesmo deslocamento que a seleção acabou de ganhar.
+    for (const [nome, onde] of montada.posicoes ?? []) {
+      posicoes.set(nome, {
+        titulo: onde.titulo + inicio,
+        itens: onde.itens.map((linha) => linha + inicio),
+      })
     }
     linhas.push(...montada.linhas, linhaVazia())
   }
 
-  return { linhas, selecao }
+  return { linhas, selecao, posicoes }
 }
 
 /**
@@ -494,6 +526,9 @@ function linhasDaSecao(secao: SecaoDesenhada, pedido: EntradaDoQuadro): Montagem
 
   let selecao: Selecao | null = null
   const corpo: LinhaDoQuadro[] = []
+  // A linha principal de cada item, relativa ao começo do corpo; vazia quando
+  // a seção está fechada, porque fechada os itens não são posição (D-07).
+  const linhasDosItens: number[] = []
 
   if (!fechada) {
     const recuo = [trecho(comCursor ? RECUO + RECUO : RECUO)]
@@ -504,6 +539,7 @@ function linhasDaSecao(secao: SecaoDesenhada, pedido: EntradaDoQuadro): Montagem
     secao.itens.forEach((item, indice) => {
       const alvo = comCursor && daSecao && estado.itemSelecionado === indice
       const inicio = corpo.length
+      linhasDosItens.push(inicio)
       const marca = item.marca ?? null
       const prefixo: Trecho[] = [
         ...(comCursor ? [alvo ? trecho(`${g.selecao} `, 'acento') : trecho(RECUO)] : []),
@@ -560,13 +596,14 @@ function linhasDaSecao(secao: SecaoDesenhada, pedido: EntradaDoQuadro): Montagem
       selecionada: tituloSelecionado,
     })
     // A borda superior é a linha do título: a seleção de um item anda uma
-    // linha, e a do título é a própria borda.
+    // linha, e a do título é a própria borda. O mapa de posições segue a
+    // mesma conta.
     const naCaixa: Selecao | null = tituloSelecionado
       ? { indice: 0, bloco: 1 }
       : selecao === null
         ? null
         : { ...(selecao as Selecao), indice: (selecao as Selecao).indice + 1 }
-    return { linhas, selecao: naCaixa }
+    return { linhas, selecao: naCaixa, posicoes: posicoesDaSecao(secao.nome, 1, linhasDosItens) }
   }
 
   const linhas: LinhaDoQuadro[] = []
@@ -580,10 +617,34 @@ function linhasDaSecao(secao: SecaoDesenhada, pedido: EntradaDoQuadro): Montagem
     selecionada: tituloSelecionado,
   })
   linhas.push(...corpo)
+  const posicoes = posicoesDaSecao(secao.nome, doTitulo, linhasDosItens)
 
-  if (tituloSelecionado) return { linhas, selecao: { indice: 0, bloco: doTitulo } }
-  if (selecao === null) return { linhas, selecao: null }
-  return { linhas, selecao: { ...(selecao as Selecao), indice: (selecao as Selecao).indice + doTitulo } }
+  if (tituloSelecionado) return { linhas, selecao: { indice: 0, bloco: doTitulo }, posicoes }
+  if (selecao === null) return { linhas, selecao: null, posicoes }
+  return {
+    linhas,
+    selecao: { ...(selecao as Selecao), indice: (selecao as Selecao).indice + doTitulo },
+    posicoes,
+  }
+}
+
+/**
+ * O mapa de posições de uma seção só, relativo ao começo dela.
+ *
+ * O título mora na primeira linha da seção, borda ou texto; os itens vêm
+ * depois de quantas linhas o título ocupou, que é a mesma conta que a seleção
+ * faz, para que a linha da seleção no mapa seja sempre `indiceDaSelecao()`.
+ * @param nome - a seção.
+ * @param antesDoCorpo - quantas linhas o corpo da seção tem acima dele.
+ * @param linhasDosItens - a linha principal de cada item, relativa ao corpo.
+ * @returns o mapa com a entrada desta seção.
+ */
+function posicoesDaSecao(
+  nome: SecaoDoTerminal,
+  antesDoCorpo: number,
+  linhasDosItens: readonly number[],
+): Map<SecaoDoTerminal, LinhasDaSecao> {
+  return new Map([[nome, { titulo: 0, itens: linhasDosItens.map((linha) => linha + antesDoCorpo) }]])
 }
 
 /** O glifo de um estado de ação, que continua sendo um de três (RF-05). */

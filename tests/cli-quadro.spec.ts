@@ -31,12 +31,13 @@ import {
   indiceDaSelecao,
   linhasDoQuadro,
 } from '../src/cli/quadro/index.ts'
+import { painelDeAjuda, TABELA_DE_AJUDA } from '../src/cli/quadro/ajuda.ts'
 import { GLIFOS } from '../src/cli/quadro/glifos.ts'
 import { situacaoDaEntrada, telaDeEntrada } from '../src/cli/quadro/entrada.ts'
 import { linhasDaProcedencia } from '../src/cli/quadro/procedencia.ts'
 import { TITULOS } from '../src/cli/quadro/secoes.ts'
-import type { EstadoDeNavegacao, Observacao } from '../src/cli/tipos.ts'
-import { PAPEIS } from '../src/cli/tipos.ts'
+import type { EstadoDeNavegacao, Observacao, TeclaNomeada } from '../src/cli/tipos.ts'
+import { PAPEIS, TECLAS } from '../src/cli/tipos.ts'
 import { sectionOrder } from '../src/webview/domain/sections.ts'
 import type { EffectiveEntry } from '../src/webview/domain/types.ts'
 import {
@@ -618,6 +619,137 @@ describe('texto hostil vindo do disco, de ponta a ponta (feature 016, T051, NFR 
     const tudo = textos({ entrada: entrada({ loaded: cargaHostil() }) }).join('\n')
     expect(tudo).toContain('␛[2J␛[H')
     expect(tudo).toContain('limpa a tela')
+  })
+})
+
+describe('o mapa de linhas do contexto de navegação (feature 017, T007, D-07)', () => {
+  const bloqueado = entrada({
+    loaded: payloadFixture({
+      process: processFixture({ actionsMd: actionsMd(5, 0), addendaFiles: [] }),
+    }),
+  })
+
+  /** O pedido da interface viva sobre a carga bloqueada, com a seleção dada. */
+  function noBloqueio(item: number | null): EntradaDoQuadro {
+    const estado: EstadoDeNavegacao = {
+      ...estadoInicial([], contextoVazio()),
+      secaoSelecionada: 'blocking',
+      itemSelecionado: item,
+    }
+    return pedido({ entrada: bloqueado, estado, apresentacao: VIVA, largura: 100 })
+  }
+
+  it('toda seção desenhada tem entrada, com o título antes dos itens e as seções em ordem', () => {
+    const contexto = contextoDeNavegacao(pedido({ apresentacao: VIVA, largura: 100 }))
+    expect(contexto.linhas).toBeDefined()
+    let anterior = -1
+    for (const nome of contexto.secoes) {
+      const daSecao = contexto.linhas?.get(nome)
+      expect(daSecao, nome).toBeDefined()
+      expect(daSecao?.titulo).toBeGreaterThan(anterior)
+      expect(daSecao?.itens).toHaveLength(contexto.itens.get(nome) ?? -1)
+      for (const linha of daSecao?.itens ?? []) {
+        expect(linha).toBeGreaterThan(anterior)
+        anterior = linha
+      }
+      anterior = Math.max(anterior, daSecao?.titulo ?? -1)
+    }
+    expect(anterior).toBeLessThan(contexto.alturaTotal)
+  })
+
+  it('a seção fechada tem itens vazios, e o título continua com linha', () => {
+    const aberta = naDecomposicao(null)
+    const fechada = { ...aberta, estado: { ...aberta.estado, secoesFechadas: new Set(['decomposition'] as const) } }
+    expect(contextoDeNavegacao(fechada).linhas?.get('decomposition')?.itens).toEqual([])
+    expect(contextoDeNavegacao(fechada).linhas?.get('decomposition')?.titulo).toBe(
+      contextoDeNavegacao(aberta).linhas?.get('decomposition')?.titulo,
+    )
+    expect(contextoDeNavegacao(aberta).linhas?.get('decomposition')?.itens.length).toBeGreaterThan(0)
+  })
+
+  it('a linha da seleção no mapa é o índice da seleção: no título, no item, no item com dado secundário e na moldura do bloqueio', () => {
+    for (const alvo of [
+      pedido({ apresentacao: VIVA, largura: 100 }),
+      naDecomposicao(null),
+      naDecomposicao(0),
+      naDecomposicao(2),
+      noBloqueio(null),
+      noBloqueio(0),
+    ]) {
+      const daSecao = contextoDeNavegacao(alvo).linhas?.get(alvo.estado.secaoSelecionada)
+      const item = alvo.estado.itemSelecionado
+      const linha = item === null ? daSecao?.titulo : daSecao?.itens[item]
+      expect(indiceDaSelecao(alvo)).not.toBeNull()
+      expect(linha, `${alvo.estado.secaoSelecionada}/${String(item)}`).toBe(indiceDaSelecao(alvo))
+    }
+  })
+
+  it('com a ajuda visível não há posição, e o mapa é omitido', () => {
+    const alvo = naDecomposicao(null)
+    const comAjuda = { ...alvo, estado: { ...alvo.estado, ajudaVisivel: true } }
+    expect(contextoDeNavegacao(comAjuda).linhas).toBeUndefined()
+    expect(contextoDeNavegacao(alvo).linhas).toBeDefined()
+  })
+
+  it('a altura total e as contagens são as de antes', () => {
+    const alvo = pedido({ apresentacao: VIVA, largura: 100 })
+    const contexto = contextoDeNavegacao(alvo)
+    expect(contexto.alturaTotal).toBe(linhasDoQuadro(alvo).length)
+    expect(contexto.secoes).toHaveLength(12)
+  })
+})
+
+describe('a tabela de ajuda transcreve o contrato do teclado (feature 017, T024, RF-06, D-09)', () => {
+  it('lista a página e a meia página depois de `g / G`, com a promessa de cada uma', () => {
+    const gestos = TABELA_DE_AJUDA.map((item) => item.tecla)
+    const emG = gestos.indexOf('g / G')
+    expect(emG).toBeGreaterThanOrEqual(0)
+    expect(gestos.slice(emG, emG + 3)).toEqual(['g / G', 'PgUp / PgDn', 'Ctrl+U / Ctrl+D'])
+    expect(TABELA_DE_AJUDA[emG + 1].efeito).toBe('Move a seleção uma janela acima e abaixo')
+    expect(TABELA_DE_AJUDA[emG + 2].efeito).toBe('Move a seleção meia janela acima e abaixo')
+    expect(TABELA_DE_AJUDA[emG + 1].emSeteBits).toBeUndefined()
+    expect(TABELA_DE_AJUDA[emG + 2].emSeteBits).toBeUndefined()
+  })
+
+  it('nem a tabela nem o painel mencionam mouse', () => {
+    const tudo = [
+      ...TABELA_DE_AJUDA.flatMap((item) => [item.tecla, item.efeito, item.emSeteBits ?? '']),
+      ...painelDeAjuda(100, VIVA).map((linha) => linha.texto),
+      ...painelDeAjuda(100, { molduras: true, glifos: 'sete-bits' }).map((linha) => linha.texto),
+    ]
+      .join('\n')
+      .toLowerCase()
+    expect(tudo).not.toContain('mouse')
+  })
+
+  it('toda tecla nomeada em `TECLAS` tem linha na tabela', () => {
+    /** Como cada tecla nomeada se escreve na coluna dos gestos. */
+    const GESTOS: Record<TeclaNomeada, string> = {
+      acima: '↑',
+      abaixo: '↓',
+      'fechar-secao': '←',
+      'abrir-secao': '→',
+      confirmar: 'Enter',
+      'proxima-secao': 'Tab',
+      'secao-anterior': 'Shift+Tab',
+      reler: 'r',
+      'abrir-tudo': 'a',
+      'fechar-tudo': 'z',
+      ajuda: '?',
+      topo: 'g',
+      fim: 'G',
+      'pagina-acima': 'PgUp',
+      'pagina-abaixo': 'PgDn',
+      'meia-pagina-acima': 'Ctrl+U',
+      'meia-pagina-abaixo': 'Ctrl+D',
+      sair: 'q',
+      suspender: 'Ctrl+Z',
+    }
+    const escritos = new Set(TABELA_DE_AJUDA.flatMap((item) => item.tecla.split(/\s+\/\s+|\s+/)))
+    for (const tecla of TECLAS) {
+      expect(GESTOS[tecla], `${tecla} sem gesto declarado nesta suíte`).toBeDefined()
+      expect(escritos.has(GESTOS[tecla]), `${tecla} (${GESTOS[tecla]}) sem linha na tabela`).toBe(true)
+    }
   })
 })
 

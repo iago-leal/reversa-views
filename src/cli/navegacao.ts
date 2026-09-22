@@ -37,6 +37,15 @@ export interface ContextoDeNavegacao {
   alturaTotal: number
   /** A altura da janela que o mostra. */
   alturaVisivel: number
+  /**
+   * Em que linha do quadro inteiro cada posição navegável mora: a do título
+   * e a principal de cada item, por seção desenhada (feature 017, D-07).
+   *
+   * Seção fechada tem `itens: []`, porque os itens dela não estão na tela.
+   * Opcional: ausente o mapa, a página anda por posições, e nenhuma chamada
+   * de antes muda.
+   */
+  linhas?: ReadonlyMap<SecaoDoTerminal, { titulo: number; itens: readonly number[] }>
 }
 
 /** Uma posição navegável: o título de uma seção, ou um item dentro dela. */
@@ -138,6 +147,92 @@ function mover(
 }
 
 /**
+ * A linha do quadro em que uma posição mora, pelo mapa do contexto.
+ * @param posicao - o título ou o item.
+ * @param linhas - o mapa que o compositor entregou.
+ * @returns a linha, ou nulo quando o mapa não a conhece.
+ */
+function linhaDe(
+  posicao: Posicao,
+  linhas: NonNullable<ContextoDeNavegacao['linhas']>,
+): number | null {
+  const daSecao = linhas.get(posicao.secao)
+  if (daSecao === undefined) return null
+  return posicao.item === null ? daSecao.titulo : (daSecao.itens[posicao.item] ?? null)
+}
+
+/**
+ * Decidir aonde uma página leva a seleção (feature 017, D-07).
+ *
+ * A página é medida em LINHAS e a seleção anda em POSIÇÕES, e um item pode
+ * ocupar mais de uma linha. Com o mapa de linhas, o alvo é a primeira posição
+ * cuja linha alcança a corrente mais o salto, para baixo, e a última cuja
+ * linha não passa da corrente menos o salto, para cima; sem alvo, a ponta.
+ * Sem o mapa, a página é o salto em posições, preso às pontas: é o
+ * comportamento definido para toda chamada que não o entrega.
+ * @param lista - as posições, em ordem.
+ * @param indice - onde a seleção está na lista.
+ * @param salto - quantas linhas andar; negativo para cima.
+ * @param linhas - o mapa de linhas por posição, quando o contexto o tem.
+ * @returns o índice da posição alvo na lista.
+ */
+function alvoDaPagina(
+  lista: readonly Posicao[],
+  indice: number,
+  salto: number,
+  linhas: ContextoDeNavegacao['linhas'],
+): number {
+  const ultimo = lista.length - 1
+  const corrente = linhas === undefined ? null : linhaDe(lista[indice], linhas)
+  if (linhas === undefined || corrente === null) {
+    return Math.min(ultimo, Math.max(0, indice + salto))
+  }
+
+  const limite = corrente + salto
+  if (salto > 0) {
+    const alvo = lista.findIndex((posicao) => {
+      const linha = linhaDe(posicao, linhas)
+      return linha !== null && linha >= limite
+    })
+    return alvo < 0 ? ultimo : alvo
+  }
+  for (let candidato = ultimo; candidato >= 0; candidato -= 1) {
+    const linha = linhaDe(lista[candidato], linhas)
+    if (linha !== null && linha <= limite) return candidato
+  }
+  return 0
+}
+
+/**
+ * Mover a seleção e a janela de uma página, ou de meia (feature 017, D-08).
+ *
+ * A janela anda junto, presa ao topo e ao fundo, na mesma transição: é o que
+ * faz a tela andar uma página em vez de a seleção descer até a borda e a
+ * janela ir atrás uma linha. O ajuste de deslocamento do laço vem depois e
+ * não move nada quando a seleção já está visível (RN-03).
+ * @param estado - a seleção corrente.
+ * @param contexto - as posições, as alturas e o mapa de linhas, quando há.
+ * @param salto - quantas linhas andar; negativo para cima.
+ * @returns o estado com a seleção e a janela movidas; o mesmo, sem posição.
+ */
+function paginar(
+  estado: EstadoDeNavegacao,
+  contexto: ContextoDeNavegacao,
+  salto: number,
+): EstadoDeNavegacao {
+  const lista = posicoes(estado, contexto)
+  if (lista.length === 0) return estado
+  const alvo = alvoDaPagina(lista, onde(estado, lista), salto, contexto.linhas)
+  const primeira = Math.min(fundo(contexto), Math.max(0, estado.primeiraLinhaVisivel + salto))
+  return { ...em(estado, lista[alvo]), primeiraLinhaVisivel: primeira }
+}
+
+/** Metade da altura visível, e nunca menos que uma linha. */
+function meiaJanela(contexto: ContextoDeNavegacao): number {
+  return Math.max(1, Math.floor(contexto.alturaVisivel / 2))
+}
+
+/**
  * Saltar para o título de outra seção, dando a volta nas duas pontas.
  * @param estado - a seleção corrente.
  * @param contexto - as seções.
@@ -214,6 +309,14 @@ export function navegar(
       const noFim = lista.length === 0 ? estado : em(estado, lista[lista.length - 1])
       return apenas({ ...noFim, primeiraLinhaVisivel: fundo(contexto) }, 'nenhum')
     }
+    case 'pagina-acima':
+      return apenas(paginar(estado, contexto, -contexto.alturaVisivel), 'nenhum')
+    case 'pagina-abaixo':
+      return apenas(paginar(estado, contexto, contexto.alturaVisivel), 'nenhum')
+    case 'meia-pagina-acima':
+      return apenas(paginar(estado, contexto, -meiaJanela(contexto)), 'nenhum')
+    case 'meia-pagina-abaixo':
+      return apenas(paginar(estado, contexto, meiaJanela(contexto)), 'nenhum')
     case 'reler':
       return apenas(estado, 'reler')
     case 'confirmar':
