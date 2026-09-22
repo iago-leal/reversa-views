@@ -1,0 +1,95 @@
+--- a/src/cli/laco.ts	2026-09-21 20:30:32
++++ b/src/cli/laco.ts	2026-09-22 17:26:44
+@@ -43,7 +43,7 @@
+ import { linha, trecho } from './quadro/trechos.ts'
+ import { lerSessao } from './sessao.ts'
+ import type { DependenciasDaSessao } from './sessao.ts'
+-import { reconhecerTecla } from './teclas.ts'
++import { reconhecerTeclas } from './teclas.ts'
+ import type { Terminal } from './terminal.ts'
+ import type {
+   EstadoDeNavegacao,
+@@ -51,6 +51,7 @@
+   Observacao,
+   Procedencia,
+   SecaoDoTerminal,
++  Transicao,
+ } from './tipos.ts'
+ 
+ /** A fatia do processo de que o laço precisa, para que ela seja substituível. */
+@@ -140,8 +141,8 @@
+     return effectiveCollapsed(EMPTY_PREFERENCES, integridade)
+   }
+ 
+-  /** Desenha por inteiro, depois de pôr a seleção dentro da janela. */
+-  function desenhar(): void {
++  /** Põe a seleção dentro da janela, que é o que o desenho faz antes de desenhar. */
++  function ajustarJanela(): void {
+     const antes = pedidoDoQuadro()
+     estado = {
+       ...estado,
+@@ -155,6 +156,11 @@
+         blocoDaSelecao(antes),
+       ),
+     }
++  }
++
++  /** Desenha por inteiro, depois de pôr a seleção dentro da janela. */
++  function desenhar(): void {
++    ajustarJanela()
+     const quadro = comporQuadro(pedidoDoQuadro())
+     // O recado fica em linha própria, ACIMA da linha de estado, como sempre
+     // esteve acima do fim da janela: a dança do editor não muda.
+@@ -238,15 +244,35 @@
+     desenhar()
+   }
+ 
+-  /** Uma tecla: reconhecer, navegar, e executar o efeito nomeado. */
++  /**
++   * Um bloco: reconhecer as teclas dele, navegar por cada uma, e desenhar uma
++   * vez (BUG-20260922-HTND).
++   *
++   * O movimento acumula: a janela é ajustada depois de cada um, como o
++   * desenho faria, e o quadro sai uma vez no fim. A tecla de efeito executa e
++   * ENCERRA o bloco, por decisão do usuário em 2026-09-22: o que vinha depois
++   * dela foi digitado antes de o efeito aparecer, e aplicá-lo depois de reler
++   * ou de voltar do editor moveria a seleção às cegas.
++   */
+   const aoBloco = (bloco: Uint8Array): void => {
+-    const tecla = reconhecerTecla(bloco)
+-    if (tecla === null) return
++    let moveu = false
++    for (const tecla of reconhecerTeclas(bloco)) {
++      const transicao = navegar(estado, tecla, contextoDeNavegacao(pedidoDoQuadro()))
++      estado = transicao.estado
++      if (transicao.efeito === 'nenhum') {
++        ajustarJanela()
++        moveu = true
++        continue
++      }
++      executar(transicao.efeito)
++      return
++    }
++    if (moveu) desenhar()
++  }
+ 
+-    const transicao = navegar(estado, tecla, contextoDeNavegacao(pedidoDoQuadro()))
+-    estado = transicao.estado
+-
+-    switch (transicao.efeito) {
++  /** O efeito nomeado de uma tecla, que não seja o movimento. */
++  const executar = (efeito: Exclude<Transicao['efeito'], 'nenhum'>): void => {
++    switch (efeito) {
+       case 'sair':
+         sair(0)
+         return
+@@ -266,9 +292,6 @@
+         if (recado !== null) desenhar()
+         return
+       }
+-      case 'nenhum':
+-        desenhar()
+-        return
+     }
+   }
+ 

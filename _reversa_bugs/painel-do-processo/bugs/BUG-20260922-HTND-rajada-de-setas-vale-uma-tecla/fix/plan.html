@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plano de correção · nº 14 · HTND</title>
+<style>body{margin:0;background:#0d1117;color:#e6edf3;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;padding:24px;max-width:1100px}h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 8px;border-bottom:1px solid #30363d;padding-bottom:4px}.meta{color:#8b949e;font-size:12px}.cards{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0}.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px 16px;min-width:140px}.card b{display:block;font-size:20px}.card span{color:#8b949e;font-size:12px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border:1px solid #30363d;padding:6px 8px;text-align:left;vertical-align:top}th{background:#161b22}a{color:#58a6ff}code{background:#161b22;border:1px solid #30363d;border-radius:4px;padding:0 4px;font-size:12px}pre{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;overflow-x:auto;font-size:12px}.svgwrap{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:8px;overflow-x:auto}.ok{color:#3fb950}.warn{color:#d29922}.bad{color:#f85149}</style></head><body>
+<h1>Plano de correção · nº 14 · BUG-20260922-HTND</h1>
+<p class="meta">Contexto <code>painel-do-processo</code> · 2026-09-22 · commit base <code>015dbe2</code> · política de fechamento <code>package</code></p>
+<div class="cards">
+<div class="card"><b class="warn">medium</b><span>severidade</span></div>
+<div class="card"><b>P2</b><span>prioridade</span></div>
+<div class="card"><b class="ok">confirmed</b><span>causa raiz</span></div>
+<div class="card"><b class="ok">baixa</b><span>risco da mudança</span></div>
+<div class="card"><b>direta</b><span>estratégia</span></div>
+</div>
+
+<h2>O defeito</h2>
+<p>A interface viva de terminal transforma cada pedaço de bytes que o terminal entrega em no máximo uma tecla. Quando o sistema junta várias teclas no mesmo pedaço, como faz a rolagem do trackpad convertida em setas, a seleção anda um passo, ou nenhum. No painel real, cinco e quarenta setas numa escrita movem um passo; três abaixo e uma acima movem um passo para cima; <code>jjjjj</code> não move nada.</p>
+
+<h2>Causa raiz <span class="ok">(confirmed)</span></h2>
+<table>
+<tr><th>Elo</th><th>O que acontece</th></tr>
+<tr><td><code>src/cli/terminal.ts#aoTeclar</code></td><td>repassa o pedaço inteiro do evento <code>data</code> como um bloco (correto; não muda)</td></tr>
+<tr><td><code>src/cli/laco.ts#aoBloco</code></td><td>chama o reconhecedor uma vez e aplica uma transição por bloco</td></tr>
+<tr><td><code>src/cli/teclas.ts#reconhecerTecla</code></td><td>num bloco que começa por <code>Esc [</code>, decide pelo último byte do bloco inteiro; fora do escape, procura o bloco inteiro na tabela de letras</td></tr>
+</table>
+<p class="meta">Evidências: <a href="../evidence/reproduction.md">evidence/reproduction.md</a>, <a href="../evidence/leitura-rajada-de-setas-2026-09-22.txt">função pura</a>, <a href="../evidence/rajada-antes-2026-09-22.txt">painel real</a>. O controle com uma tecla por escrita anda um passo por tecla: a navegação está certa.</p>
+
+<h2>Estratégia escolhida: correção direta</h2>
+<p>Não há hipóteses concorrentes a resolver, e o risco é baixo; o debate custaria mais do que decide.</p>
+<ol>
+<li><b>Fatiar o bloco em unidades completas</b>, em função pura, sem temporizador: sequência de controle <code>Esc [</code> até o byte final (faixa <code>0x40</code> a <code>0x7E</code>); <code>Esc</code> seguido de outro byte vira unidade de dois bytes, que não é tecla; fora disso, um caractere UTF-8 por unidade.</li>
+<li><b>A D-15 continua valendo</b>: o bloco que é exatamente <code>Esc</code> é a saída. Um <code>Esc</code> ou uma sequência incompleta no fim de um bloco maior é descartado, porque pode ser o começo de uma seta partida (o risco já registrado no roadmap da 014).</li>
+<li><b>Reconhecer cada unidade</b> pela lógica de hoje, intacta: letra pelo último byte, til pelo número, controles, tabela de letras.</li>
+<li><b>No laço, aplicar cada tecla em ordem</b>, ajustando a janela depois de cada movimento como o desenho faria, e <b>desenhar uma vez só</b> no fim do bloco.</li>
+<li><b>Tecla de efeito maior encerra o bloco</b> (decisão do usuário em 2026-09-22): sair, reler, abrir no editor e suspender executam como hoje, e as teclas seguintes do mesmo pedaço são descartadas, porque foram digitadas antes de o efeito aparecer.</li>
+</ol>
+
+<h2>Correction Change Set proposto</h2>
+<table>
+<tr><th>CHG</th><th>Tipo</th><th>Artefato</th><th>Propósito</th></tr>
+<tr><td>CHG-001</td><td>code</td><td><code>src/cli/teclas.ts</code></td><td><code>fatiar</code> (privada) e <code>reconhecerTeclas</code> (exportada, devolve a lista em ordem); <code>reconhecerTecla</code> passa a valer só para bloco de uma unidade e devolve nulo para bloco com várias, em vez da última</td></tr>
+<tr><td>CHG-002</td><td>code</td><td><code>src/cli/laco.ts</code></td><td><code>ajustarJanela</code> extraída de <code>desenhar</code>; <code>aoBloco</code> percorre <code>reconhecerTeclas</code>, acumula os movimentos e desenha uma vez; efeito maior executa e encerra</td></tr>
+</table>
+<p class="meta">Nenhum dado persistido, nenhum contrato externo, nenhuma mudança em <code>terminal.ts</code>, na navegação ou no quadro. A regra de fronteira que proíbe a sequência de escape escrita como texto fora de <code>terminal.ts</code> continua respeitada.</p>
+
+<h2>Testes planejados</h2>
+<table>
+<tr><th>Tipo</th><th>Arquivo</th><th>O que prova</th></tr>
+<tr><td>reprodução</td><td><code>tests/cli-teclas-rajada.spec.ts</code></td><td>N setas num bloco viram N teclas; abaixo e acima viram as duas, em ordem; <code>jj</code> vira duas; <code>reconhecerTecla</code> não devolve mais a última de um bloco com várias</td></tr>
+<tr><td>regressão</td><td><code>tests/cli-teclas-rajada.spec.ts</code></td><td>bloco que é exatamente <code>Esc</code> é saída; <code>Esc</code> ou sequência incompleta no fim do bloco não viram tecla e não apagam as anteriores; sequência desconhecida no meio não impede as vizinhas; <code>PgUp</code>/<code>PgDn</code> no meio da rajada seguem lidas pelo número; letra acentuada de vários bytes é uma unidade só</td></tr>
+<tr><td>regressão</td><td><code>tests/cli-teclas.spec.ts</code></td><td>a suíte existente, sem uma linha alterada</td></tr>
+<tr><td>verificação</td><td><code>evidence/rajada-no-pseudoterminal.py</code></td><td>no painel real: 5 setas movem 5 passos em 1 quadro; <code>jjjjj</code> move 5; 3 abaixo e 1 acima param 2 passos abaixo</td></tr>
+</table>
+<p class="meta">O laço não tem suíte própria e montar uma exigiria simular terminal, sessão, editor e vigia; a mudança nele fica provada pelo pseudoterminal, antes e depois, e registrada em <code>evidence/</code>.</p>
+
+<h2>Riscos e o que fica de fora</h2>
+<table>
+<tr><th>Risco</th><th>Tratamento</th></tr>
+<tr><td>Sequência partida entre dois blocos (ligação lenta)</td><td>fora do escopo; o resto incompleto é descartado, como hoje o bloco inteiro seria. A espera de cinquenta milissegundos do roadmap da 014 continua sendo a saída, se o caso aparecer</td></tr>
+<tr><td>Custo de N montagens de quadro numa rajada longa</td><td>o cálculo por tecla já acontecia, com N desenhos; agora são N cálculos e um desenho</td></tr>
+<tr><td>Janela diferente da que N desenhos produziriam</td><td><code>ajustarJanela</code> roda depois de cada movimento, exatamente como o desenho fazia</td></tr>
+<tr><td>Entrega</td><td>política <code>package</code>: o bug fica em <code>delivering</code> até commit, pacote e instalação por <code>npm run atualizar -- --aplicar</code></td></tr>
+</table>
+
+<h2>Mini-grafo do bug</h2>
+<div class="svgwrap"><svg viewBox="0 0 400 140" width="400" role="img" aria-label="Mini-grafo"><a href="../bug.md"><rect x="70" y="20" width="260" height="96" rx="8" fill="#161b22" stroke="#d29922" stroke-width="3"/><text x="82" y="42" fill="#e6edf3" font-size="13" font-weight="600">nº 14 · HTND</text><text x="82" y="62" fill="#c9d1d9" font-size="11">Rajada de setas vale uma tecla só</text><text x="82" y="82" fill="#8b949e" font-size="11">medium · painel-do-processo</text><text x="82" y="102" fill="#d29922" font-size="11" font-weight="600">active · diagnosing</text></a></svg></div>
+
+<h2>Matriz de relações</h2>
+<table><tr><th>Origem</th><th>Tipo</th><th>Destino</th><th>Estado</th></tr>
+<tr><td colspan="4">Nenhuma relação. O bug nasce do reconhecimento por bloco da 014 e não toca a área de nenhum outro bug registrado.</td></tr></table>
+</body></html>

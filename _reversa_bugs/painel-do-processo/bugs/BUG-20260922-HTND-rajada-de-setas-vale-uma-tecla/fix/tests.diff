@@ -1,0 +1,122 @@
+--- /dev/null	2026-09-22 17:25:10
++++ tests/cli-teclas-rajada.spec.ts	2026-09-22 17:25:10
+@@ -0,0 +1,119 @@
++/**
++ * Suíte da rajada de teclas (BUG-20260922-HTND).
++ *
++ * O terminal entrega bytes em pedaços, e o sistema junta à vontade o que foi
++ * escrito em separado: a rolagem do trackpad convertida em setas chega, quase
++ * sempre, como várias sequências num pedaço só. Cada tecla completa do pedaço
++ * vale uma tecla, na ordem em que chegou. A D-15 continua decidindo o `Esc`:
++ * o bloco que é exatamente `Esc` é a saída, e o `Esc` que sobra no fim de um
++ * bloco maior pode ser o começo de uma seta partida, e não vira tecla.
++ */
++
++import { describe, expect, it } from 'vitest'
++import { reconhecerTecla, reconhecerTeclas } from '../src/cli/teclas.ts'
++
++/** Um bloco de bytes, como o terminal o entrega. */
++function bloco(...bytes: number[]): Uint8Array {
++  return Uint8Array.from(bytes)
++}
++
++/** Um bloco escrito como texto. */
++function texto(valor: string): Uint8Array {
++  return new TextEncoder().encode(valor)
++}
++
++/** Vários pedaços colados num bloco só, como o sistema os entrega. */
++function colados(...pedacos: Uint8Array[]): Uint8Array {
++  return Uint8Array.from(pedacos.flatMap((pedaco) => Array.from(pedaco)))
++}
++
++const ESC = 0x1b
++const TIL = 0x7e
++const ABAIXO = bloco(ESC, 0x5b, 0x42)
++const ACIMA = bloco(ESC, 0x5b, 0x41)
++
++/** N cópias do mesmo pedaço, coladas. */
++function vezes(pedaco: Uint8Array, quantas: number): Uint8Array {
++  return colados(...Array.from({ length: quantas }, () => pedaco))
++}
++
++describe('reprodução: a rajada vale uma tecla por sequência', () => {
++  it('N setas num bloco viram N teclas', () => {
++    for (const quantas of [2, 7, 40]) {
++      expect(reconhecerTeclas(vezes(ABAIXO, quantas)), String(quantas)).toEqual(
++        Array.from({ length: quantas }, () => 'abaixo'),
++      )
++    }
++  })
++
++  it('setas em sentidos opostos no mesmo bloco valem as duas, em ordem', () => {
++    expect(reconhecerTeclas(colados(ABAIXO, ABAIXO, ABAIXO, ACIMA))).toEqual([
++      'abaixo',
++      'abaixo',
++      'abaixo',
++      'acima',
++    ])
++  })
++
++  it('letras de navegação coladas valem cada uma', () => {
++    expect(reconhecerTeclas(texto('jj'))).toEqual(['abaixo', 'abaixo'])
++    expect(reconhecerTeclas(texto('jjk'))).toEqual(['abaixo', 'abaixo', 'acima'])
++  })
++
++  it('letra e seta no mesmo bloco valem as duas', () => {
++    expect(reconhecerTeclas(colados(texto('j'), ACIMA))).toEqual(['abaixo', 'acima'])
++  })
++
++  it('`reconhecerTecla` não devolve mais a última de um bloco com várias', () => {
++    expect(reconhecerTecla(colados(ABAIXO, ACIMA))).toBeNull()
++    expect(reconhecerTecla(texto('jj'))).toBeNull()
++  })
++})
++
++describe('regressão: o que a rajada não pode desfazer', () => {
++  it('o bloco que é exatamente `Esc` continua sendo a saída (D-15)', () => {
++    expect(reconhecerTeclas(bloco(ESC))).toEqual(['sair'])
++    expect(reconhecerTecla(bloco(ESC))).toBe('sair')
++  })
++
++  it('bloco de uma tecla só continua valendo uma tecla', () => {
++    expect(reconhecerTeclas(ABAIXO)).toEqual(['abaixo'])
++    expect(reconhecerTeclas(texto('q'))).toEqual(['sair'])
++    expect(reconhecerTeclas(bloco(0x0d))).toEqual(['confirmar'])
++  })
++
++  it('`Esc` sobrando no fim de um bloco maior não é saída, e não apaga as anteriores', () => {
++    expect(reconhecerTeclas(colados(ABAIXO, bloco(ESC)))).toEqual(['abaixo'])
++  })
++
++  it('sequência incompleta no fim do bloco não vira tecla, e não apaga as anteriores', () => {
++    expect(reconhecerTeclas(colados(ABAIXO, bloco(ESC, 0x5b)))).toEqual(['abaixo'])
++    expect(reconhecerTeclas(colados(ABAIXO, bloco(ESC, 0x5b, 0x35)))).toEqual(['abaixo'])
++  })
++
++  it('sequência desconhecida no meio não vira tecla, e não impede as vizinhas', () => {
++    // `Esc [ 2 ~` é Insert, que não é tecla.
++    expect(reconhecerTeclas(colados(ABAIXO, bloco(ESC, 0x5b, 0x32, TIL), ACIMA))).toEqual([
++      'abaixo',
++      'acima',
++    ])
++  })
++
++  it('as teclas de página no meio da rajada seguem lidas pelo número (017, D-06)', () => {
++    expect(
++      reconhecerTeclas(colados(bloco(ESC, 0x5b, 0x36, TIL), ABAIXO, bloco(ESC, 0x5b, 0x35, TIL))),
++    ).toEqual(['pagina-abaixo', 'abaixo', 'pagina-acima'])
++  })
++
++  it('`Esc` seguido de outro byte, como Alt com tecla, não vira tecla nem arrasta a vizinha', () => {
++    expect(reconhecerTeclas(colados(bloco(ESC, 0x6a), texto('k')))).toEqual(['acima'])
++  })
++
++  it('letra acentuada de vários bytes é uma unidade só, e não vira tecla', () => {
++    expect(reconhecerTeclas(texto('éj'))).toEqual(['abaixo'])
++  })
++
++  it('bloco vazio não vira tecla alguma', () => {
++    expect(reconhecerTeclas(bloco())).toEqual([])
++  })
++})

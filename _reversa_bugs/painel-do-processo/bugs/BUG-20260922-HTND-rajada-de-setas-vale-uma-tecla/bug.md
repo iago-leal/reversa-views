@@ -3,8 +3,8 @@ schema_version: 1
 id: BUG-20260922-HTND
 display_number: 14
 title: Rajada de setas num só bloco de bytes vale uma tecla só no painel de terminal
-status: open
-phase: triaging
+status: active
+phase: delivering
 severity: medium
 priority: P2
 created: 2026-09-22
@@ -26,7 +26,7 @@ security_suspected: false
 
 reproduction:
   classification: deterministic
-  rate: "4/4"
+  rate: "6/6"
   suspected_triggers:
     - "bloco de bytes com mais de uma sequência de tecla, como a rolagem do trackpad convertida em setas pelo emulador"
 
@@ -43,13 +43,76 @@ traceability:
   affected_code:
     - src/cli/teclas.ts
     - src/cli/laco.ts
-  root_cause: null
-  reproduction_tests: []
-  regression_tests: []
+  root_cause:
+    state: confirmed
+    hypothesis: >-
+      `reconhecerTecla` devolve no máximo uma tecla por bloco e, num bloco que começa por `Esc [`,
+      decide pelo último byte do bloco inteiro; fora do escape, decodifica o bloco inteiro como uma
+      chave da tabela. `aoBloco`, em `laco.ts`, aplica uma transição por chamada. O agrupamento de
+      várias teclas num só `data` do fluxo de entrada, que o sistema faz livremente, colapsa a rajada.
+    causal_path:
+      - "o emulador (ou o sistema) entrega N sequências num único evento `data` do stdin"
+      - "src/cli/terminal.ts#aoTeclar repassa o pedaço inteiro como um bloco"
+      - "src/cli/laco.ts#aoBloco chama reconhecerTecla uma vez"
+      - "src/cli/teclas.ts#reconhecerTecla lê o último byte (sequência) ou o bloco inteiro (letra)"
+      - "uma tecla, ou nenhuma, e uma transição de navegação"
+    evidence:
+      - ref: evidence/leitura-rajada-de-setas-2026-09-22.txt
+        observation: "a função pura devolve uma tecla para N setas, a última para setas mistas, nulo para jj"
+      - ref: evidence/rajada-antes-2026-09-22.txt
+        observation: "no painel real, 5 e 40 setas numa escrita movem um passo; jjjjj não move"
+      - ref: evidence/reproduction.md
+        observation: "o controle com uma tecla por escrita anda um passo por tecla"
+    code_refs:
+      - {file: src/cli/teclas.ts, symbol: reconhecerTecla, commit: 015dbe2}
+      - {file: src/cli/laco.ts, symbol: aoBloco, commit: 015dbe2}
+  reproduction_tests:
+    - "tests/cli-teclas-rajada.spec.ts#N setas num bloco viram N teclas"
+    - "tests/cli-teclas-rajada.spec.ts#setas em sentidos opostos no mesmo bloco valem as duas, em ordem"
+    - "tests/cli-teclas-rajada.spec.ts#letras de navegação coladas valem cada uma"
+    - "tests/cli-teclas-rajada.spec.ts#letra e seta no mesmo bloco valem as duas"
+    - "tests/cli-teclas-rajada.spec.ts#`reconhecerTecla` não devolve mais a última de um bloco com várias"
+  regression_tests:
+    - "tests/cli-teclas-rajada.spec.ts#o bloco que é exatamente `Esc` continua sendo a saída (D-15)"
+    - "tests/cli-teclas-rajada.spec.ts#bloco de uma tecla só continua valendo uma tecla"
+    - "tests/cli-teclas-rajada.spec.ts#`Esc` sobrando no fim de um bloco maior não é saída, e não apaga as anteriores"
+    - "tests/cli-teclas-rajada.spec.ts#sequência incompleta no fim do bloco não vira tecla, e não apaga as anteriores"
+    - "tests/cli-teclas-rajada.spec.ts#sequência desconhecida no meio não vira tecla, e não impede as vizinhas"
+    - "tests/cli-teclas-rajada.spec.ts#as teclas de página no meio da rajada seguem lidas pelo número (017, D-06)"
+    - "tests/cli-teclas-rajada.spec.ts#`Esc` seguido de outro byte, como Alt com tecla, não vira tecla nem arrasta a vizinha"
+    - "tests/cli-teclas-rajada.spec.ts#letra acentuada de vários bytes é uma unidade só, e não vira tecla"
+    - "tests/cli-teclas-rajada.spec.ts#bloco vazio não vira tecla alguma"
+    - "tests/cli-teclas.spec.ts (suíte inteira, sem linha alterada)"
 
-spec_verdict: null
+spec_verdict:
+  verdict: spec-gap
+  decided_by: iago
+  decided_at: 2026-09-22
+  addendum: _reversa_sdd/addenda/bug-BUG-20260922-HTND-v001.md
 
-change_set: []
+change_risk:
+  level: baixa
+  reasons:
+    - ferramenta local, sem dado persistido nem contrato externo
+    - função pura continua pura; o laço só muda a ordem de aplicação e o número de desenhos
+    - reversível; nenhuma suíte existente é reescrita
+
+change_set:
+  - id: CHG-001
+    kind: code
+    artifact: src/cli/teclas.ts
+    purpose: fatiar o bloco em unidades e reconhecer cada uma; reconhecerTeclas exportada
+    diff: fix/CHG-001.diff
+  - id: CHG-002
+    kind: code
+    artifact: src/cli/laco.ts
+    purpose: aplicar cada tecla em ordem, desenhar uma vez, tecla de efeito encerra o bloco
+    diff: fix/CHG-002.diff
+  - id: CHG-003
+    kind: specification
+    artifact: _reversa_sdd/addenda/bug-BUG-20260922-HTND-v001.md
+    purpose: adendo aditivo com as regras da rajada
+    diff: null
 
 closure:
   policy: package
@@ -142,7 +205,73 @@ uma lista longa; a seleção anda bem menos que o gesto.
 
 ## Resolution
 
-Pendente: preenchida pelo `/reversa-debugger-fix`.
+### Causa raiz, no estado final
+
+`confirmed`. `reconhecerTecla`, em `src/cli/teclas.ts`, devolvia no máximo uma tecla por bloco: num
+bloco que começa por `Esc [`, decidia pelo último byte do bloco inteiro; fora do escape, procurava o
+bloco inteiro na tabela de letras. `aoBloco`, em `src/cli/laco.ts`, aplicava uma transição por bloco.
+Reprodução determinística em `evidence/reproduction.md`.
+
+### Veredito de spec
+
+`spec-gap`, decidido pelo usuário em 2026-09-22, sobre a recomendação da sessão. O contrato do
+teclado faz de cada seta uma linha, e a D-15 só previa a sequência partida; o bloco com várias teclas
+nunca foi escrito, e a regra da tecla de efeito nasceu nesta correção. Adendo aditivo em
+`_reversa_sdd/addenda/bug-BUG-20260922-HTND-v001.md` (CHG-003).
+
+### Estratégia
+
+Correção direta, escolhida pelo usuário. O bloco é fatiado em unidades completas por função pura, e
+cada unidade é reconhecida pela lógica de antes, intacta. O laço aplica cada tecla em ordem, ajusta a
+janela depois de cada movimento como o desenho faria, e desenha uma vez. Tecla de efeito executa e
+encerra o bloco, por decisão do usuário.
+
+### Correction Change Set
+
+| CHG | Tipo | Artefato | Propósito |
+|---|---|---|---|
+| CHG-001 | code | `src/cli/teclas.ts` | `fatiar` e `reconhecerTeclas`; `reconhecerTecla` só para bloco de uma unidade |
+| CHG-002 | code | `src/cli/laco.ts` | `ajustarJanela` extraída; `aoBloco` por tecla, um desenho; `executar` com os efeitos |
+| CHG-003 | specification | `_reversa_sdd/addenda/bug-BUG-20260922-HTND-v001.md` | as seis regras da rajada |
+
+Diffs de código em `fix/CHG-001.diff` e `fix/CHG-002.diff`; o dos testes em `fix/tests.diff`. O
+adendo de spec é o próprio arquivo do CHG-003.
+
+### Testes, e a prova vermelho → verde
+
+**Vermelho**, com a suíte nova aplicada e nenhuma linha de correção: 14 de 14 falham, porque
+`reconhecerTeclas` não existe; a suíte antiga, 26 de 26 verde (`evidence/gate1-vermelho.txt`).
+
+**Verde**, com o change set aplicado: suíte inteira com 2674 de 2674 em 146 arquivos; `typecheck`,
+`check:webview` e o `tsc` da CLI sem erro (`evidence/gate2-verde.txt`).
+
+**Painel real**, no pseudoterminal, antes e depois (`evidence/rajada-antes-2026-09-22.txt`,
+`evidence/rajada-depois-2026-09-22.txt`):
+
+| Rajada numa escrita | Antes | Depois |
+|---|---|---|
+| 5 setas abaixo | 1 passo (T023) | 5 passos (T019), 1 quadro |
+| 40 setas abaixo | 1 passo | 40 passos, a mesma posição de 40 setas uma a uma |
+| 3 abaixo e 1 acima | 1 passo acima | 2 passos abaixo (T021) |
+| `jjjjj` | nada | 5 passos (T019) |
+
+### Critérios de aceite
+
+| # | Critério | Estado |
+|---|---|---|
+| 1 | N setas movem N linhas, em ordem | cumprido |
+| 2 | Sentidos diferentes, cada uma aplicada | cumprido |
+| 3 | Letras coladas valem cada uma | cumprido |
+| 4 | `Esc` exato é saída; desconhecida não vira tecla nem impede vizinhas | cumprido |
+| 5 | Til lido pelo número | cumprido |
+| 6 | Puro e sem temporizador | cumprido |
+| 7 | Rajada não dispara N redesenhos | cumprido, um quadro por bloco |
+| 8 | Nenhuma suíte existente reescrita | cumprido |
+
+### Fechamento
+
+Política `package`: falta a entrega. O bug segue `active`/`delivering` até commit, pacote e
+instalação por `npm run atualizar -- --aplicar`.
 
 ## Agent Notes
 

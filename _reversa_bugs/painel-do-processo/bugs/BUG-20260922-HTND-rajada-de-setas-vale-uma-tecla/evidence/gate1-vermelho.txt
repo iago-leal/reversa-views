@@ -1,0 +1,217 @@
+
+ RUN  v3.2.7 /Users/iagoleal/dev/reversa-views
+
+ ✓ tests/cli-teclas.spec.ts (26 tests) 3ms
+ ❯ tests/cli-teclas-rajada.spec.ts (14 tests | 14 failed) 7ms
+   × reprodução: a rajada vale uma tecla por sequência > N setas num bloco viram N teclas 3ms
+     → (0 , reconhecerTeclas) is not a function
+   × reprodução: a rajada vale uma tecla por sequência > setas em sentidos opostos no mesmo bloco valem as duas, em ordem 0ms
+     → (0 , reconhecerTeclas) is not a function
+   × reprodução: a rajada vale uma tecla por sequência > letras de navegação coladas valem cada uma 0ms
+     → (0 , reconhecerTeclas) is not a function
+   × reprodução: a rajada vale uma tecla por sequência > letra e seta no mesmo bloco valem as duas 0ms
+     → (0 , reconhecerTeclas) is not a function
+   × reprodução: a rajada vale uma tecla por sequência > `reconhecerTecla` não devolve mais a última de um bloco com várias 1ms
+     → expected 'acima' to be null
+   × regressão: o que a rajada não pode desfazer > o bloco que é exatamente `Esc` continua sendo a saída (D-15) 0ms
+     → (0 , reconhecerTeclas) is not a function
+   × regressão: o que a rajada não pode desfazer > bloco de uma tecla só continua valendo uma tecla 0ms
+     → (0 , reconhecerTeclas) is not a function
+   × regressão: o que a rajada não pode desfazer > `Esc` sobrando no fim de um bloco maior não é saída, e não apaga as anteriores 0ms
+     → (0 , reconhecerTeclas) is not a function
+   × regressão: o que a rajada não pode desfazer > sequência incompleta no fim do bloco não vira tecla, e não apaga as anteriores 0ms
+     → (0 , reconhecerTeclas) is not a function
+   × regressão: o que a rajada não pode desfazer > sequência desconhecida no meio não vira tecla, e não impede as vizinhas 0ms
+     → (0 , reconhecerTeclas) is not a function
+   × regressão: o que a rajada não pode desfazer > as teclas de página no meio da rajada seguem lidas pelo número (017, D-06) 0ms
+     → (0 , reconhecerTeclas) is not a function
+   × regressão: o que a rajada não pode desfazer > `Esc` seguido de outro byte, como Alt com tecla, não vira tecla nem arrasta a vizinha 1ms
+     → (0 , reconhecerTeclas) is not a function
+   × regressão: o que a rajada não pode desfazer > letra acentuada de vários bytes é uma unidade só, e não vira tecla 0ms
+     → (0 , reconhecerTeclas) is not a function
+   × regressão: o que a rajada não pode desfazer > bloco vazio não vira tecla alguma 0ms
+     → (0 , reconhecerTeclas) is not a function
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 14 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/cli-teclas-rajada.spec.ts > reprodução: a rajada vale uma tecla por sequência > N setas num bloco viram N teclas
+TypeError: (0 , reconhecerTeclas) is not a function
+ ❯ tests/cli-teclas-rajada.spec.ts:43:14
+     41|   it('N setas num bloco viram N teclas', () => {
+     42|     for (const quantas of [2, 7, 40]) {
+     43|       expect(reconhecerTeclas(vezes(ABAIXO, quantas)), String(quantas)…
+       |              ^
+     44|         Array.from({ length: quantas }, () => 'abaixo'),
+     45|       )
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/14]⎯
+
+ FAIL  tests/cli-teclas-rajada.spec.ts > reprodução: a rajada vale uma tecla por sequência > setas em sentidos opostos no mesmo bloco valem as duas, em ordem
+TypeError: (0 , reconhecerTeclas) is not a function
+ ❯ tests/cli-teclas-rajada.spec.ts:50:12
+     48| 
+     49|   it('setas em sentidos opostos no mesmo bloco valem as duas, em ordem…
+     50|     expect(reconhecerTeclas(colados(ABAIXO, ABAIXO, ABAIXO, ACIMA))).t…
+       |            ^
+     51|       'abaixo',
+     52|       'abaixo',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/14]⎯
+
+ FAIL  tests/cli-teclas-rajada.spec.ts > reprodução: a rajada vale uma tecla por sequência > letras de navegação coladas valem cada uma
+TypeError: (0 , reconhecerTeclas) is not a function
+ ❯ tests/cli-teclas-rajada.spec.ts:59:12
+     57| 
+     58|   it('letras de navegação coladas valem cada uma', () => {
+     59|     expect(reconhecerTeclas(texto('jj'))).toEqual(['abaixo', 'abaixo'])
+       |            ^
+     60|     expect(reconhecerTeclas(texto('jjk'))).toEqual(['abaixo', 'abaixo'…
+     61|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/14]⎯
+
+ FAIL  tests/cli-teclas-rajada.spec.ts > reprodução: a rajada vale uma tecla por sequência > letra e seta no mesmo bloco valem as duas
+TypeError: (0 , reconhecerTeclas) is not a function
+ ❯ tests/cli-teclas-rajada.spec.ts:64:12
+     62| 
+     63|   it('letra e seta no mesmo bloco valem as duas', () => {
+     64|     expect(reconhecerTeclas(colados(texto('j'), ACIMA))).toEqual(['aba…
+       |            ^
+     65|   })
+     66| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/14]⎯
+
+ FAIL  tests/cli-teclas-rajada.spec.ts > reprodução: a rajada vale uma tecla por sequência > `reconhecerTecla` não devolve mais a última de um bloco com várias
+AssertionError: expected 'acima' to be null
+
+- Expected: 
+null
+
++ Received: 
+"acima"
+
+ ❯ tests/cli-teclas-rajada.spec.ts:68:53
+     66| 
+     67|   it('`reconhecerTecla` não devolve mais a última de um bloco com vári…
+     68|     expect(reconhecerTecla(colados(ABAIXO, ACIMA))).toBeNull()
+       |                                                     ^
+     69|     expect(reconhecerTecla(texto('jj'))).toBeNull()
+     70|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/14]⎯
+
+ FAIL  tests/cli-teclas-rajada.spec.ts > regressão: o que a rajada não pode desfazer > o bloco que é exatamente `Esc` continua sendo a saída (D-15)
+TypeError: (0 , reconhecerTeclas) is not a function
+ ❯ tests/cli-teclas-rajada.spec.ts:75:12
+     73| describe('regressão: o que a rajada não pode desfazer', () => {
+     74|   it('o bloco que é exatamente `Esc` continua sendo a saída (D-15)', (…
+     75|     expect(reconhecerTeclas(bloco(ESC))).toEqual(['sair'])
+       |            ^
+     76|     expect(reconhecerTecla(bloco(ESC))).toBe('sair')
+     77|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/14]⎯
+
+ FAIL  tests/cli-teclas-rajada.spec.ts > regressão: o que a rajada não pode desfazer > bloco de uma tecla só continua valendo uma tecla
+TypeError: (0 , reconhecerTeclas) is not a function
+ ❯ tests/cli-teclas-rajada.spec.ts:80:12
+     78| 
+     79|   it('bloco de uma tecla só continua valendo uma tecla', () => {
+     80|     expect(reconhecerTeclas(ABAIXO)).toEqual(['abaixo'])
+       |            ^
+     81|     expect(reconhecerTeclas(texto('q'))).toEqual(['sair'])
+     82|     expect(reconhecerTeclas(bloco(0x0d))).toEqual(['confirmar'])
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/14]⎯
+
+ FAIL  tests/cli-teclas-rajada.spec.ts > regressão: o que a rajada não pode desfazer > `Esc` sobrando no fim de um bloco maior não é saída, e não apaga as anteriores
+TypeError: (0 , reconhecerTeclas) is not a function
+ ❯ tests/cli-teclas-rajada.spec.ts:86:12
+     84| 
+     85|   it('`Esc` sobrando no fim de um bloco maior não é saída, e não apaga…
+     86|     expect(reconhecerTeclas(colados(ABAIXO, bloco(ESC)))).toEqual(['ab…
+       |            ^
+     87|   })
+     88| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/14]⎯
+
+ FAIL  tests/cli-teclas-rajada.spec.ts > regressão: o que a rajada não pode desfazer > sequência incompleta no fim do bloco não vira tecla, e não apaga as anteriores
+TypeError: (0 , reconhecerTeclas) is not a function
+ ❯ tests/cli-teclas-rajada.spec.ts:90:12
+     88| 
+     89|   it('sequência incompleta no fim do bloco não vira tecla, e não apaga…
+     90|     expect(reconhecerTeclas(colados(ABAIXO, bloco(ESC, 0x5b)))).toEqua…
+       |            ^
+     91|     expect(reconhecerTeclas(colados(ABAIXO, bloco(ESC, 0x5b, 0x35)))).…
+     92|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/14]⎯
+
+ FAIL  tests/cli-teclas-rajada.spec.ts > regressão: o que a rajada não pode desfazer > sequência desconhecida no meio não vira tecla, e não impede as vizinhas
+TypeError: (0 , reconhecerTeclas) is not a function
+ ❯ tests/cli-teclas-rajada.spec.ts:96:12
+     94|   it('sequência desconhecida no meio não vira tecla, e não impede as v…
+     95|     // `Esc [ 2 ~` é Insert, que não é tecla.
+     96|     expect(reconhecerTeclas(colados(ABAIXO, bloco(ESC, 0x5b, 0x32, TIL…
+       |            ^
+     97|       'abaixo',
+     98|       'acima',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/14]⎯
+
+ FAIL  tests/cli-teclas-rajada.spec.ts > regressão: o que a rajada não pode desfazer > as teclas de página no meio da rajada seguem lidas pelo número (017, D-06)
+TypeError: (0 , reconhecerTeclas) is not a function
+ ❯ tests/cli-teclas-rajada.spec.ts:104:7
+    102|   it('as teclas de página no meio da rajada seguem lidas pelo número (…
+    103|     expect(
+    104|       reconhecerTeclas(colados(bloco(ESC, 0x5b, 0x36, TIL), ABAIXO, bl…
+       |       ^
+    105|     ).toEqual(['pagina-abaixo', 'abaixo', 'pagina-acima'])
+    106|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/14]⎯
+
+ FAIL  tests/cli-teclas-rajada.spec.ts > regressão: o que a rajada não pode desfazer > `Esc` seguido de outro byte, como Alt com tecla, não vira tecla nem arrasta a vizinha
+TypeError: (0 , reconhecerTeclas) is not a function
+ ❯ tests/cli-teclas-rajada.spec.ts:109:12
+    107| 
+    108|   it('`Esc` seguido de outro byte, como Alt com tecla, não vira tecla …
+    109|     expect(reconhecerTeclas(colados(bloco(ESC, 0x6a), texto('k')))).to…
+       |            ^
+    110|   })
+    111| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/14]⎯
+
+ FAIL  tests/cli-teclas-rajada.spec.ts > regressão: o que a rajada não pode desfazer > letra acentuada de vários bytes é uma unidade só, e não vira tecla
+TypeError: (0 , reconhecerTeclas) is not a function
+ ❯ tests/cli-teclas-rajada.spec.ts:113:12
+    111| 
+    112|   it('letra acentuada de vários bytes é uma unidade só, e não vira tec…
+    113|     expect(reconhecerTeclas(texto('éj'))).toEqual(['abaixo'])
+       |            ^
+    114|   })
+    115| 
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/14]⎯
+
+ FAIL  tests/cli-teclas-rajada.spec.ts > regressão: o que a rajada não pode desfazer > bloco vazio não vira tecla alguma
+TypeError: (0 , reconhecerTeclas) is not a function
+ ❯ tests/cli-teclas-rajada.spec.ts:117:12
+    115| 
+    116|   it('bloco vazio não vira tecla alguma', () => {
+    117|     expect(reconhecerTeclas(bloco())).toEqual([])
+       |            ^
+    118|   })
+    119| })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/14]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  14 failed | 26 passed (40)
+   Start at  17:26:07
+   Duration  269ms (transform 44ms, setup 0ms, collect 52ms, tests 10ms, environment 0ms, prepare 97ms)
+

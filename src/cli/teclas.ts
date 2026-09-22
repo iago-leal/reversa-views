@@ -20,6 +20,14 @@
  * emuladores: nelas, quem diz a tecla é o NÚMERO entre o colchete e o til, e
  * mapear pelo último byte trataria todas como uma só. O reconhecedor lê o
  * número e só conhece dois deles; qualquer outro não é tecla.
+ *
+ * Um bloco pode trazer VÁRIAS teclas (BUG-20260922-HTND): o sistema junta à
+ * vontade o que foi escrito em separado, e a rolagem do trackpad convertida em
+ * setas chega quase sempre como rajada. O bloco é fatiado em unidades
+ * completas antes do reconhecimento, e cada unidade vale uma tecla. O `Esc` ou
+ * a sequência incompleta que sobra no fim de um bloco maior é descartado: pode
+ * ser o começo de uma seta partida, e a D-15 só dá a saída ao bloco que é
+ * exatamente `Esc`.
  * @module cli/teclas
  */
 
@@ -91,12 +99,92 @@ const LETRAS: Record<string, TeclaNomeada> = {
   q: 'sair',
 }
 
+/** O primeiro e o último byte final de uma sequência de controle. */
+const FINAL_MINIMO = 0x40
+const FINAL_MAXIMO = 0x7e
+
 /**
- * Reconhecer um bloco de bytes.
+ * Quantos bytes tem o caractere UTF-8 que começa neste byte.
+ * @param byte - o primeiro byte do caractere.
+ * @returns o comprimento; um, para byte que não abre caractere válido.
+ */
+function comprimentoDoCaractere(byte: number): number {
+  if (byte >= 0xf0 && byte <= 0xf7) return 4
+  if (byte >= 0xe0) return byte <= 0xef ? 3 : 1
+  if (byte >= 0xc0) return 2
+  return 1
+}
+
+/**
+ * Fatiar um bloco nas unidades que o terminal escreveu.
+ *
+ * Uma unidade é uma sequência de controle inteira, de `Esc [` até o byte
+ * final; ou `Esc` seguido de um byte que não é o colchete, como o Alt com
+ * tecla; ou um caractere. O bloco que é exatamente `Esc` é uma unidade (D-15);
+ * o `Esc` ou a sequência sem byte final no fim de um bloco maior não é.
  * @param bloco - o que o terminal entregou de uma vez.
- * @returns a tecla nomeada, ou nulo quando o bloco não é nenhuma delas.
+ * @returns as unidades, em ordem.
+ */
+function fatiar(bloco: Uint8Array): Uint8Array[] {
+  if (bloco.length === 1 && bloco[0] === ESC) return [bloco]
+
+  const unidades: Uint8Array[] = []
+  let posicao = 0
+  while (posicao < bloco.length) {
+    const inicio = posicao
+    if (bloco[posicao] === ESC) {
+      if (posicao + 1 >= bloco.length) break
+      if (bloco[posicao + 1] === COLCHETE) {
+        let fim = posicao + 2
+        while (fim < bloco.length && (bloco[fim] < FINAL_MINIMO || bloco[fim] > FINAL_MAXIMO)) {
+          fim += 1
+        }
+        if (fim >= bloco.length) break
+        posicao = fim + 1
+      } else {
+        posicao += 2
+      }
+    } else {
+      posicao += comprimentoDoCaractere(bloco[posicao])
+    }
+    unidades.push(bloco.subarray(inicio, Math.min(posicao, bloco.length)))
+  }
+  return unidades
+}
+
+/**
+ * Reconhecer um bloco que traz uma tecla só.
+ * @param bloco - o que o terminal entregou de uma vez.
+ * @returns a tecla nomeada, ou nulo quando o bloco não é nenhuma delas ou
+ *   traz mais de uma unidade.
  */
 export function reconhecerTecla(bloco: Uint8Array): TeclaNomeada | null {
+  const unidades = fatiar(bloco)
+  return unidades.length === 1 ? reconhecerUnidade(unidades[0]) : null
+}
+
+/**
+ * Reconhecer todas as teclas de um bloco, na ordem em que chegaram.
+ *
+ * Unidade que não é tecla fica de fora, e não impede as vizinhas.
+ * @param bloco - o que o terminal entregou de uma vez.
+ * @returns as teclas nomeadas, possivelmente nenhuma.
+ */
+export function reconhecerTeclas(bloco: Uint8Array): TeclaNomeada[] {
+  const teclas: TeclaNomeada[] = []
+  for (const unidade of fatiar(bloco)) {
+    const tecla = reconhecerUnidade(unidade)
+    if (tecla !== null) teclas.push(tecla)
+  }
+  return teclas
+}
+
+/**
+ * Reconhecer uma unidade já fatiada.
+ * @param bloco - uma sequência, um `Esc` com um byte, ou um caractere.
+ * @returns a tecla nomeada, ou nulo quando a unidade não é nenhuma delas.
+ */
+function reconhecerUnidade(bloco: Uint8Array): TeclaNomeada | null {
   if (bloco.length === 0) return null
 
   // A aresta da D-15, e a ordem importa: o bloco de um byte só é conferido

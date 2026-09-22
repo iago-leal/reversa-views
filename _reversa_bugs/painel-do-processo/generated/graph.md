@@ -1,4 +1,4 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-22T19:53:08.729Z a partir de 14 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-22T20:30:11.456Z a partir de 14 bugs -->
 # Grafo de bugs · painel-do-processo
 
 ```mermaid
@@ -16,7 +16,7 @@ graph LR
   BUG_20260919_BQBJ["nº 10 · BUG-20260919-BQBJ<br/>Adaptações declaradas com trecho indentado não são literais no YAML, e a ressincronização para em A4<br/>open · medium"]
   BUG_20260921_J2ZK["nº 13 · BUG-20260921-J2ZK<br/>Bug encerrado com bloqueio declarado ainda sobe à faixa de espera<br/>resolved · low"]
   BUG_20260921_WNU6["nº 12 · BUG-20260921-WNU6<br/>Comentário de fim de linha no front matter é lido como valor, e lista vazia vira bloqueio<br/>resolved · medium"]
-  BUG_20260922_HTND["nº 14 · BUG-20260922-HTND<br/>Rajada de setas num só bloco de bytes vale uma tecla só no painel de terminal<br/>open · medium"]
+  BUG_20260922_HTND["nº 14 · BUG-20260922-HTND<br/>Rajada de setas num só bloco de bytes vale uma tecla só no painel de terminal<br/>active · medium"]
   BUG_20260909_VHII -. related-to (proposed) .-> BUG_20260909_FJBD
   BUG_20260910_74UL -. related-to (proposed) .-> BUG_20260909_FJBD
   BUG_20260910_SVZU -. related-to (proposed) .-> BUG_20260909_VHII

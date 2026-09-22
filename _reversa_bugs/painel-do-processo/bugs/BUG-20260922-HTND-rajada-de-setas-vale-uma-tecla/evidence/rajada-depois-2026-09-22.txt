@@ -1,0 +1,20 @@
+tentativa 1
+5 setas abaixo numa escrita        -> 1 quadro(s); seleção: ❯   ✓ T019 Acrescentar a `TABELA_DE_AJUDA`, depois
+40 setas abaixo numa escrita       -> 1 quadro(s); seleção: ❯   008-cronologia-do-ciclo-bugs · convergida · fo
+3 abaixo e 1 acima numa escrita    -> 1 quadro(s); seleção: ❯   ✓ T021 Confirmar o contrato de máquina e as fr
+jjjjj numa escrita                 -> 1 quadro(s); seleção: ❯   ✓ T019 Acrescentar a `TABELA_DE_AJUDA`, depois
+tentativa 2
+5 setas abaixo numa escrita        -> 1 quadro(s); seleção: ❯   ✓ T019 Acrescentar a `TABELA_DE_AJUDA`, depois
+40 setas abaixo numa escrita       -> 1 quadro(s); seleção: ❯   008-cronologia-do-ciclo-bugs · convergida · fo
+3 abaixo e 1 acima numa escrita    -> 1 quadro(s); seleção: ❯   ✓ T021 Confirmar o contrato de máquina e as fr
+jjjjj numa escrita                 -> 1 quadro(s); seleção: ❯   ✓ T019 Acrescentar a `TABELA_DE_AJUDA`, depois
+controle, uma seta por escrita:
+início  ❯ Aguardando decisão humana
+tab     ❯ ▾ Ciclo forward
+tab     ❯ ▾ Decomposição da feature ativa (24)
+tecla 1 ❯   ✓ T023 Na descrição da interface viva do READM
+tecla 2 ❯   ✓ T021 Confirmar o contrato de máquina e as fr
+tecla 3 ❯   ✓ T022 Atualizar o cabeçalho do módulo e a doc
+tecla 4 ❯   ✓ T020 Regenerar a amostra da ajuda com `npm r
+tecla 5 ❯   ✓ T019 Acrescentar a `TABELA_DE_AJUDA`, depois
+controle, 40 setas uma por escrita -> seleção: ❯   008-cronologia-do-ciclo-bugs · convergida · fo

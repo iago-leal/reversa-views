@@ -1,0 +1,10 @@
+tentativa 1
+5 setas abaixo numa escrita        -> 1 quadro(s); seleção: ❯   ✓ T023 Na descrição da interface viva do READM
+40 setas abaixo numa escrita       -> 1 quadro(s); seleção: ❯   ✓ T023 Na descrição da interface viva do READM
+3 abaixo e 1 acima numa escrita    -> 1 quadro(s); seleção: ❯   Adendo: 017-tela-cheia-do-painel.md
+jjjjj numa escrita                 -> 0 quadro(s); seleção: (sem seleção; 0 bytes)
+tentativa 2
+5 setas abaixo numa escrita        -> 1 quadro(s); seleção: ❯   ✓ T023 Na descrição da interface viva do READM
+40 setas abaixo numa escrita       -> 1 quadro(s); seleção: ❯   ✓ T023 Na descrição da interface viva do READM
+3 abaixo e 1 acima numa escrita    -> 1 quadro(s); seleção: ❯   Adendo: 017-tela-cheia-do-painel.md
+jjjjj numa escrita                 -> 0 quadro(s); seleção: (sem seleção; 0 bytes)

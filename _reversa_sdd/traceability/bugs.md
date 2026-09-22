@@ -1,4 +1,4 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-22T19:53:08.729Z a partir de 14 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-22T20:30:11.456Z a partir de 14 bugs -->
 # Bugs por artefato de spec
 
 Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec muda só por adendo.
@@ -26,14 +26,14 @@ Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec mud
 
 ## `_reversa_forward/014-cli-do-processo/interfaces/teclado.md`
 
-- BUG-20260922-HTND (open, P2): Rajada de setas num só bloco de bytes vale uma tecla só no painel de terminal
+- BUG-20260922-HTND (active, P2): Rajada de setas num só bloco de bytes vale uma tecla só no painel de terminal
   - seção `#2-a-tabela-confirmada` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260922-HTND-rajada-de-setas-vale-uma-tecla`
-- BUG-20260922-HTND (open, P2): Rajada de setas num só bloco de bytes vale uma tecla só no painel de terminal
+- BUG-20260922-HTND (active, P2): Rajada de setas num só bloco de bytes vale uma tecla só no painel de terminal
   - seção `#4-como-a-decisão-entra-no-código` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260922-HTND-rajada-de-setas-vale-uma-tecla`
 
 ## `_reversa_forward/017-tela-cheia-do-painel/interfaces/teclado.md`
 
-- BUG-20260922-HTND (open, P2): Rajada de setas num só bloco de bytes vale uma tecla só no painel de terminal
+- BUG-20260922-HTND (active, P2): Rajada de setas num só bloco de bytes vale uma tecla só no painel de terminal
   - seção `#1-o-que-não-muda` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260922-HTND-rajada-de-setas-vale-uma-tecla`
 
 ## `_reversa_sdd/addenda/006-cartoes-e-cronologia.md`
@@ -70,7 +70,7 @@ Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec mud
 
 ## `_reversa_sdd/addenda/017-tela-cheia-do-painel.md`
 
-- BUG-20260922-HTND (open, P2): Rajada de setas num só bloco de bytes vale uma tecla só no painel de terminal
+- BUG-20260922-HTND (active, P2): Rajada de setas num só bloco de bytes vale uma tecla só no painel de terminal
   - seção `#impacto-por-artefato-da-extração` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260922-HTND-rajada-de-setas-vale-uma-tecla`
 
 ## `_reversa_sdd/prd.md`
