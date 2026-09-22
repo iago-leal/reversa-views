@@ -1,4 +1,4 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-22T20:32:20.475Z a partir de 14 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-22T21:14:46.630Z a partir de 14 bugs -->
 # Bugs por artefato de spec
 
 Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec muda só por adendo.
@@ -35,6 +35,11 @@ Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec mud
 
 - BUG-20260922-HTND (resolved/fixed, P2): Rajada de setas num só bloco de bytes vale uma tecla só no painel de terminal
   - seção `#1-o-que-não-muda` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260922-HTND-rajada-de-setas-vale-uma-tecla`
+
+## `_reversa_sdd/addenda/004-heranca-e-sincronia.md`
+
+- BUG-20260919-BQBJ (resolved/fixed, P2): Adaptações declaradas com trecho indentado não são literais no YAML, e a ressincronização para em A4
+  - seção `#` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260919-BQBJ-adaptacao-indentada-nao-e-literal`
 
 ## `_reversa_sdd/addenda/006-cartoes-e-cronologia.md`
 
@@ -73,6 +78,11 @@ Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec mud
 - BUG-20260922-HTND (resolved/fixed, P2): Rajada de setas num só bloco de bytes vale uma tecla só no painel de terminal
   - seção `#impacto-por-artefato-da-extração` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260922-HTND-rajada-de-setas-vale-uma-tecla`
 
+## `_reversa_sdd/addenda/bug-BUG-20260919-BQBJ-v001.md`
+
+- BUG-20260919-BQBJ (resolved/fixed, P2): Adaptações declaradas com trecho indentado não são literais no YAML, e a ressincronização para em A4
+  - seção `#` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260919-BQBJ-adaptacao-indentada-nao-e-literal`
+
 ## `_reversa_sdd/prd.md`
 
 - BUG-20260909-VHII (resolved/fixed, P1): Extensão instalada anterior à feature 007 não declara procedência nem anuncia atualização
@@ -91,9 +101,9 @@ Espelho gerado pelo registro de bugs. Registra o vínculo; conteúdo de spec mud
 
 ## `_reversa_sdd/sdd/heranca-e-sincronia.md`
 
-- BUG-20260919-BQBJ (open, P2): Adaptações declaradas com trecho indentado não são literais no YAML, e a ressincronização para em A4
+- BUG-20260919-BQBJ (resolved/fixed, P2): Adaptações declaradas com trecho indentado não são literais no YAML, e a ressincronização para em A4
   - seção `#6-requisitos-funcionais` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260919-BQBJ-adaptacao-indentada-nao-e-literal`
-- BUG-20260919-BQBJ (open, P2): Adaptações declaradas com trecho indentado não são literais no YAML, e a ressincronização para em A4
+- BUG-20260919-BQBJ (resolved/fixed, P2): Adaptações declaradas com trecho indentado não são literais no YAML, e a ressincronização para em A4
   - seção `#11-edge-cases-e-tratamento-de-erros` · pasta `_reversa_bugs/painel-do-processo/bugs/BUG-20260919-BQBJ-adaptacao-indentada-nao-e-literal`
 
 ## `_reversa_sdd/sdd/leitura-do-processo.md`

@@ -1,4 +1,4 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-22T20:32:20.475Z a partir de 14 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-22T21:14:46.630Z a partir de 14 bugs -->
 # Grafo de bugs · painel-do-processo
 
 ```mermaid
@@ -13,7 +13,7 @@ graph LR
   BUG_20260914_5UH7["nº 9 · BUG-20260914-5UH7<br/>O vigia de regressão só procura a tabela antes do primeiro título, e sai vazio sem dizer nada<br/>resolved · low"]
   BUG_20260914_DTLI["nº 8 · BUG-20260914-DTLI<br/>A notação que o próprio Reversa escreve na tabela vira tipo desconhecido e tabela não reconhecida<br/>resolved · high"]
   BUG_20260919_3P7S["nº 11 · BUG-20260919-3P7S<br/>Pasta com actions.md acima do teto de bytes aparece como sem ações, e a perda não é declarada<br/>resolved · medium"]
-  BUG_20260919_BQBJ["nº 10 · BUG-20260919-BQBJ<br/>Adaptações declaradas com trecho indentado não são literais no YAML, e a ressincronização para em A4<br/>open · medium"]
+  BUG_20260919_BQBJ["nº 10 · BUG-20260919-BQBJ<br/>Adaptações declaradas com trecho indentado não são literais no YAML, e a ressincronização para em A4<br/>resolved · medium"]
   BUG_20260921_J2ZK["nº 13 · BUG-20260921-J2ZK<br/>Bug encerrado com bloqueio declarado ainda sobe à faixa de espera<br/>resolved · low"]
   BUG_20260921_WNU6["nº 12 · BUG-20260921-WNU6<br/>Comentário de fim de linha no front matter é lido como valor, e lista vazia vira bloqueio<br/>resolved · medium"]
   BUG_20260922_HTND["nº 14 · BUG-20260922-HTND<br/>Rajada de setas num só bloco de bytes vale uma tecla só no painel de terminal<br/>resolved · medium"]
@@ -44,6 +44,6 @@ Nenhum cluster por causa estrutural: não há aresta `supported` ou `confirmed` 
 
 | Bug | Score |
 |---|---|
-| BUG-20260919-BQBJ | 2 |
+
 
 Fórmula: causados×3 + bloqueados×2 + regressões×4 + relacionados×1 (máx. 3), só sobre arestas `supported`/`confirmed`.

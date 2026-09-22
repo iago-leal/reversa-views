@@ -3,7 +3,7 @@ schema_version: 1
 id: BUG-20260919-BQBJ
 display_number: 10
 title: Adaptações declaradas com trecho indentado não são literais no YAML, e a ressincronização para em A4
-status: active
+status: resolved
 phase: delivering
 severity: medium
 priority: P2
@@ -139,24 +139,25 @@ change_set:
 
 delivery:
   branch: master
-  commit: null
+  commit: 8307f47
   pull_request: null
   ci: null
-  merged: null
-  published: null
+  merged: 2026-09-22
+  published: 2026-09-22, pacote reversa-views-0.17.5.vsix gerado e instalado por npm run atualizar -- --aplicar
 
 versions:
-  fixed_in: null
-  built_from: null
-  packaged: null
-  installed: null
+  fixed_in: "0.17.5"
+  built_from: 8307f47
+  packaged: "2026-09-22, reversa-views-0.17.5.vsix, construído de 8307f47"
+  installed: "0.17.5, confirmada em iagoleal-local.reversa-views@0.17.5"
 
 backports: []
 
 closure:
   policy: package
-  satisfied: false
-resolution_kind: null
+  satisfied: true
+  satisfied_at: 2026-09-22
+resolution_kind: fixed
 ---
 
 # Adaptações declaradas com trecho indentado não são literais no YAML, e a ressincronização para em A4
@@ -261,7 +262,10 @@ O diff da spec e o do código ficam juntos nesta tabela: o adendo é o CHG-004.
 
 **Dados:** nenhum reparo; nenhum arquivo herdado, resumo ou carimbo mudou.
 
-**Entrega:** pendente (política `package`).
+**Entrega:** commit `8307f47` em `master`, enviado ao remoto; `npm run atualizar -- --aplicar`
+construiu (com a conferência local nova dentro do build), empacotou e instalou a 0.17.5, confirmada
+em `iagoleal-local.reversa-views@0.17.5`. A extensão se comporta como na 0.17.3; o que mudou foram as
+ferramentas de manutenção da herança.
 
 ## Agent Notes
 

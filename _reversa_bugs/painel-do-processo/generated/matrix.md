@@ -1,4 +1,4 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-22T20:32:20.475Z a partir de 14 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-22T21:14:46.630Z a partir de 14 bugs -->
 # Matriz de relações · painel-do-processo
 
 Lista esparsa de arestas. Inversas derivadas estão marcadas. Relação `proposed` é hipótese e não entra em priorização.
@@ -23,8 +23,8 @@ Lista esparsa de arestas. Inversas derivadas estão marcadas. Relação `propose
 | BUG-20260912-PIPE | related-to | BUG-20260914-DTLI | supported | 2 | sim |
 | BUG-20260919-3P7S | related-to | BUG-20260914-5UH7 | proposed | 0 | não |
 | BUG-20260914-5UH7 | related-to | BUG-20260919-3P7S | proposed | 0 | sim |
-| BUG-20260919-BQBJ | related-to | BUG-20260909-FJBD | supported | 2 | não |
-| BUG-20260909-FJBD | related-to | BUG-20260919-BQBJ | supported | 2 | sim |
+| BUG-20260919-BQBJ | related-to | BUG-20260909-FJBD | confirmed | 3 | não |
+| BUG-20260909-FJBD | related-to | BUG-20260919-BQBJ | confirmed | 3 | sim |
 | BUG-20260919-BQBJ | related-to | BUG-20260914-DTLI | supported | 1 | não |
 | BUG-20260914-DTLI | related-to | BUG-20260919-BQBJ | supported | 1 | sim |
 | BUG-20260921-J2ZK | related-to | BUG-20260921-WNU6 | supported | 1 | não |
