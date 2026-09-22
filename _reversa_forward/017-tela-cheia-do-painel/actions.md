@@ -137,10 +137,26 @@ Rodada de `/reversa-coding` em 2026-09-21, na noite (2026-09-22 em UTC, que é o
 4. **Uma expectativa da T004 estava errada na primeira redação**, e não a máquina: afirmava que três
    páginas levariam a janela ao fundo de um quadro de 200 linhas com janela de 20. A D-08 promete uma
    altura por página, presa ao fundo; o caso passou a afirmar isso, com doze páginas para o fundo.
-5. **A fumaça da D-11 continua pendente**, por ser passo humano (`onboarding.md`). Ao fazê-la,
-   registre aqui: o estado das duas caixas do iTerm2 (passo 0.3), o resultado do passo 1 (defeito
-   reproduzido ou não, com a versão), o resultado do passo 2 sobre esta construção, e qualquer
-   emulador em que algum passo tenha falhado.
+5. **A fumaça da D-11 foi feita na mesma noite, no iTerm2 3.7.2, e o achado é misto.**
+   - Caixas do perfil Default (passo 0.3): "Treat ambiguous-width characters as double width"
+     desligada, conforme o arquivo de preferências; "Save lines to scrollback in alternate screen
+     mode" e "Disable save/restore alternate screen" sem chave gravada, isto é, no padrão.
+   - Passo 1, no painel dividido (18×65) em que o usuário vinha testando: a réplica dos quadros
+     **persistiu com a 0.17.0**. A gravação de tela mostra a caixa `Projeto:` e o eco
+     `> npm run compile:cli` desenhados abaixo de uma linha de estado, o que só ocorre com os
+     quadros no buffer principal: naquela sessão o emulador não honrava `CSI ?1049h`, embora o
+     programa o emita sem condição. Causa provável: estado da própria sessão (ajuste por *Edit
+     Session*, que não persiste no perfil), pois o mesmo perfil, em janela nova, honra a troca.
+   - Passo 2, em painel novo do mesmo perfil, tamanhos 18×65, 55×185 e 55×208, com oitenta setas
+     enviadas por AppleScript e depois com o trackpad pelo usuário: nenhuma réplica, um quadro por
+     tela, nada no histórico depois de `q`. O emulador, porém, **não converte a rolagem do trackpad
+     em setas**: a opção avançada "Scroll wheel sends arrow keys when in alternate screen mode"
+     (`AlternateMouseScroll`) está no padrão, desligada; com ela ligada a rolagem passa a mover a
+     seleção. Sem relato de mouse, que o RF deixou fora por decisão do usuário, é o único caminho.
+   - Achado lateral, a registrar como bug: uma rajada de setas entregue num só bloco de bytes é
+     reconhecida como uma única tecla, pela regra por bloco da D-15 da 014; quarenta `Esc [ B`
+     em sequência produziram seis redesenhos no pseudoterminal. Não causa réplica, mas torna a
+     rolagem por rajada mais lenta do que o gesto.
 
 Verificação da T021: suíte inteira verde (145 arquivos, 2660 testes), `tsc -p ./`, `tsc -p
 tsconfig.cli.json` e `check:webview` limpos; `git diff` sem linha em `src/cli/laco.ts`, `passada.ts`,
@@ -154,3 +170,4 @@ paridade, dados e uso, e em `amostras/painel/` fora de `ajuda.txt`.
 | 2026-09-21 | Versão inicial gerada por `/reversa-to-do` | reversa |
 | 2026-09-21 | Edição manual após o `audit/cross-check.md`, por decisão do usuário no chat: A001, T020 promovida a 🟢 e o resumo reescrito; A002, T024 acrescentada e T021 passa a depender dela; A003, T016 cita o RF-10 e a D-12; A005, `[//]` retirado da T022, que compartilha alvo com a T016 | usuário, via reversa |
 | 2026-09-21 | Execução por `/reversa-coding`: 24 de 24 ações `[X]`, notas de execução preenchidas | reversa |
+| 2026-09-21 | Fumaça da D-11 registrada na nota 5: réplica presa à sessão antiga do iTerm2, painel novo limpo, trackpad depende de `AlternateMouseScroll`, rajada de setas como bug lateral | usuário, via reversa |
