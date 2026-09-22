@@ -1,0 +1,118 @@
+
+ RUN  v3.2.7 /Users/iagoleal/dev/reversa-views
+
+ ❯ tests/heranca-verificador-local.spec.ts (17 tests | 2 failed) 11ms
+   ✓ árvore alinhada > não produz achado algum e o veredito é alinhado 1ms
+   ✓ árvore alinhada > o modo é local quando nenhuma origem foi lida 0ms
+   ✓ edição local não declarada > é apontada nomeando o arquivo e a origem a que ele pertence 0ms
+   ✓ edição local não declarada > trocar apenas o carimbo não conta como edição (RN-03) 0ms
+   ✓ carimbo > arquivo herdado sem carimbo é apontado 0ms
+   ✓ carimbo > arquivo isento de carimbo não é cobrado por isso 0ms
+   ✓ carimbo > carimbo que diz uma revisão e manifesto que diz outra é inconsistência (RN-04) 0ms
+   ✓ carimbo > carimbo que aponta caminho de origem diferente do manifesto também é inconsistência 0ms
+   ✓ presença > arquivo do manifesto ausente do disco é apontado 0ms
+   ✓ presença > arquivo na pasta de herança fora do manifesto é apontado (RN-02) 0ms
+   ✓ paridade externa > o fixture preso ao gancho instalado é relatado como tal, sem impedir nada 0ms
+   × ida e volta das adaptações (BUG-20260919-BQBJ) > trecho declarado sem a indentação do arquivo é apontado, e impede, sem origem alguma 6ms
+     → expected [] to deeply equal [ 'adaptacao-nao-reaplica' ]
+   ✓ ida e volta das adaptações (BUG-20260919-BQBJ) > o mesmo trecho, declarado com a indentação do arquivo, não é apontado 0ms
+   ✓ ida e volta das adaptações (BUG-20260919-BQBJ) > adaptações em sequência sobre a mesma linha, como A12 e A14, não são apontadas 0ms
+   ✓ ida e volta das adaptações (BUG-20260919-BQBJ) > supressão pura não se simula, e não é apontada 0ms
+   × ida e volta das adaptações (BUG-20260919-BQBJ) > adaptação que ficaria ambígua na origem reconstruída é apontada 1ms
+     → expected [] to deeply equal [ 'adaptacao-nao-reaplica' ]
+   ✓ ida e volta das adaptações (BUG-20260919-BQBJ) > arquivo editado localmente recebe só editado-localmente, sem repetir o defeito 0ms
+ ❯ tests/heranca-adaptacoes-declaradas.spec.ts (3 tests | 2 failed) 15ms
+   ✓ a árvore herdada real > toda declaração reaplica sobre a origem que ela implica, sem precisar da origem 10ms
+   × a árvore herdada real > A4 é lida com a indentação que o código de impact.ts tem 4ms
+     → expected false to be true // Object.is equality
+   × a árvore herdada real > A5 é lida com a indentação que o código de impact.spec.ts tem 0ms
+     → expected false to be true // Object.is equality
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 4 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/heranca-adaptacoes-declaradas.spec.ts > a árvore herdada real > A4 é lida com a indentação que o código de impact.ts tem
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/heranca-adaptacoes-declaradas.spec.ts:45:72
+     43|   it('A4 é lida com a indentação que o código de impact.ts tem', () =>…
+     44|     const a4 = declarada('A4')
+     45|     expect(a4.original.startsWith('    // The note is authoritative'))…
+       |                                                                        ^
+     46|     expect(a4.adaptado.startsWith('    // A4 (BUG-20260909-FJBD)')).to…
+     47|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/4]⎯
+
+ FAIL  tests/heranca-adaptacoes-declaradas.spec.ts > a árvore herdada real > A5 é lida com a indentação que o código de impact.spec.ts tem
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ tests/heranca-adaptacoes-declaradas.spec.ts:51:84
+     49|   it('A5 é lida com a indentação que o código de impact.spec.ts tem', …
+     50|     const a5 = declarada('A5')
+     51|     expect(a5.original.startsWith("  it('keeps the note authoritative …
+       |                                                                                    ^
+     52|     expect(a5.adaptado.startsWith("  it('keeps the note authoritative …
+     53|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/4]⎯
+
+ FAIL  tests/heranca-verificador-local.spec.ts > ida e volta das adaptações (BUG-20260919-BQBJ) > trecho declarado sem a indentação do arquivo é apontado, e impede, sem origem alguma
+AssertionError: expected [] to deeply equal [ 'adaptacao-nao-reaplica' ]
+
+- Expected
++ Received
+
+- [
+-   "adaptacao-nao-reaplica",
+- ]
++ []
+
+ ❯ tests/heranca-verificador-local.spec.ts:191:30
+    189|       { id: 'A1', original: 'velho()\n', adaptado: 'novo()\noutro()\n'…
+    190|     ])
+    191|     expect(tipos(resultado)).toEqual(['adaptacao-nao-reaplica'])
+       |                              ^
+    192|     expect(resultado.achados[0].caminho).toBe(CAMINHO)
+    193|     expect(resultado.achados[0].detalhe).toContain('A1')
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/4]⎯
+
+ FAIL  tests/heranca-verificador-local.spec.ts > ida e volta das adaptações (BUG-20260919-BQBJ) > adaptação que ficaria ambígua na origem reconstruída é apontada
+AssertionError: expected [] to deeply equal [ 'adaptacao-nao-reaplica' ]
+
+- Expected
++ Received
+
+- [
+-   "adaptacao-nao-reaplica",
+- ]
++ []
+
+ ❯ tests/heranca-verificador-local.spec.ts:221:30
+    219|   it('adaptação que ficaria ambígua na origem reconstruída é apontada'…
+    220|     const resultado = comAdaptacoes('x()\ny()\n', [{ id: 'A1', origina…
+    221|     expect(tipos(resultado)).toEqual(['adaptacao-nao-reaplica'])
+       |                              ^
+    222|     expect(resultado.achados[0].detalhe).toContain('ambiguo')
+    223|   })
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+
+
+ Test Files  2 failed (2)
+      Tests  4 failed | 16 passed (20)
+   Start at  17:58:30
+   Duration  351ms (transform 54ms, setup 0ms, collect 116ms, tests 26ms, environment 0ms, prepare 138ms)
+

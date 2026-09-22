@@ -1,0 +1,392 @@
+
+ RUN  v3.2.7 /Users/iagoleal/dev/reversa-views
+
+ ✓ tests/versao.spec.ts (23 tests) 114ms
+ ✓ tests/cli-contagem.spec.ts (15 tests) 124ms
+ ✓ tests/cli-quadro.spec.ts (75 tests) 246ms
+ ✓ tests/domain-bugs.spec.ts (34 tests) 215ms
+ ✓ tests/cli-paridade.spec.tsx (29 tests) 150ms
+ ✓ tests/webview-render.spec.tsx (67 tests) 262ms
+ ✓ tests/webview-sections.spec.ts (26 tests) 26ms
+ ✓ tests/preview-servidor.spec.ts (17 tests) 154ms
+raiz: /var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-raiz-79Gonl
+projetos com state.json: 3
+já decididos: 0 pares, 0 entradas
+nada inédito a propor; o mapa já decide tudo o que apareceu
+a classificar: 0 pares e 0 entradas, a ~3 s por pergunta
+fases: 3 nomes a decidir, 1 erros de grafia, 1 recusados pelo motor
+
+proposta escrita em ../../../../var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-saida-Aj7Os9/equivalencias.md
+propostos: 0 pares e 0 entradas
+o mapa NÃO foi tocado. Marque o que aprovar e rode `npm run promover:equivalencias`.
+raiz: /var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-raiz-qQUJTz
+projetos com state.json: 3
+já decididos: 0 pares, 0 entradas
+nada inédito a propor; o mapa já decide tudo o que apareceu
+a classificar: 0 pares e 0 entradas, a ~3 s por pergunta
+fases: 4 nomes a decidir, 1 erros de grafia, 0 recusados pelo motor
+
+proposta escrita em ../../../../var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-saida-Jt7RYe/equivalencias.md
+propostos: 0 pares e 0 entradas
+o mapa NÃO foi tocado. Marque o que aprovar e rode `npm run promover:equivalencias`.
+raiz: /var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-raiz-eGtejk
+projetos com state.json: 3
+já decididos: 0 pares, 0 entradas
+nada inédito a propor; o mapa já decide tudo o que apareceu
+a classificar: 0 pares e 0 entradas, a ~3 s por pergunta
+fases: 3 nomes a decidir, 1 erros de grafia, 1 recusados pelo motor
+
+proposta escrita em ../../../../var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-saida-nLV6RP/equivalencias.md
+propostos: 0 pares e 0 entradas
+o mapa NÃO foi tocado. Marque o que aprovar e rode `npm run promover:equivalencias`.
+raiz: /var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-raiz-7cZJc2
+projetos com state.json: 3
+já decididos: 0 pares, 0 entradas
+nada inédito a propor; o mapa já decide tudo o que apareceu
+a classificar: 0 pares e 0 entradas, a ~3 s por pergunta
+fases: 3 nomes a decidir, 1 erros de grafia, 1 recusados pelo motor
+
+proposta escrita em ../../../../var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-saida-SRV8jT/equivalencias.md
+propostos: 0 pares e 0 entradas
+o mapa NÃO foi tocado. Marque o que aprovar e rode `npm run promover:equivalencias`.
+raiz: /var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-raiz-NTvYKt
+projetos com state.json: 3
+já decididos: 0 pares, 0 entradas
+nada inédito a propor; o mapa já decide tudo o que apareceu
+a classificar: 0 pares e 0 entradas, a ~3 s por pergunta
+fases: 3 nomes a decidir, 1 erros de grafia, 1 recusados pelo motor
+
+proposta escrita em ../../../../var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-saida-0G5N49/equivalencias.md
+propostos: 0 pares e 0 entradas
+o mapa NÃO foi tocado. Marque o que aprovar e rode `npm run promover:equivalencias`.
+raiz: /var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-raiz-NTvYKt
+projetos com state.json: 3
+já decididos: 0 pares, 0 entradas
+nada inédito a propor; o mapa já decide tudo o que apareceu
+a classificar: 0 pares e 0 entradas, a ~3 s por pergunta
+fases: 3 nomes a decidir, 1 erros de grafia, 1 recusados pelo motor
+
+proposta escrita em ../../../../var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-saida-0G5N49/equivalencias.md
+propostos: 0 pares e 0 entradas
+o mapa NÃO foi tocado. Marque o que aprovar e rode `npm run promover:equivalencias`.
+raiz: /var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-raiz-cCpaXh
+projetos com state.json: 3
+já decididos: 0 pares, 0 entradas
+nada inédito a propor; o mapa já decide tudo o que apareceu
+a classificar: 0 pares e 0 entradas, a ~3 s por pergunta
+fases: 3 nomes a decidir, 1 erros de grafia, 1 recusados pelo motor
+
+proposta escrita em ../../../../var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-saida-oC9roB/equivalencias.md
+propostos: 0 pares e 0 entradas
+o mapa NÃO foi tocado. Marque o que aprovar e rode `npm run promover:equivalencias`.
+promovidos: 0 pares, 0 entradas e 2 etapas
+o mapa agora tem 0 pares, 0 entradas e 2 etapas
+escrito em ../../../../var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-saida-oC9roB/equivalencias.ts. Confira com `git diff` e construa de novo.
+raiz: /var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-raiz-5XpbBF
+projetos com state.json: 3
+já decididos: 0 pares, 0 entradas
+nada inédito a propor; o mapa já decide tudo o que apareceu
+a classificar: 0 pares e 0 entradas, a ~3 s por pergunta
+fases: 3 nomes a decidir, 1 erros de grafia, 1 recusados pelo motor
+
+proposta escrita em ../../../../var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-saida-AO3hOk/equivalencias.md
+propostos: 0 pares e 0 entradas
+o mapa NÃO foi tocado. Marque o que aprovar e rode `npm run promover:equivalencias`.
+promovidos: 0 pares, 0 entradas e 1 etapas
+o mapa agora tem 0 pares, 0 entradas e 1 etapas
+escrito em ../../../../var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-saida-AO3hOk/equivalencias.ts. Confira com `git diff` e construa de novo.
+ ✓ tests/preview-greenfield.spec.ts (10 tests) 101ms
+raiz: /var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-raiz-oz86SJ
+projetos com state.json: 3
+já decididos: 0 pares, 0 entradas
+nada inédito a propor; o mapa já decide tudo o que apareceu
+a classificar: 0 pares e 0 entradas, a ~3 s por pergunta
+fases: 3 nomes a decidir, 1 erros de grafia, 1 recusados pelo motor
+
+proposta escrita em ../../../../var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-saida-3AKkj3/equivalencias.md
+propostos: 0 pares e 0 entradas
+o mapa NÃO foi tocado. Marque o que aprovar e rode `npm run promover:equivalencias`.
+promovidos: 0 pares, 0 entradas e 1 etapas
+o mapa agora tem 0 pares, 0 entradas e 2 etapas
+escrito em ../../../../var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-saida-3AKkj3/equivalencias.ts. Confira com `git diff` e construa de novo.
+raiz: /var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-raiz-nH165C
+projetos com state.json: 3
+já decididos: 0 pares, 0 entradas
+nada inédito a propor; o mapa já decide tudo o que apareceu
+a classificar: 0 pares e 0 entradas, a ~3 s por pergunta
+fases: 3 nomes a decidir, 1 erros de grafia, 1 recusados pelo motor
+
+proposta escrita em ../../../../var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-saida-jDomVn/equivalencias.md
+propostos: 0 pares e 0 entradas
+o mapa NÃO foi tocado. Marque o que aprovar e rode `npm run promover:equivalencias`.
+nenhum item marcado na proposta; nada foi escrito.
+marque as caixas do que aprovar e rode de novo.
+raiz: /var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-raiz-vfXzKR
+projetos com state.json: 3
+já decididos: 0 pares, 0 entradas
+nada inédito a propor; o mapa já decide tudo o que apareceu
+a classificar: 0 pares e 0 entradas, a ~3 s por pergunta
+fases: 3 nomes a decidir, 1 erros de grafia, 1 recusados pelo motor
+
+proposta escrita em ../../../../var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-saida-4xfVGa/equivalencias.md
+propostos: 0 pares e 0 entradas
+o mapa NÃO foi tocado. Marque o que aprovar e rode `npm run promover:equivalencias`.
+raiz: /var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-raiz-vGuLhn
+projetos com state.json: 3
+já decididos: 0 pares, 0 entradas
+nada inédito a propor; o mapa já decide tudo o que apareceu
+a classificar: 0 pares e 0 entradas, a ~3 s por pergunta
+fases: 4 nomes a decidir, 1 erros de grafia, 0 recusados pelo motor
+
+proposta escrita em ../../../../var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-saida-SshpQg/equivalencias.md
+propostos: 0 pares e 0 entradas
+o mapa NÃO foi tocado. Marque o que aprovar e rode `npm run promover:equivalencias`.
+
+código  ocorrências
+total  0
+promovidos: 0 pares, 0 entradas e 1 etapas
+o mapa agora tem 0 pares, 0 entradas e 1 etapas
+escrito em ../../../../var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/rodada-saida-SshpQg/equivalencias.ts. Confira com `git diff` e construa de novo.
+
+código  ocorrências
+total  0
+ ✓ tests/equivalencias-rodada-fases.spec.ts (13 tests) 137ms
+ ✓ tests/webview-bugs-section.spec.tsx (31 tests) 173ms
+ ✓ tests/probe-features.spec.ts (15 tests) 140ms
+ ✓ tests/preview-registro.spec.ts (7 tests) 112ms
+ ✓ tests/webview-header.spec.tsx (43 tests) 142ms
+ ✓ tests/cli-linha-de-estado.spec.ts (23 tests) 124ms
+ ✓ tests/webview-discovery-section.spec.tsx (15 tests) 31ms
+ ✓ tests/cli-passada.spec.ts (31 tests) 128ms
+ ✓ tests/webview-panorama-section.spec.tsx (35 tests) 193ms
+[feature 010] vínculo e conferências: 80.9 ms com 49 pastas
+ ✓ tests/webview-messaging.spec.ts (18 tests) 83ms
+ ✓ src/heranca/reversa-probe/tests/snapshot.spec.ts (16 tests) 74ms
+ ✓ tests/cli-amostras.spec.ts (11 tests) 35ms
+[feature 012] mapa e checkpoints: 0.23 ms com 50 pares e 50 checkpoints
+ ✓ tests/desempenho-referencia.spec.ts (7 tests) 1975ms
+   ✓ o eixo greenfield no workspace de referência > pinta os dois cartões depois da chegada do processo em menos de 100 ms  305ms
+   ✓ o vínculo e as conferências no workspace de referência (feature 010) > lê os dois arquivos a mais por pasta e julga tudo em menos de 200 ms  932ms
+ ✓ tests/cli-boundaries.spec.ts (25 tests) 60ms
+ ✓ tests/webview-instants-render.spec.tsx (17 tests) 159ms
+raiz: /var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/prompt-harness-mEbjsN
+casos sem conclusão declarada: 1
+prompt escrito em ../../../../var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/prompt-harness-mEbjsN/saida.md
+  projeto-de-scout: scout
+nenhum state.json foi tocado. Confira com `git status` na raiz varrida.
+raiz: /var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/prompt-harness-oozV9f
+casos sem conclusão declarada: 1
+prompt escrito em ../../../../var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/prompt-harness-oozV9f/saida.md
+  projeto-de-scout: scout
+nenhum state.json foi tocado. Confira com `git status` na raiz varrida.
+raiz: /var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/prompt-harness-1ONJMq
+casos sem conclusão declarada: 0
+nada a pedir: todo checkpoint desta raiz declara o que o esquema manda, ou já foi decidido por gente.
+ ✓ tests/prompt-harness.spec.ts (17 tests) 69ms
+ ✓ tests/preview-descoberta.spec.ts (13 tests) 49ms
+ ✓ tests/limites.spec.ts (9 tests) 39ms
+ ✓ tests/webview-error-boundary.spec.tsx (11 tests) 41ms
+ ✓ tests/webview-theme-tokens.spec.ts (13 tests) 32ms
+ ✓ tests/webview-boundaries.spec.ts (18 tests) 83ms
+ ✓ tests/webview-progress-cards.spec.tsx (21 tests) 50ms
+ ✓ tests/webview-labels.spec.ts (35 tests) 11ms
+ ✓ tests/equivalencias-mapa.spec.ts (18 tests) 21ms
+ ✓ tests/bugs-sem-projecao.spec.ts (6 tests) 41ms
+ ✓ tests/fases-paridade.spec.ts (29 tests) 15ms
+ ✓ tests/heranca-manifesto.spec.ts (13 tests) 72ms
+ ✓ tests/forward-marcador-de-duvida-citado.spec.ts (18 tests) 15ms
+ ✓ tests/host-provider.spec.ts (29 tests) 39ms
+ ✓ tests/heranca-ressincronizador.spec.ts (15 tests) 32ms
+ ✓ tests/host-reading.spec.ts (28 tests) 29ms
+ ✓ tests/host-protocol-fases.spec.ts (7 tests) 8ms
+ ✓ tests/webview-origin-section.spec.tsx (16 tests) 41ms
+ ✓ tests/probe-greenfield.spec.ts (10 tests) 47ms
+ ✓ tests/readonly-local.spec.ts (13 tests) 28ms
+ ✓ tests/webview-summary.spec.ts (27 tests) 27ms
+ ✓ tests/domain-decomposition.spec.ts (19 tests) 7ms
+raiz: /var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/aprendizado-cTESr3
+projetos com state.json: 1
+já decididos: 0 pares, 0 entradas
+ ✓ tests/host-boundaries.spec.ts (23 tests) 25ms
+a classificar: 4 pares e 1 entradas, a ~3 s por pergunta
+
+proposta escrita em ../../../../var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/proposta-48m8pA/equivalencias.md
+propostos: 1 pares e 1 entradas
+não classificados: 3 (a proposta os nomeia)
+o mapa NÃO foi tocado. Marque o que aprovar e rode `npm run promover:equivalencias`.
+raiz: /var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/aprendizado-kENs9Y
+projetos com state.json: 2
+já decididos: 0 pares, 0 entradas
+a classificar: 2 pares e 1 entradas, a ~3 s por pergunta
+
+proposta escrita em ../../../../var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/proposta-zpDPP7/equivalencias.md
+propostos: 2 pares e 1 entradas
+o mapa NÃO foi tocado. Marque o que aprovar e rode `npm run promover:equivalencias`.
+raiz: /var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/aprendizado-WUcOXy
+projetos com state.json: 1
+já decididos: 0 pares, 0 entradas
+a classificar: 3 pares e 1 entradas, a ~3 s por pergunta
+
+proposta escrita em ../../../../var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/proposta-ywDn6U/equivalencias.md
+propostos: 0 pares e 1 entradas
+não classificados: 3 (a proposta os nomeia)
+o mapa NÃO foi tocado. Marque o que aprovar e rode `npm run promover:equivalencias`.
+raiz: /var/folders/wy/6ny1w8792fl9r6jkww89352c0000gn/T/aprendizado-oTJ3Kw
+projetos com state.json: 1
+já decididos: 0 pares, 0 entradas
+a classificar: 1 pares e 1 entradas, a ~3 s por pergunta
+
+erro: o motor local não respondeu (ECONNREFUSED).
+nada foi escrito. Confira se ele está no ar e rode de novo.
+ ✓ tests/equivalencias-aprendizado.spec.ts (4 tests) 29ms
+ ✓ tests/equivalencias-fases-coleta.spec.ts (23 tests) 70ms
+ ✓ tests/webview-instants.spec.ts (24 tests) 40ms
+ ✓ tests/equivalencias-mapa-etapas.spec.ts (13 tests) 22ms
+ ✓ tests/domain-fases-encerramento.spec.ts (18 tests) 70ms
+ ✓ tests/webview-discovery-section-fases.spec.tsx (12 tests) 64ms
+ ✓ tests/cli-terminal.spec.ts (43 tests) 9ms
+ ✓ tests/equivalencias-motor-fases.spec.ts (12 tests) 19ms
+ ✓ tests/webview-entry.spec.ts (15 tests) 15ms
+ ✓ tests/host-protocol.spec.ts (40 tests) 17ms
+ ✓ tests/domain-greenfield-panorama.spec.ts (35 tests) 19ms
+ ✓ tests/equivalencias-motor.spec.ts (10 tests) 22ms
+ ✓ tests/domain-fases-desconto.spec.ts (18 tests) 14ms
+ ✓ tests/equivalencias-coletor.spec.ts (11 tests) 13ms
+ ✓ tests/domain-discovery-state.spec.ts (58 tests) 28ms
+ ✓ tests/domain-history.spec.ts (41 tests) 16ms
+ ✓ tests/domain-front-matter.spec.ts (34 tests) 12ms
+ ✓ tests/cli-higiene.spec.ts (8 tests) 7ms
+ ✓ tests/heranca-adaptacoes-declaradas.spec.ts (3 tests) 8ms
+ ✓ tests/host-update.spec.ts (30 tests) 19ms
+ ✓ tests/heranca-origens.spec.ts (10 tests) 15ms
+ ✓ src/heranca/reversa-domain/tests/policy.spec.ts (22 tests) 7ms
+ ✓ tests/host-net.spec.ts (28 tests) 12ms
+ ✓ tests/domain-fases-ciclo.spec.ts (15 tests) 15ms
+ ✓ tests/cli-moldura.spec.ts (24 tests) 10ms
+ ✓ tests/heranca-verificador-origem.spec.ts (10 tests) 13ms
+ ✓ tests/cli-observacao.spec.ts (15 tests) 9ms
+ ✓ tests/webview-blocking.spec.ts (28 tests) 24ms
+ ✓ tests/atualizador.spec.ts (39 tests) 9ms
+ ✓ tests/domain-delivery-link.spec.ts (20 tests) 8ms
+ ✓ tests/webview-prompt.spec.ts (34 tests) 10ms
+ ✓ tests/webview-integrity.spec.ts (12 tests) 37ms
+ ✓ tests/domain-fases.spec.ts (35 tests) 5ms
+ ✓ tests/cli-navegacao.spec.ts (48 tests) 8ms
+ ✓ tests/host-open-file.spec.ts (9 tests) 11ms
+ ✓ src/heranca/reversa-probe/tests/files.spec.ts (18 tests) 9ms
+ ✓ tests/host-router.spec.ts (23 tests) 14ms
+ ✓ tests/webview-progress-bar.spec.tsx (22 tests) 6ms
+ ✓ src/heranca/reversa-domain/tests/hook-parity.spec.ts (4 tests) 7ms
+ ✓ tests/webview-anomalies-view.spec.ts (8 tests) 9ms
+ ✓ tests/preview-descoberta-fases.spec.ts (6 tests) 52ms
+ ✓ tests/cli-sessao.spec.ts (10 tests) 8ms
+ ✓ src/heranca/reversa-domain/tests/migration.spec.ts (16 tests) 46ms
+ ✓ src/heranca/reversa-domain/tests/compose.spec.ts (7 tests) 11ms
+ ✓ tests/webview-build.spec.ts (15 tests) 8ms
+ ✓ tests/host-bridge.spec.ts (17 tests) 31ms
+ ✓ tests/webview-preferences.spec.ts (24 tests) 9ms
+ ✓ tests/domain-conferences.spec.ts (19 tests) 9ms
+ ✓ tests/webview-theme.spec.ts (26 tests) 46ms
+ ✓ src/heranca/reversa-domain/tests/progress.spec.ts (14 tests) 5ms
+ ✓ tests/host-root.spec.ts (6 tests) 5ms
+ ✓ tests/webview-decomposition-view.spec.ts (35 tests) 8ms
+ ✓ tests/domain-prd-scope.spec.ts (19 tests) 6ms
+ ✓ tests/leitura-vigia-secoes.spec.ts (11 tests) 4ms
+ ✓ src/heranca/reversa-domain/tests/watch.spec.ts (9 tests) 7ms
+ ✓ src/heranca/reversa-domain/tests/readonly.spec.ts (5 tests) 7ms
+ ✓ tests/cli-paleta.spec.ts (35 tests) 12ms
+ ✓ tests/host-panel.spec.ts (10 tests) 4ms
+ ✓ tests/cli-teclas.spec.ts (26 tests) 5ms
+ ✓ tests/heranca-verificador-local.spec.ts (17 tests) 9ms
+ ✓ tests/vsix-leitor.spec.ts (5 tests) 14ms
+ ✓ tests/domain-greenfield.spec.ts (29 tests) 10ms
+ ✓ tests/elisao-paridade.spec.ts (10 tests) 4ms
+ ✓ src/heranca/reversa-domain/tests/state.spec.ts (19 tests) 9ms
+ ✓ tests/cli-ambiente.spec.ts (18 tests) 11ms
+ ✓ tests/equivalencias-proposta-fases.spec.ts (14 tests) 5ms
+ ✓ tests/webview-bugs-view.spec.ts (22 tests) 6ms
+ ✓ tests/leitura-tabela-barra-escapada.spec.ts (5 tests) 12ms
+ ✓ tests/host-manifest.spec.ts (32 tests) 9ms
+ ✓ tests/heranca-adaptacoes.spec.ts (11 tests) 7ms
+ ✓ src/heranca/reversa-domain/tests/actions.spec.ts (11 tests) 3ms
+ ✓ tests/host-session.spec.ts (10 tests) 5ms
+ ✓ tests/leitura-notacao-markdown.spec.ts (10 tests) 9ms
+ ✓ src/heranca/reversa-probe/tests/readonly.spec.ts (5 tests) 22ms
+ ✓ tests/heranca-carimbo.spec.ts (12 tests) 4ms
+ ✓ tests/leitura-impacto-nota-greenfield.spec.ts (2 tests) 3ms
+ ✓ tests/preview-config.spec.ts (19 tests) 4ms
+ ✓ src/heranca/reversa-domain/tests/glob.spec.ts (12 tests) 4ms
+ ✓ tests/webview-panorama-view.spec.ts (14 tests) 8ms
+ ✓ src/heranca/reversa-domain/tests/impact.spec.ts (15 tests) 12ms
+ ✓ src/heranca/reversa-domain/tests/ideation.spec.ts (12 tests) 5ms
+ ✓ src/heranca/reversa-domain/tests/forward.spec.ts (16 tests) 5ms
+ ✓ tests/cli-argumentos.spec.ts (25 tests) 5ms
+ ✓ tests/vsix-conteudo.spec.ts (6 tests) 4ms
+ ✓ tests/equivalencias-proposta.spec.ts (12 tests) 8ms
+ ✓ tests/cli-teclas-rajada.spec.ts (14 tests) 4ms
+ ✓ tests/webview-blocking-greenfield.spec.ts (10 tests) 9ms
+ ✓ tests/empacotamento-versao.spec.ts (10 tests) 3ms
+ ✓ src/heranca/reversa-domain/tests/table.spec.ts (12 tests) 9ms
+ ✓ tests/webview-labels-greenfield.spec.ts (8 tests) 20ms
+ ✓ tests/preview-leitura.spec.ts (7 tests) 3ms
+ ✓ tests/host-document.spec.ts (10 tests) 3ms
+ ✓ tests/carimbo-da-construcao.spec.ts (5 tests) 2ms
+ ✓ tests/equivalencias-elisao.spec.ts (9 tests) 3ms
+ ✓ tests/heranca-ritual.spec.ts (11 tests) 2ms
+ ✓ tests/prompt-paridade.spec.ts (6 tests) 3ms
+ ✓ tests/heranca-relatorio.spec.ts (7 tests) 3ms
+ ✓ tests/paridade-gancho-instalado.spec.ts (1 test) 1ms
+ ✓ tests/heranca-revisao-gerada.spec.ts (4 tests) 3ms
+ ✓ tests/preview-vinculo.spec.ts (9 tests) 11230ms
+   ✓ os cinco casos (RF-14) > `declarada`: specs sem pasta homônima, todas ligadas por declaração  1138ms
+   ✓ os cinco casos (RF-14) > `sem-spec`: uma linha em "Entregues sem spec" com a pasta que a declara  739ms
+   ✓ os cinco casos (RF-14) > `conferencias`: "2 de 20" numa pasta convergida, que continua convergida, sem razão nova  815ms
+   ✓ os cinco casos (RF-14) > `conferencias-sem-tabela`: anomalia com a seção e o cabeçalho no detalhe  714ms
+   ✓ os cinco casos (RF-14) > `impacto-grande`: vínculo parcial, com a anomalia do arquivo não lido  651ms
+   ✓ a origem e a cópia > a cópia fica fora do repositório  792ms
+   ✓ a origem e a cópia > o workspace de origem fica intocado depois de todos os casos  4173ms
+
+ Test Files  147 passed (147)
+      Tests  2683 passed (2683)
+   Start at  18:09:43
+   Duration  11.93s (transform 3.51s, setup 0ms, collect 13.50s, tests 18.31s, environment 54ms, prepare 11.13s)
+
+
+# casos do bug, em modo detalhado
+ ✓ tests/heranca-verificador-local.spec.ts > árvore alinhada > não produz achado algum e o veredito é alinhado 2ms
+ ✓ tests/heranca-verificador-local.spec.ts > árvore alinhada > o modo é local quando nenhuma origem foi lida 0ms
+ ✓ tests/heranca-verificador-local.spec.ts > edição local não declarada > é apontada nomeando o arquivo e a origem a que ele pertence 0ms
+ ✓ tests/heranca-verificador-local.spec.ts > edição local não declarada > trocar apenas o carimbo não conta como edição (RN-03) 1ms
+ ✓ tests/heranca-verificador-local.spec.ts > carimbo > arquivo herdado sem carimbo é apontado 0ms
+ ✓ tests/heranca-verificador-local.spec.ts > carimbo > arquivo isento de carimbo não é cobrado por isso 0ms
+ ✓ tests/heranca-verificador-local.spec.ts > carimbo > carimbo que diz uma revisão e manifesto que diz outra é inconsistência (RN-04) 0ms
+ ✓ tests/heranca-verificador-local.spec.ts > carimbo > carimbo que aponta caminho de origem diferente do manifesto também é inconsistência 0ms
+ ✓ tests/heranca-verificador-local.spec.ts > presença > arquivo do manifesto ausente do disco é apontado 0ms
+ ✓ tests/heranca-verificador-local.spec.ts > presença > arquivo na pasta de herança fora do manifesto é apontado (RN-02) 0ms
+ ✓ tests/heranca-verificador-local.spec.ts > paridade externa > o fixture preso ao gancho instalado é relatado como tal, sem impedir nada 0ms
+ ✓ tests/heranca-verificador-local.spec.ts > ida e volta das adaptações (BUG-20260919-BQBJ) > trecho declarado sem a indentação do arquivo é apontado, e impede, sem origem alguma 0ms
+ ✓ tests/heranca-verificador-local.spec.ts > ida e volta das adaptações (BUG-20260919-BQBJ) > o mesmo trecho, declarado com a indentação do arquivo, não é apontado 0ms
+ ✓ tests/heranca-verificador-local.spec.ts > ida e volta das adaptações (BUG-20260919-BQBJ) > adaptações em sequência sobre a mesma linha, como A12 e A14, não são apontadas 0ms
+ ✓ tests/heranca-verificador-local.spec.ts > ida e volta das adaptações (BUG-20260919-BQBJ) > supressão pura não se simula, e não é apontada 0ms
+ ✓ tests/heranca-verificador-local.spec.ts > ida e volta das adaptações (BUG-20260919-BQBJ) > adaptação que ficaria ambígua na origem reconstruída é apontada 0ms
+ ✓ tests/heranca-verificador-local.spec.ts > ida e volta das adaptações (BUG-20260919-BQBJ) > arquivo editado localmente recebe só editado-localmente, sem repetir o defeito 0ms
+ ✓ tests/heranca-adaptacoes-declaradas.spec.ts > a árvore herdada real > toda declaração reaplica sobre a origem que ela implica, sem precisar da origem 8ms
+ ✓ tests/heranca-adaptacoes-declaradas.spec.ts > a árvore herdada real > A4 é lida com a indentação que o código de impact.ts tem 0ms
+ ✓ tests/heranca-adaptacoes-declaradas.spec.ts > a árvore herdada real > A5 é lida com a indentação que o código de impact.spec.ts tem 0ms
+      Tests  20 passed (20)
+
+# npm run check:heranca:local
+Herança vendorizada
+  modo: local (só o que está versionado aqui)
+  as origens não foram consultadas: rode npm run check:heranca para confrontá-las
+
+  scrum-harness (código): não verificado
+    [informa] paridade-externa src/heranca/reversa-domain/tests/fixtures/check-legacy-policy.mjs
+              este arquivo é o espelho de .reversa/hooks/check-legacy-policy.mjs, e os dois andam juntos
+              → ao mexer num lado, confira o outro na mesma passada
+
+  vscode-kanban (padrão): não verificado
+    nada a relatar
+
+  veredito: divergente (0 impedem, 1 apenas informam)
+exit 0

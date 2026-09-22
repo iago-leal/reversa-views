@@ -6,6 +6,12 @@
 # única vez; zero ou duas ocorrências interrompem a ressincronização inteira,
 # sem escrever arquivo algum.
 #
+# Por isso o trecho precisa chegar com a indentação que tem no código. O bloco
+# literal do YAML deduz a indentação pela primeira linha: quando ela começa por
+# espaço, o bloco precisa do indicador (`|2`, contado a partir da chave), ou a
+# indentação do código sai do texto lido. A conferência local, que roda no
+# build, acusa o esquecimento como `adaptacao-nao-reaplica`.
+#
 # A prosa que explica a história de cada adaptação continua em
 # `src/heranca/PROCEDENCIA.md`. Aqui vive o dado.
 versao: 1
@@ -49,12 +55,12 @@ adaptacoes:
       primeira modifica arquivos que as anteriores criaram, e a nota que distingue criado de
       modificado é mais verdadeira, não contraditória. A anomalia deixa de ser registrada; o
       vocabulário (anomaly.ts) permanece intacto.
-    original: |
+    original: |2
           // The note is authoritative, but a shape that contradicts it is worth saying.
           if (cenario === 'greenfield' && files.some(file => file.tipo !== 'componente-novo')) {
             log.add(FILE, 'cenario-ambiguo', 'nota de greenfield com impacto que não é componente-novo')
           }
-    adaptado: |
+    adaptado: |2
           // A4 (BUG-20260909-FJBD): the note is authoritative, and a shape with other
           // impact types does not contradict it. In this project a greenfield feature
           // after the first one modifies files the earlier ones created, and a note
@@ -64,14 +70,14 @@ adaptacoes:
     arquivo: src/heranca/reversa-domain/tests/impact.spec.ts
     motivo: |
       Consequência de A4, na suíte herdada: o caso que fixava a anomalia passa a fixar a aceitação.
-    original: |
+    original: |2
         it('keeps the note authoritative but flags a contradictory shape', () => {
           const md = `# Impacto\n\n${GREENFIELD_NOTE}\n\n${HEADER}| src/a.js | Comp | regra-alterada | HIGH | mexeu em regra existente |\n`
           const impact = ImpactContract.read(md)
           expect(impact.cenario).toBe('greenfield')
           expect(impact.anomalies.some(a => a.code === 'cenario-ambiguo')).toBe(true)
         })
-    adaptado: |
+    adaptado: |2
         it('keeps the note authoritative and accepts a shape with other impact types (A5)', () => {
           const md = `# Impacto\n\n${GREENFIELD_NOTE}\n\n${HEADER}| src/a.js | Comp | regra-alterada | HIGH | mexeu em regra existente |\n`
           const impact = ImpactContract.read(md)

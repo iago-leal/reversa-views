@@ -1,0 +1,159 @@
+--- tests/heranca-verificador-local.spec.ts	2026-09-09 14:32:42
++++ tests/heranca-verificador-local.spec.ts	2026-09-22 17:51:06
+@@ -153,3 +153,99 @@
+     expect(resultado.impede).toBe(false)
+   })
+ })
++
++describe('ida e volta das adaptações (BUG-20260919-BQBJ)', () => {
++  /**
++   * Um arquivo herdado com adaptações declaradas, julgado sem origem alguma.
++   * O carimbo e o manifesto concordam entre si e com o resumo do corpo, para
++   * que só a sétima conferência tenha o que dizer.
++   */
++  function comAdaptacoes(corpo: string, itens: Array<Record<string, unknown>>) {
++    const ids = itens.map((item) => String(item.id))
++    return julgar({
++      manifesto: manifestoFixture({
++        arquivos: [
++          entradaDeArquivo({
++            caminho: CAMINHO,
++            caminhoNaOrigem: NA_ORIGEM,
++            resumo: resumo(corpo),
++            adaptacoes: ids,
++          }),
++        ],
++      }),
++      adaptacoes: adaptacoesFixture(itens.map((item) => ({ arquivo: CAMINHO, motivo: 'x', ...item }))),
++      local: {
++        arquivos: { [CAMINHO]: arquivoCarimbado({ caminho: NA_ORIGEM, adaptacoes: ids.join(', ') }, corpo) },
++        extras: [],
++      },
++      origens: null,
++    })
++  }
++
++  const INDENTADO = 'function f() {\n  if (x) {\n    novo()\n    outro()\n  }\n}\n'
++
++  it('trecho declarado sem a indentação do arquivo é apontado, e impede, sem origem alguma', () => {
++    const resultado = comAdaptacoes(INDENTADO, [
++      { id: 'A1', original: 'velho()\n', adaptado: 'novo()\noutro()\n' },
++    ])
++    expect(tipos(resultado)).toEqual(['adaptacao-nao-reaplica'])
++    expect(resultado.achados[0].caminho).toBe(CAMINHO)
++    expect(resultado.achados[0].detalhe).toContain('A1')
++    expect(resultado.impede).toBe(true)
++  })
++
++  it('o mesmo trecho, declarado com a indentação do arquivo, não é apontado', () => {
++    const resultado = comAdaptacoes(INDENTADO, [
++      { id: 'A1', original: '    velho()\n', adaptado: '    novo()\n    outro()\n' },
++    ])
++    expect(resultado.achados).toEqual([])
++  })
++
++  it('adaptações em sequência sobre a mesma linha, como A12 e A14, não são apontadas', () => {
++    const resultado = comAdaptacoes("import { a, c } from './t.ts'\nexport const z = a\n", [
++      { id: 'A1', original: "import { a } from './t.ts'\n", adaptado: "import { a, b } from './t.ts'\n" },
++      { id: 'A2', original: "import { a, b } from './t.ts'\n", adaptado: "import { a, c } from './t.ts'\n" },
++    ])
++    expect(resultado.achados).toEqual([])
++  })
++
++  it('supressão pura não se simula, e não é apontada', () => {
++    const resultado = comAdaptacoes('export const a = 1\n', [
++      { id: 'A1', original: "export { b } from './b.ts'\n", adaptado: '' },
++    ])
++    expect(resultado.achados).toEqual([])
++  })
++
++  it('adaptação que ficaria ambígua na origem reconstruída é apontada', () => {
++    const resultado = comAdaptacoes('x()\ny()\n', [{ id: 'A1', original: 'x()\n', adaptado: 'y()\n' }])
++    expect(tipos(resultado)).toEqual(['adaptacao-nao-reaplica'])
++    expect(resultado.achados[0].detalhe).toContain('ambiguo')
++  })
++
++  it('arquivo editado localmente recebe só editado-localmente, sem repetir o defeito', () => {
++    const ids = ['A1']
++    const resultado = julgar({
++      manifesto: manifestoFixture({
++        arquivos: [
++          entradaDeArquivo({
++            caminho: CAMINHO,
++            caminhoNaOrigem: NA_ORIGEM,
++            resumo: resumo(INDENTADO),
++            adaptacoes: ids,
++          }),
++        ],
++      }),
++      adaptacoes: adaptacoesFixture([
++        { id: 'A1', arquivo: CAMINHO, motivo: 'x', original: 'velho()\n', adaptado: 'novo()\noutro()\n' },
++      ]),
++      local: {
++        arquivos: {
++          [CAMINHO]: arquivoCarimbado({ caminho: NA_ORIGEM, adaptacoes: 'A1' }, `${INDENTADO}// mexida\n`),
++        },
++        extras: [],
++      },
++      origens: null,
++    })
++    expect(tipos(resultado)).toEqual(['editado-localmente'])
++  })
++})
+--- /dev/null	2026-09-22 17:51:20
++++ tests/heranca-adaptacoes-declaradas.spec.ts	2026-09-22 17:51:20
+@@ -0,0 +1,54 @@
++/**
++ * As adaptações declaradas de verdade, julgadas contra a árvore de verdade
++ * (BUG-20260919-BQBJ).
++ *
++ * As outras suítes da herança julgam fixtures montadas à mão; esta lê o
++ * `adaptacoes.yml`, o manifesto e os arquivos herdados que estão no disco, e
++ * pergunta se cada declaração reaplica sobre a origem que ela mesma implica.
++ * Foi a falta dessa pergunta que deixou A4 e A5 sem indentação por doze dias.
++ */
++
++import { join } from 'node:path'
++import { describe, expect, it } from 'vitest'
++import { lerArvoreLocal, lerDeclaracoes } from '../scripts/heranca/leitura.js'
++import { julgar } from '../scripts/heranca/verificar.js'
++
++/** A raiz do repositório. */
++const RAIZ = join(__dirname, '..')
++
++const { manifesto, adaptacoes } = lerDeclaracoes(RAIZ)
++
++/** Uma adaptação declarada, pelo identificador. */
++function declarada(id: string): { original: string; adaptado: string } {
++  const item = adaptacoes.adaptacoes.find((candidata: { id: string }) => candidata.id === id)
++  expect(item, id).toBeDefined()
++  return item
++}
++
++describe('a árvore herdada real', () => {
++  it('toda declaração reaplica sobre a origem que ela implica, sem precisar da origem', () => {
++    const resultado = julgar({
++      manifesto,
++      adaptacoes,
++      local: lerArvoreLocal(RAIZ, manifesto),
++      origens: null,
++    })
++    const naoReaplicam = resultado.achados.filter(
++      (achado: { tipo: string }) => achado.tipo === 'adaptacao-nao-reaplica',
++    )
++    expect(naoReaplicam).toEqual([])
++    expect(resultado.impede).toBe(false)
++  })
++
++  it('A4 é lida com a indentação que o código de impact.ts tem', () => {
++    const a4 = declarada('A4')
++    expect(a4.original.startsWith('    // The note is authoritative')).toBe(true)
++    expect(a4.adaptado.startsWith('    // A4 (BUG-20260909-FJBD)')).toBe(true)
++  })
++
++  it('A5 é lida com a indentação que o código de impact.spec.ts tem', () => {
++    const a5 = declarada('A5')
++    expect(a5.original.startsWith("  it('keeps the note authoritative but flags")).toBe(true)
++    expect(a5.adaptado.startsWith("  it('keeps the note authoritative and accepts")).toBe(true)
++  })
++})

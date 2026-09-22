@@ -1,0 +1,28 @@
+# node _reversa_bugs/painel-do-processo/bugs/BUG-20260919-BQBJ-adaptacao-indentada-nao-e-literal/evidence/ida-e-volta.js, na raiz, sobre a9d29b3 (master), 2026-09-22
+src/heranca/reversa-domain/src/impact.ts desfazer: A4 ausente
+src/heranca/reversa-domain/src/index.ts reproduz
+src/heranca/reversa-domain/src/table.ts reproduz
+src/heranca/reversa-domain/src/watch.ts reproduz
+src/heranca/reversa-domain/tests/impact.spec.ts desfazer: A5 ausente
+src/heranca/reversa-probe/src/index.ts supressão pura, pula
+src/heranca/reversa-probe/src/snapshot.ts reproduz
+src/heranca/reversa-probe/tests/snapshot.spec.ts reproduz
+exit 0
+
+# o mesmo, com A4 e A5 declaradas com o indicador |2 (cópia em memória do adaptacoes.yml)
+src/heranca/reversa-domain/src/impact.ts reproduz
+src/heranca/reversa-domain/src/index.ts reproduz
+src/heranca/reversa-domain/src/table.ts reproduz
+src/heranca/reversa-domain/src/watch.ts reproduz
+src/heranca/reversa-domain/tests/impact.spec.ts reproduz
+src/heranca/reversa-probe/src/index.ts supressão pura, pula
+src/heranca/reversa-probe/src/snapshot.ts reproduz
+src/heranca/reversa-probe/tests/snapshot.spec.ts reproduz
+
+# como o yaml entrega a primeira linha do original de A4
+A4 "// The note is authoritative, but a shape that contradicts it is worth saying."
+A5 "it('keeps the note authoritative but flags a contradictory shape', () => {"
+A10 "      const [arquivo = '', componente = '', tipo = '', severidade = '', justificativa = ''] = row"
+# no arquivo local (adaptado já aplicado), com a indentação visível:
+120:    // A4 (BUG-20260909-FJBD): the note is authoritative, and a shape with other
+136:  it('keeps the note authoritative and accepts a shape with other impact types (A5)', () => {

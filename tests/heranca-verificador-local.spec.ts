@@ -153,3 +153,99 @@ describe('paridade externa', () => {
     expect(resultado.impede).toBe(false)
   })
 })
+
+describe('ida e volta das adaptações (BUG-20260919-BQBJ)', () => {
+  /**
+   * Um arquivo herdado com adaptações declaradas, julgado sem origem alguma.
+   * O carimbo e o manifesto concordam entre si e com o resumo do corpo, para
+   * que só a sétima conferência tenha o que dizer.
+   */
+  function comAdaptacoes(corpo: string, itens: Array<Record<string, unknown>>) {
+    const ids = itens.map((item) => String(item.id))
+    return julgar({
+      manifesto: manifestoFixture({
+        arquivos: [
+          entradaDeArquivo({
+            caminho: CAMINHO,
+            caminhoNaOrigem: NA_ORIGEM,
+            resumo: resumo(corpo),
+            adaptacoes: ids,
+          }),
+        ],
+      }),
+      adaptacoes: adaptacoesFixture(itens.map((item) => ({ arquivo: CAMINHO, motivo: 'x', ...item }))),
+      local: {
+        arquivos: { [CAMINHO]: arquivoCarimbado({ caminho: NA_ORIGEM, adaptacoes: ids.join(', ') }, corpo) },
+        extras: [],
+      },
+      origens: null,
+    })
+  }
+
+  const INDENTADO = 'function f() {\n  if (x) {\n    novo()\n    outro()\n  }\n}\n'
+
+  it('trecho declarado sem a indentação do arquivo é apontado, e impede, sem origem alguma', () => {
+    const resultado = comAdaptacoes(INDENTADO, [
+      { id: 'A1', original: 'velho()\n', adaptado: 'novo()\noutro()\n' },
+    ])
+    expect(tipos(resultado)).toEqual(['adaptacao-nao-reaplica'])
+    expect(resultado.achados[0].caminho).toBe(CAMINHO)
+    expect(resultado.achados[0].detalhe).toContain('A1')
+    expect(resultado.impede).toBe(true)
+  })
+
+  it('o mesmo trecho, declarado com a indentação do arquivo, não é apontado', () => {
+    const resultado = comAdaptacoes(INDENTADO, [
+      { id: 'A1', original: '    velho()\n', adaptado: '    novo()\n    outro()\n' },
+    ])
+    expect(resultado.achados).toEqual([])
+  })
+
+  it('adaptações em sequência sobre a mesma linha, como A12 e A14, não são apontadas', () => {
+    const resultado = comAdaptacoes("import { a, c } from './t.ts'\nexport const z = a\n", [
+      { id: 'A1', original: "import { a } from './t.ts'\n", adaptado: "import { a, b } from './t.ts'\n" },
+      { id: 'A2', original: "import { a, b } from './t.ts'\n", adaptado: "import { a, c } from './t.ts'\n" },
+    ])
+    expect(resultado.achados).toEqual([])
+  })
+
+  it('supressão pura não se simula, e não é apontada', () => {
+    const resultado = comAdaptacoes('export const a = 1\n', [
+      { id: 'A1', original: "export { b } from './b.ts'\n", adaptado: '' },
+    ])
+    expect(resultado.achados).toEqual([])
+  })
+
+  it('adaptação que ficaria ambígua na origem reconstruída é apontada', () => {
+    const resultado = comAdaptacoes('x()\ny()\n', [{ id: 'A1', original: 'x()\n', adaptado: 'y()\n' }])
+    expect(tipos(resultado)).toEqual(['adaptacao-nao-reaplica'])
+    expect(resultado.achados[0].detalhe).toContain('ambiguo')
+  })
+
+  it('arquivo editado localmente recebe só editado-localmente, sem repetir o defeito', () => {
+    const ids = ['A1']
+    const resultado = julgar({
+      manifesto: manifestoFixture({
+        arquivos: [
+          entradaDeArquivo({
+            caminho: CAMINHO,
+            caminhoNaOrigem: NA_ORIGEM,
+            resumo: resumo(INDENTADO),
+            adaptacoes: ids,
+          }),
+        ],
+      }),
+      adaptacoes: adaptacoesFixture([
+        { id: 'A1', arquivo: CAMINHO, motivo: 'x', original: 'velho()\n', adaptado: 'novo()\noutro()\n' },
+      ]),
+      local: {
+        arquivos: {
+          [CAMINHO]: arquivoCarimbado({ caminho: NA_ORIGEM, adaptacoes: 'A1' }, `${INDENTADO}// mexida\n`),
+        },
+        extras: [],
+      },
+      origens: null,
+    })
+    expect(tipos(resultado)).toEqual(['editado-localmente'])
+  })
+})

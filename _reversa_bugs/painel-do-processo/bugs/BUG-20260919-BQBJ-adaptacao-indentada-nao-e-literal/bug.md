@@ -3,12 +3,12 @@ schema_version: 1
 id: BUG-20260919-BQBJ
 display_number: 10
 title: Adaptações declaradas com trecho indentado não são literais no YAML, e a ressincronização para em A4
-status: open
-phase: triaging
+status: active
+phase: delivering
 severity: medium
 priority: P2
 created: 2026-09-19
-updated: 2026-09-19
+updated: 2026-09-22
 
 origin:
   type: inspection
@@ -26,7 +26,8 @@ security_suspected: false
 
 reproduction:
   classification: deterministic
-  rate: "1/1"
+  rate: "2/2"
+  capsule: evidence/reproduction.md
   suspected_triggers:
     - "trecho original ou adaptado de adaptacoes.yml cuja primeira linha começa por espaço, sem indicador de indentação no bloco literal"
 
@@ -35,9 +36,10 @@ blocking: []
 relationships:
   - bug: BUG-20260909-FJBD
     type: related-to
-    state: supported
+    state: confirmed
     evidence:
       - "A4 e A5 foram declaradas pelo fix do nº 1, commit bf238ce"
+      - "git log -S sobre o trecho de A4 aponta bf238ce"
       - evidence/literalidade-2026-09-19.txt
   - bug: BUG-20260914-DTLI
     type: related-to
@@ -49,16 +51,107 @@ traceability:
   specs:
     - _reversa_sdd/sdd/heranca-e-sincronia.md#6-requisitos-funcionais
     - _reversa_sdd/sdd/heranca-e-sincronia.md#11-edge-cases-e-tratamento-de-erros
+    - _reversa_sdd/addenda/004-heranca-e-sincronia.md
+    - _reversa_sdd/addenda/bug-BUG-20260919-BQBJ-v001.md
   affected_code:
     - src/heranca/adaptacoes.yml
     - scripts/heranca/verificar.js
     - scripts/heranca/adaptacoes.js
-  root_cause: null
-  reproduction_tests: []
-  regression_tests: []
+    - scripts/heranca/relatorio.js
+  root_cause:
+    state: confirmed
+    hypothesis: >-
+      A4 e A5 declaram `original` e `adaptado` em bloco literal sem indicador de indentação (`|`).
+      O YAML deduz a indentação do bloco pela primeira linha de conteúdo; como o trecho de código
+      começa indentado, a indentação dele é absorvida pela do bloco e sai de toda linha lida. O
+      trecho entregue não existe na origem, e `aplicar()` para com `ausente`. A falta de detecção
+      nasce ao lado: o modo local do verificador confere carimbo e resumo, e nenhuma das suas
+      conferências simula a reaplicação, que só o modo completo faz, com a origem no disco.
+    causal_path:
+      - "src/heranca/adaptacoes.yml declara A4 e A5 com `|`, primeira linha indentada (bf238ce)"
+      - "scripts/heranca/manifesto.js#lerAdaptacoes entrega o trecho sem a indentação"
+      - "scripts/heranca/adaptacoes.js#aplicar não encontra o original: motivo ausente"
+      - "scripts/heranca/verificar.js#julgarLocalmente não reaplica nada, e o build segue verde"
+    evidence:
+      - ref: evidence/ida-e-volta-2026-09-22.txt
+        observation: "impact.ts para em A4 e impact.spec.ts em A5; com `|2` nas duas, os sete arquivos simulados reproduzem o local"
+      - ref: evidence/literalidade-2026-09-19.txt
+        observation: "A4 e A5 são as únicas adaptações cujo trecho não ocorre no arquivo por defeito, e não por desenho"
+      - ref: evidence/reproduction.md
+        observation: "a reconstrução da origem por desfazimento em ordem inversa dispensa o clone"
+    code_refs:
+      - {file: src/heranca/adaptacoes.yml, symbol: A4, commit: bf238ce}
+      - {file: src/heranca/adaptacoes.yml, symbol: A5, commit: bf238ce}
+      - {file: scripts/heranca/verificar.js, symbol: julgarLocalmente, commit: a9d29b3}
+  regression_analysis:
+    culprit_commit: bf238ce
+    culprit_pr: null
+    method: "git log -S sobre o trecho de A4; bisect dispensado, porque o defeito é da declaração e nasce no commit que a escreveu"
+  reproduction_tests:
+    - "tests/heranca-verificador-local.spec.ts#trecho declarado sem a indentação do arquivo é apontado, e impede, sem origem alguma"
+    - "tests/heranca-adaptacoes-declaradas.spec.ts#A4 é lida com a indentação que o código de impact.ts tem"
+    - "tests/heranca-adaptacoes-declaradas.spec.ts#A5 é lida com a indentação que o código de impact.spec.ts tem"
+  regression_tests:
+    - "tests/heranca-adaptacoes-declaradas.spec.ts#toda declaração reaplica sobre a origem que ela implica, sem precisar da origem"
+    - "tests/heranca-verificador-local.spec.ts#o mesmo trecho, declarado com a indentação do arquivo, não é apontado"
+    - "tests/heranca-verificador-local.spec.ts#adaptações em sequência sobre a mesma linha, como A12 e A14, não são apontadas"
+    - "tests/heranca-verificador-local.spec.ts#supressão pura não se simula, e não é apontada"
+    - "tests/heranca-verificador-local.spec.ts#adaptação que ficaria ambígua na origem reconstruída é apontada"
+    - "tests/heranca-verificador-local.spec.ts#arquivo editado localmente recebe só editado-localmente, sem repetir o defeito"
+    - "tests/heranca-*.spec.ts (suítes existentes da herança, sem linha alterada)"
 
-spec_verdict: null
-change_set: []
+spec_verdict:
+  verdict: spec-desatualizada
+  decided_by: iago
+  decided_at: 2026-09-22
+  addendum: _reversa_sdd/addenda/bug-BUG-20260919-BQBJ-v001.md
+  note: "spec-correta quanto a A4 e A5 (RF-04, RF-05); desatualizada quanto às contagens do adendo 004 e à falta do RF-03.1"
+
+change_risk:
+  level: baixa
+  reasons:
+    - ferramenta local de manutenção da herança, sem contrato externo nem dado persistido
+    - nenhum arquivo herdado, resumo ou carimbo muda; a extensão se comporta como na 0.17.3
+    - a conferência nova impede o build, e foi medida sem falso positivo na árvore real
+    - reversível por revert do commit
+
+change_set:
+  - id: CHG-001
+    kind: configuration
+    artifact: src/heranca/adaptacoes.yml
+    purpose: indicador |2 nos quatro blocos de A4 e A5, e a regra do indicador no cabeçalho
+    diff: fix/CHG-001.diff
+  - id: CHG-002
+    kind: code
+    artifact: scripts/heranca/verificar.js
+    purpose: sétima conferência local, a ida e volta (falhaDeReaplicacao), e o tipo adaptacao-nao-reaplica em IMPEDEM
+    diff: fix/CHG-002.diff
+  - id: CHG-003
+    kind: code
+    artifact: scripts/heranca/relatorio.js
+    purpose: ação seguinte do tipo novo
+    diff: fix/CHG-003.diff
+  - id: CHG-004
+    kind: specification
+    artifact: _reversa_sdd/addenda/bug-BUG-20260919-BQBJ-v001.md
+    purpose: delta das contagens do adendo 004 e o RF-03.1
+    diff: null
+
+delivery:
+  branch: master
+  commit: null
+  pull_request: null
+  ci: null
+  merged: null
+  published: null
+
+versions:
+  fixed_in: null
+  built_from: null
+  packaged: null
+  installed: null
+
+backports: []
 
 closure:
   policy: package
@@ -131,11 +224,44 @@ conferência local que simule a reaplicação.
 |---|---|
 | Spec | `_reversa_sdd/sdd/heranca-e-sincronia.md#6-requisitos-funcionais` (RF-03, RF-04, RF-05); §11 (EC-03) |
 | Código | `src/heranca/adaptacoes.yml`, `scripts/heranca/verificar.js`, `scripts/heranca/adaptacoes.js` |
-| Teste | a definir no fix |
+| Teste | `tests/heranca-verificador-local.spec.ts` (ida e volta), `tests/heranca-adaptacoes-declaradas.spec.ts` (árvore real) |
 
 ## Resolution
 
-Pendente.
+**Causa raiz (confirmed).** A4 e A5, declaradas em `bf238ce`, usavam bloco literal `|` com a primeira
+linha indentada; o YAML absorvia a indentação do código na do bloco, e o trecho lido não existia na
+origem. O modo local do verificador, único que roda no build, não simulava a reaplicação, e o defeito
+passou doze dias sem acusação.
+
+**Veredito de spec: `spec-desatualizada`** (decisão de iago, 2026-09-22). Quanto a A4 e A5 a spec
+estava certa (RF-04, RF-05), e o dado divergiu. Quanto à conferência, o adendo 004 contava dez tipos
+de achado e seis conferências locais, e passam a ser onze e sete; o RF-03.1 especifica a ida e volta.
+Adendo: `_reversa_sdd/addenda/bug-BUG-20260919-BQBJ-v001.md`.
+
+**resolution_kind:** `fixed`.
+
+| CHG | Tipo | Artefato | Propósito | Diff |
+|---|---|---|---|---|
+| CHG-001 | configuration | `src/heranca/adaptacoes.yml` | `\|2` em A4 e A5; regra no cabeçalho | [fix/CHG-001.diff](fix/CHG-001.diff) |
+| CHG-002 | code | `scripts/heranca/verificar.js` | ida e volta; `adaptacao-nao-reaplica` impede | [fix/CHG-002.diff](fix/CHG-002.diff) |
+| CHG-003 | code | `scripts/heranca/relatorio.js` | ação seguinte do tipo novo | [fix/CHG-003.diff](fix/CHG-003.diff) |
+| CHG-004 | specification | `_reversa_sdd/addenda/bug-BUG-20260919-BQBJ-v001.md` | delta das contagens e RF-03.1 | o próprio adendo |
+
+O diff da spec e o do código ficam juntos nesta tabela: o adendo é o CHG-004.
+
+**Prova vermelho → verde.**
+
+- Gate 1 ([evidence/gate1-vermelho.txt](evidence/gate1-vermelho.txt)): 4 falhas em 20, os casos de
+  A4 e A5 na árvore real, o trecho sem indentação e a ambiguidade na origem reconstruída. O caso da
+  árvore real passava por vacuidade, porque o tipo de achado ainda não existia.
+- Gate 2 ([evidence/gate2-verde.txt](evidence/gate2-verde.txt)): 147 arquivos e 2683 testes verdes,
+  `tsc` sem erro, `check:heranca:local` em `divergente (0 impedem, 1 apenas informam)`, como antes.
+- Contraprova, numa cópia fora do projeto: o verificador novo com o YAML antigo dá `impedido (2
+  impedem)`, nomeando A4 em `impact.ts` e A5 em `impact.spec.ts`. É o critério 3 sem origem.
+
+**Dados:** nenhum reparo; nenhum arquivo herdado, resumo ou carimbo mudou.
+
+**Entrega:** pendente (política `package`).
 
 ## Agent Notes
 

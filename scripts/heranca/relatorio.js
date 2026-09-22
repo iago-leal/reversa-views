@@ -31,6 +31,8 @@ const ACAO_SEGUINTE = {
   'nao-manifestado': 'declare o arquivo com npm run sync:heranca ou apague-o da pasta da herança',
   'ausente-do-disco': 'restaure o arquivo pela origem ou remova a entrada do manifesto',
   'adaptacao-nao-casa': 'atualize o trecho original da adaptação, ou remova-a se a origem já o fez',
+  'adaptacao-nao-reaplica':
+    'declare o trecho exatamente como está no código, com |2 no bloco se a primeira linha começa por espaço',
   'origem-avancou': 'rode npm run sync:heranca quando quiser trazer a revisão nova',
   'novo-na-origem': 'copiar é decisão sua: a ferramenta não traz arquivo por conta própria',
   'origem-indisponivel': 'declare o caminho da origem em heranca.origens.yml',

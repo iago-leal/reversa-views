@@ -1,0 +1,89 @@
+diff --git a/scripts/heranca/verificar.js b/scripts/heranca/verificar.js
+index fd48bb5..9c3d4c4 100644
+--- a/scripts/heranca/verificar.js
++++ b/scripts/heranca/verificar.js
+@@ -23,6 +23,7 @@ const IMPEDEM = new Set([
+   'nao-manifestado',
+   'ausente-do-disco',
+   'adaptacao-nao-casa',
++  'adaptacao-nao-reaplica',
+ ])
+ 
+ /**
+@@ -53,13 +54,50 @@ function adaptacoesDe(adaptacoes, ids) {
+ }
+ 
+ /**
+- * As seis conferências que não dependem de origem alguma.
++ * Se as adaptações de um arquivo reaplicam sobre a origem que elas mesmas
++ * implicam (BUG-20260919-BQBJ).
++ *
++ * A origem é reconstruída sem clone algum: as adaptações são desfeitas sobre o
++ * conteúdo herdado em ordem inversa, trocando adaptado por original, e depois
++ * reaplicadas em ordem pelo mesmo `aplicar` do ressincronizador. A ordem
++ * inversa é o que honra adaptações encadeadas na mesma linha, como A12 e A14,
++ * cujo primeiro adaptado não sobrevive no arquivo final por desenho.
++ *
++ * Supressão pura (adaptado vazio) não se desfaz sem saber onde o trecho
++ * estava, e o arquivo que tiver uma não é simulado; o resumo segue
++ * conferindo-o.
++ * @param {string} herdado - o conteúdo herdado, sem carimbo.
++ * @param {object[]} itens - as adaptações do arquivo, na ordem declarada.
++ * @returns {string|null} o motivo da falha, ou nulo quando reaplica.
++ */
++function falhaDeReaplicacao(herdado, itens) {
++  if (itens.length === 0 || itens.some((item) => item.adaptado === '')) return null
++  const inversas = [...itens]
++    .reverse()
++    .map((item) => ({ id: item.id, original: item.adaptado, adaptado: item.original }))
++  const desfeita = aplicar(herdado, inversas)
++  if (!desfeita.ok) {
++    return `a adaptação ${desfeita.id} não se desfaz sobre o arquivo: ${desfeita.motivo} (${desfeita.ocorrencias} ocorrências do adaptado)`
++  }
++  const refeita = aplicar(desfeita.conteudo, itens)
++  if (!refeita.ok) {
++    return `a adaptação ${refeita.id} não se reaplica sobre a origem que as declarações implicam: ${refeita.motivo} (${refeita.ocorrencias} ocorrências do original)`
++  }
++  if (refeita.conteudo !== herdado) {
++    return 'as adaptações reaplicadas sobre a origem que elas implicam não reproduzem o arquivo'
++  }
++  return null
++}
++
++/**
++ * As sete conferências que não dependem de origem alguma.
+  * @param {object} entrada - a entrada do manifesto.
+  * @param {object} origem - a origem a que ela pertence.
+  * @param {string|null|undefined} conteudo - o que está no disco.
++ * @param {object} adaptacoes - o arquivo de adaptações.
+  * @returns {object[]} os achados daquele arquivo.
+  */
+-function julgarLocalmente(entrada, origem, conteudo) {
++function julgarLocalmente(entrada, origem, conteudo, adaptacoes) {
+   const caminho = entrada.caminho
+   const nome = entrada.origem
+ 
+@@ -129,6 +167,11 @@ function julgarLocalmente(entrada, origem, conteudo) {
+           'o conteúdo difere do resumo do manifesto: declare a adaptação ou descarte a edição',
+       }),
+     )
++  } else {
++    const falha = falhaDeReaplicacao(herdado, adaptacoesDe(adaptacoes, entrada.adaptacoes))
++    if (falha !== null) {
++      achados.push(achar('adaptacao-nao-reaplica', { caminho, origem: nome, detalhe: falha }))
++    }
+   }
+   if (entrada.paridadeExterna) {
+     achados.push(
+@@ -237,7 +280,10 @@ function julgar(estado) {
+ 
+   for (const entrada of manifesto.arquivos) {
+     const origem = manifesto.origens.find((item) => item.nome === entrada.origem)
+-    registrar(entrada.origem, julgarLocalmente(entrada, origem, local.arquivos[entrada.caminho]))
++    registrar(
++      entrada.origem,
++      julgarLocalmente(entrada, origem, local.arquivos[entrada.caminho], adaptacoes),
++    )
+   }
+ 
+   const daCasa = manifesto.origens.find((origem) => origem.tipo === 'codigo')

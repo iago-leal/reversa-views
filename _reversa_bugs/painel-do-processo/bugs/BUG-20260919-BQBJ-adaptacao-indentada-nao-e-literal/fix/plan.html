@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Plano de correção · nº 10 · BQBJ</title>
+<style>body{margin:0;background:#0d1117;color:#e6edf3;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;padding:24px;max-width:1100px}h1{font-size:20px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 8px;border-bottom:1px solid #30363d;padding-bottom:4px}.meta{color:#8b949e;font-size:12px}.cards{display:flex;flex-wrap:wrap;gap:12px;margin:16px 0}.card{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px 16px;min-width:140px}.card b{display:block;font-size:20px}.card span{color:#8b949e;font-size:12px}table{border-collapse:collapse;width:100%;font-size:13px}th,td{border:1px solid #30363d;padding:6px 8px;text-align:left;vertical-align:top}th{background:#161b22}a{color:#58a6ff}code{background:#161b22;border:1px solid #30363d;border-radius:4px;padding:0 4px;font-size:12px}pre{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;overflow-x:auto;font-size:12px}.svgwrap{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:8px;overflow-x:auto}.ok{color:#3fb950}.warn{color:#d29922}.bad{color:#f85149}</style></head><body>
+<h1>Plano de correção · nº 10 · BUG-20260919-BQBJ</h1>
+<p class="meta">Contexto <code>painel-do-processo</code> · 2026-09-22 · commit base <code>a9d29b3</code> · política de fechamento <code>package</code></p>
+<div class="cards">
+<div class="card"><b class="warn">medium</b><span>severidade</span></div>
+<div class="card"><b>P2</b><span>prioridade</span></div>
+<div class="card"><b class="ok">confirmed</b><span>causa raiz</span></div>
+<div class="card"><b class="ok">baixa</b><span>risco da mudança</span></div>
+<div class="card"><b>direta</b><span>estratégia</span></div>
+</div>
+
+<h2>O defeito</h2>
+<p>O <code>adaptacoes.yml</code> guarda cada adaptação do código herdado como um par de trechos em bloco literal. A4 e A5 começam indentadas e não têm indicador de indentação: o YAML toma a indentação da primeira linha como a do bloco e a retira de todas. O trecho lido não existe na origem, e a primeira ressincronização de <code>impact.ts</code> pararia em A4 com o motivo <code>ausente</code>, apontando um conflito que não há. Nada acusou isso em doze dias, porque a conferência que roda no build não reaplica adaptação alguma.</p>
+
+<h2>Causa raiz <span class="ok">(confirmed)</span></h2>
+<table>
+<tr><th>Elo</th><th>O que acontece</th></tr>
+<tr><td><code>src/heranca/adaptacoes.yml</code> (A4, A5, commit <code>bf238ce</code>)</td><td>blocos <code>|</code> cuja primeira linha começa por espaço</td></tr>
+<tr><td><code>scripts/heranca/manifesto.js#lerAdaptacoes</code></td><td>entrega o trecho sem a indentação (correto segundo o YAML; não muda)</td></tr>
+<tr><td><code>scripts/heranca/adaptacoes.js#aplicar</code></td><td>busca exata não encontra o original: <code>ausente</code> (correto; não muda)</td></tr>
+<tr><td><code>scripts/heranca/verificar.js#julgarLocalmente</code></td><td>as seis conferências locais olham carimbo e resumo, nenhuma simula a reaplicação: o build segue verde</td></tr>
+</table>
+<p class="meta">Evidências: <a href="../evidence/reproduction.md">evidence/reproduction.md</a>, <a href="../evidence/ida-e-volta-2026-09-22.txt">ida e volta, antes e com <code>|2</code></a>, <a href="../evidence/literalidade-2026-09-19.txt">literalidade por adaptação</a>. O nº 8 corrigiu o mesmo defeito em A10 e A13 com <code>|2</code>.</p>
+
+<h2>Estratégia escolhida: correção direta</h2>
+<p>A causa é única e está confirmada; não há estratégias concorrentes de risco que um debate precisasse arbitrar.</p>
+<ol>
+<li><b>Corrigir o dado</b>: <code>|2</code> nos quatro blocos de A4 e A5, como A10 e A13 já fazem. Nenhum arquivo herdado muda, e por isso nenhum resumo nem carimbo muda.</li>
+<li><b>Fechar a porta por onde o defeito passou</b>: uma sétima conferência local, a <b>ida e volta</b>. Para cada arquivo com adaptações, o verificador desfaz as adaptações em ordem inversa sobre o conteúdo herdado (trocando adaptado por original), reconstruindo a origem sem o clone, e reaplica-as em ordem com o mesmo <code>aplicar()</code> do ressincronizador. Se o desfazimento ou a reaplicação param, ou se o resultado difere do arquivo, sai o achado <code>adaptacao-nao-reaplica</code>, que <b>impede</b>.</li>
+<li><b>A ordem inversa resolve A12 e A14</b>: A14 é desfeita antes de A12, e o adaptado de A12 reaparece exatamente onde A12 o procura. É a resposta à restrição das Agent Notes, e não uma conferência de presença isolada.</li>
+<li><b>Supressão pura fica fora da simulação</b>: adaptação com adaptado vazio (hoje só A3) não se desfaz sem saber onde o trecho estava. O arquivo que tiver uma é pulado em silêncio, e o comentário do código diz por quê. Achado informativo a cada build seria ruído sem ação possível.</li>
+<li><b>Precedência</b>: a conferência só roda sobre arquivo que passou nas anteriores, como as outras; arquivo editado localmente já é reprovado por <code>editado-localmente</code>, e reapontá-lo só repetiria o defeito.</li>
+</ol>
+
+<h2>Correction Change Set proposto</h2>
+<table>
+<tr><th>CHG</th><th>Tipo</th><th>Artefato</th><th>Propósito</th></tr>
+<tr><td>CHG-001</td><td>configuration</td><td><code>src/heranca/adaptacoes.yml</code></td><td><code>|2</code> em <code>original</code> e <code>adaptado</code> de A4 e A5; o texto dos trechos não muda</td></tr>
+<tr><td>CHG-002</td><td>code</td><td><code>scripts/heranca/verificar.js</code></td><td>função <code>reaplicaSobreSiMesmo</code> (ida e volta), chamada em <code>julgarLocalmente</code>, que passa a receber as adaptações; tipo novo <code>adaptacao-nao-reaplica</code> em <code>IMPEDEM</code></td></tr>
+<tr><td>CHG-003</td><td>code</td><td><code>scripts/heranca/relatorio.js</code></td><td>ação seguinte do tipo novo: declarar o trecho exatamente como está no código, com indicador de indentação quando a primeira linha começa por espaço</td></tr>
+<tr><td>CHG-004</td><td>specification</td><td><code>_reversa_sdd/addenda/bug-BUG-20260919-BQBJ-v001.md</code></td><td>a depender do veredito da etapa 7: a spec efetiva conta seis conferências locais e dez tipos de achado</td></tr>
+</table>
+<p class="meta"><code>adaptacoes.js</code>, <code>manifesto.js</code> e o ressincronizador não mudam: o verificador e o ressincronizador são código próprio (<code>scripts/heranca/</code>), e mudança ali não cria adaptação. A pasta do nº 1 (travada) não é tocada.</p>
+
+<h2>Testes planejados</h2>
+<table>
+<tr><th>Tipo</th><th>Arquivo</th><th>O que prova</th></tr>
+<tr><td>reprodução</td><td><code>tests/heranca-adaptacoes-declaradas.spec.ts</code> (novo)</td><td>lê o <code>adaptacoes.yml</code> real e o manifesto real, e julga a árvore real em modo local: nenhum <code>adaptacao-nao-reaplica</code> (hoje, dois: <code>impact.ts</code> e <code>impact.spec.ts</code>); e A4 e A5 lidas começam pela indentação que o código tem</td></tr>
+<tr><td>reprodução</td><td><code>tests/heranca-verificador-local.spec.ts</code></td><td>trecho declarado sem a indentação do arquivo é apontado como <code>adaptacao-nao-reaplica</code>, que impede, sem origem alguma (critério 3)</td></tr>
+<tr><td>regressão</td><td><code>tests/heranca-verificador-local.spec.ts</code></td><td>adaptações em sequência sobre a mesma linha (forma de A12 e A14) não são apontadas; adaptação que casa não é apontada; supressão pura não é apontada; arquivo sem adaptação não é apontado; arquivo editado localmente recebe só <code>editado-localmente</code>; adaptação ambígua na origem reconstruída é apontada</td></tr>
+<tr><td>regressão</td><td>suíte inteira e <code>npm run check:heranca:local</code></td><td>as suítes da herança sem linha alterada fora dos acréscimos; o veredito local continua <code>divergente (0 impedem, 1 apenas informam)</code></td></tr>
+</table>
+
+<h2>Riscos e o que fica de fora</h2>
+<table>
+<tr><th>Risco</th><th>Tratamento</th></tr>
+<tr><td>A conferência nova entra no build com poder de impedir</td><td>medida sobre a árvore real antes do plano: com <code>|2</code> nas duas, os sete arquivos simulados reproduzem o local. Falso positivo apareceria já no gate 2</td></tr>
+<tr><td>Ida e volta não é a origem verdadeira</td><td>é a origem que as declarações implicam. Se ela diferir da real, o modo completo continua sendo quem diz, com <code>origem-avancou</code> ou <code>adaptacao-nao-casa</code>; a conferência local só garante que as declarações são coerentes com o arquivo</td></tr>
+<tr><td>Trecho de uma linha sem indentação ainda casa como substring</td><td>nesse caso a reaplicação na origem real também casaria; não é defeito, e a conferência não precisa acusá-lo</td></tr>
+<tr><td>Supressão pura não simulada</td><td>lacuna declarada no código e no adendo; hoje cobre só A3, e o resumo segue conferindo o arquivo</td></tr>
+<tr><td>Entrega</td><td>política <code>package</code>: commit, push e <code>npm run atualizar -- --aplicar</code> gerando a 0.17.4. A extensão não muda de comportamento, mas o fechamento exige a versão instalada</td></tr>
+</table>
+
+<h2>Mini-grafo do bug</h2>
+<div class="svgwrap"><svg viewBox="0 0 860 170" width="860" role="img" aria-label="Mini-grafo">
+<line x1="300" y1="85" x2="560" y2="45" stroke="#8b949e" stroke-width="1.5"/><line x1="300" y1="85" x2="560" y2="125" stroke="#8b949e" stroke-width="1.5"/>
+<text x="400" y="52" fill="#8b949e" font-size="11">related-to · supported</text><text x="400" y="128" fill="#8b949e" font-size="11">related-to · supported</text>
+<a href="../bug.md"><rect x="20" y="37" width="280" height="96" rx="8" fill="#161b22" stroke="#d29922" stroke-width="3"/><text x="32" y="59" fill="#e6edf3" font-size="13" font-weight="600">nº 10 · BQBJ</text><text x="32" y="79" fill="#c9d1d9" font-size="11">Adaptação indentada não é literal</text><text x="32" y="99" fill="#8b949e" font-size="11">medium · painel-do-processo</text><text x="32" y="119" fill="#d29922" font-size="11" font-weight="600">active · awaiting-human</text></a>
+<a href="../../BUG-20260909-FJBD-anomalia-cenario-ambiguo/bug.md"><rect x="560" y="10" width="280" height="70" rx="8" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/><text x="572" y="32" fill="#e6edf3" font-size="13" font-weight="600">nº 1 · FJBD</text><text x="572" y="52" fill="#c9d1d9" font-size="11">Anomalia cenario-ambiguo (declarou A4, A5)</text><text x="572" y="70" fill="#3fb950" font-size="11">resolved · DONE</text></a>
+<a href="../../BUG-20260914-DTLI-notacao-markdown-vira-valor-desconhecido/bug.md"><rect x="560" y="90" width="280" height="70" rx="8" fill="#161b22" stroke="#3fb950" stroke-width="1.5"/><text x="572" y="112" fill="#e6edf3" font-size="13" font-weight="600">nº 8 · DTLI</text><text x="572" y="132" fill="#c9d1d9" font-size="11">Mesmo defeito em A10 e A13, já corrigido</text><text x="572" y="150" fill="#3fb950" font-size="11">resolved · DONE</text></a>
+</svg></div>
+
+<h2>Matriz de relações</h2>
+<table>
+<tr><th>Origem</th><th>Tipo</th><th>Destino</th><th>Estado</th></tr>
+<tr><td><a href="../bug.md">nº 10 · BQBJ</a></td><td>related-to</td><td><a href="../../BUG-20260909-FJBD-anomalia-cenario-ambiguo/bug.md">nº 1 · FJBD</a></td><td>supported → <span class="ok">confirmed</span> (proposto: <code>git log -S</code> aponta <code>bf238ce</code>)</td></tr>
+<tr><td><a href="../bug.md">nº 10 · BQBJ</a></td><td>related-to</td><td><a href="../../BUG-20260914-DTLI-notacao-markdown-vira-valor-desconhecido/bug.md">nº 8 · DTLI</a></td><td>supported</td></tr>
+</table>
+<p class="meta">Os dois destinos estão travados com <code>DONE.md</code> e não são tocados; a relação é <code>related-to</code>, e não <code>regression-of</code>, porque o comportamento que eles corrigiram continua correto.</p>
+</body></html>
