@@ -1,0 +1,15 @@
+Reconhecedor de teclas da construção c4a77a2 (out-cli/cli/teclas.js, compilado por
+`npm run compile:cli`), chamado diretamente com blocos de bytes montados à mão.
+Cada seta abaixo é `Esc [ B` (0x1b 0x5b 0x42); acima é `Esc [ A`.
+
+uma seta                   -> "abaixo" (uma tecla, quando deviam ser 1)
+duas setas num bloco       -> "abaixo" (uma tecla, quando deviam ser 2)
+sete setas num bloco       -> "abaixo" (uma tecla, quando deviam ser 7)
+quarenta setas num bloco   -> "abaixo" (uma tecla, quando deviam ser 40)
+abaixo+acima num bloco     -> "acima"
+"jj" num bloco             -> null
+
+Medição anterior, da sessão de 2026-09-21 (handoff da 017): `node scripts/painel.js --sem-conferir`
+num pseudoterminal, quarenta `Esc [ B` em escritas consecutivas, seis `CSI H` na saída, isto é,
+seis redesenhos para quarenta setas. O sistema operacional juntou as escritas em blocos, e cada
+bloco valeu uma tecla.

@@ -1,4 +1,4 @@
-<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-21T19:41:25.235Z a partir de 13 bugs -->
+<!-- GENERATED, DO NOT EDIT: regenerado por /reversa-debugger-graph em 2026-09-22T19:53:08.729Z a partir de 14 bugs -->
 # Índice de bugs · painel-do-processo
 
 ## Resumo
@@ -6,18 +6,19 @@
 | Status | Bugs |
 |---|---|
 | resolved | 12 |
-| open | 1 |
+| open | 2 |
 
 | Phase | Bugs |
 |---|---|
 | delivering | 12 |
-| triaging | 1 |
+| triaging | 2 |
 
 ## Abertos e ativos
 
 | # | ID | Prioridade | Severidade | area/module/feature | Título | Caminho | Bloqueado |
 |---|---|---|---|---|---|---|---|
 | 10 | BUG-20260919-BQBJ | P2 | medium | heranca/heranca-e-sincronia/004-heranca-e-sincronia | Adaptações declaradas com trecho indentado não são literais no YAML, e a ressincronização para em A4 | `_reversa_bugs/painel-do-processo/bugs/BUG-20260919-BQBJ-adaptacao-indentada-nao-e-literal` | não |
+| 14 | BUG-20260922-HTND | P2 | medium | unclassified/painel-do-processo/unclassified | Rajada de setas num só bloco de bytes vale uma tecla só no painel de terminal | `_reversa_bugs/painel-do-processo/bugs/BUG-20260922-HTND-rajada-de-setas-vale-uma-tecla` | não |
 
 ## Resolvidos
 
